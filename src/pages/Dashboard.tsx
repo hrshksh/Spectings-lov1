@@ -25,10 +25,17 @@ const alertColumns: Column<Alert>[] = [
     key: 'title',
     header: 'Alert',
     sortable: true,
+    searchable: true,
     render: (alert) => (
       <div>
         <div className="font-medium">{alert.title}</div>
         <div className="text-sm text-muted-foreground truncate max-w-[200px]">{alert.message}</div>
+      </div>
+    ),
+    mobileRender: (alert) => (
+      <div className="text-right">
+        <div className="font-medium">{alert.title}</div>
+        <div className="text-sm text-muted-foreground">{alert.message}</div>
       </div>
     ),
   },
@@ -36,6 +43,12 @@ const alertColumns: Column<Alert>[] = [
     key: 'severity',
     header: 'Severity',
     sortable: true,
+    filterable: true,
+    filterOptions: [
+      { label: 'Critical', value: 'critical' },
+      { label: 'Warning', value: 'warning' },
+      { label: 'Info', value: 'info' },
+    ],
     render: (alert) => (
       <Badge variant={
         alert.severity === 'critical' ? 'destructive' :
@@ -49,6 +62,7 @@ const alertColumns: Column<Alert>[] = [
     key: 'read',
     header: 'Status',
     sortable: true,
+    mobileHidden: true,
     render: (alert) => (
       alert.read ? (
         <span className="text-muted-foreground text-sm">Read</span>
@@ -64,8 +78,15 @@ const trendColumns: Column<TrendSignal>[] = [
     key: 'topic',
     header: 'Topic',
     sortable: true,
+    searchable: true,
     render: (trend) => (
       <div>
+        <div className="font-medium">{trend.topic}</div>
+        <div className="text-sm text-muted-foreground">{trend.timeframe}</div>
+      </div>
+    ),
+    mobileRender: (trend) => (
+      <div className="text-right">
         <div className="font-medium">{trend.topic}</div>
         <div className="text-sm text-muted-foreground">{trend.timeframe}</div>
       </div>
@@ -85,6 +106,9 @@ const trendColumns: Column<TrendSignal>[] = [
         </div>
         <span className="text-sm font-medium">{trend.score}%</span>
       </div>
+    ),
+    mobileRender: (trend) => (
+      <span className="text-sm font-medium">{trend.score}%</span>
     ),
   },
   {
@@ -107,14 +131,25 @@ const eventColumns: Column<CompanyEvent>[] = [
     key: 'summary',
     header: 'Event',
     sortable: true,
+    searchable: true,
     render: (event) => (
       <div className="font-medium max-w-[300px]">{event.summary}</div>
+    ),
+    mobileRender: (event) => (
+      <div className="font-medium text-right">{event.summary}</div>
     ),
   },
   {
     key: 'eventType',
     header: 'Type',
     sortable: true,
+    filterable: true,
+    filterOptions: [
+      { label: 'Pricing', value: 'pricing_change' },
+      { label: 'Product', value: 'product_launch' },
+      { label: 'Hiring', value: 'hiring' },
+      { label: 'Funding', value: 'funding' },
+    ],
     render: (event) => (
       <Badge variant="outline" className="capitalize">
         {event.eventType.replace('_', ' ')}
@@ -125,6 +160,7 @@ const eventColumns: Column<CompanyEvent>[] = [
     key: 'confidence',
     header: 'Confidence',
     sortable: true,
+    mobileHidden: true,
     render: (event) => (
       <div className="flex items-center gap-2">
         <div className={`w-2 h-2 rounded-full ${
@@ -139,6 +175,7 @@ const eventColumns: Column<CompanyEvent>[] = [
     key: 'publishedAt',
     header: 'Date',
     sortable: true,
+    mobileHidden: true,
     render: (event) => (
       <span className="text-muted-foreground">{event.publishedAt}</span>
     ),
@@ -146,6 +183,7 @@ const eventColumns: Column<CompanyEvent>[] = [
   {
     key: 'actions',
     header: '',
+    hidden: false,
     render: () => (
       <Button variant="ghost" size="sm">
         <ExternalLink className="h-4 w-4" />
@@ -254,7 +292,13 @@ export default function Dashboard() {
               </Button>
             </CardHeader>
             <CardContent>
-              <DataTable data={mockAlerts} columns={alertColumns} pageSize={5} />
+              <DataTable 
+                data={mockAlerts} 
+                columns={alertColumns} 
+                pageSize={5}
+                showSearch
+                searchPlaceholder="Search alerts..."
+              />
             </CardContent>
           </Card>
 
@@ -270,7 +314,13 @@ export default function Dashboard() {
               </Button>
             </CardHeader>
             <CardContent>
-              <DataTable data={mockTrendSignals} columns={trendColumns} pageSize={5} />
+              <DataTable 
+                data={mockTrendSignals} 
+                columns={trendColumns} 
+                pageSize={5}
+                showSearch
+                searchPlaceholder="Search topics..."
+              />
             </CardContent>
           </Card>
         </div>
@@ -287,7 +337,13 @@ export default function Dashboard() {
             </Button>
           </CardHeader>
           <CardContent>
-            <DataTable data={mockCompanyEvents} columns={eventColumns} pageSize={5} />
+            <DataTable 
+              data={mockCompanyEvents} 
+              columns={eventColumns} 
+              pageSize={5}
+              showSearch
+              searchPlaceholder="Search events..."
+            />
           </CardContent>
         </Card>
 
