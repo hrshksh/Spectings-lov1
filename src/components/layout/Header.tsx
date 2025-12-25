@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Bell, Search, User, Settings, LogOut, HelpCircle } from 'lucide-react';
 import { mockAlerts } from '@/data/mockData';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 interface HeaderProps {
   title: string;
@@ -29,7 +30,7 @@ export function Header({ title, subtitle }: HeaderProps) {
         {subtitle && <p className="text-sm text-muted-foreground">{subtitle}</p>}
       </div>
 
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-2">
         {/* Search */}
         <div className="relative">
           {searchOpen ? (
@@ -45,6 +46,9 @@ export function Header({ title, subtitle }: HeaderProps) {
             </Button>
           )}
         </div>
+
+        {/* Theme Toggle */}
+        <ThemeToggle />
 
         {/* Notifications */}
         <DropdownMenu>
