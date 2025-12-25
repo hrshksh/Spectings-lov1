@@ -23,7 +23,7 @@ interface SidebarProps {
 
 const userNavItems = [
   { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
-  { icon: Users, label: 'People Intelligence', path: '/people' },
+  { icon: Users, label: 'People', path: '/people' },
   { icon: Building2, label: 'Company Intelligence', path: '/companies' },
   { icon: TrendingUp, label: 'Analytics', path: '/analytics' },
   { icon: BookOpen, label: 'Case Studies', path: '/case-studies' },
