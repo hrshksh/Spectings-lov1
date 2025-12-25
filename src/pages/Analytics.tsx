@@ -27,24 +27,24 @@ const weeklyTrends = [
 export default function Analytics() {
   return (
     <DashboardLayout title="Analytics" subtitle="Market trends, sentiment, and behavioral signals">
-      <div className="space-y-6 animate-fade-in">
-        <Tabs defaultValue="trends" className="space-y-6">
-          <TabsList>
-            <TabsTrigger value="trends">Trend Analysis</TabsTrigger>
-            <TabsTrigger value="sentiment">Sentiment</TabsTrigger>
-            <TabsTrigger value="signals">Market Signals</TabsTrigger>
-            <TabsTrigger value="alerts">Alerts</TabsTrigger>
+      <div className="space-y-3 animate-fade-in">
+        <Tabs defaultValue="trends" className="space-y-3">
+          <TabsList className="h-8">
+            <TabsTrigger value="trends" className="text-xs h-7">Trend Analysis</TabsTrigger>
+            <TabsTrigger value="sentiment" className="text-xs h-7">Sentiment</TabsTrigger>
+            <TabsTrigger value="signals" className="text-xs h-7">Market Signals</TabsTrigger>
+            <TabsTrigger value="alerts" className="text-xs h-7">Alerts</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="trends" className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <TabsContent value="trends" className="space-y-3">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
               <Card className="lg:col-span-2">
-                <CardHeader>
-                  <CardTitle>Weekly Trend Score</CardTitle>
-                  <CardDescription>Overall market trend momentum</CardDescription>
+                <CardHeader className="py-2 px-3">
+                  <CardTitle className="text-sm font-medium">Weekly Trend Score</CardTitle>
+                  <CardDescription className="text-xs">Overall market trend momentum</CardDescription>
                 </CardHeader>
-                <CardContent>
-                  <div className="h-72">
+                <CardContent className="p-2">
+                  <div className="h-52">
                     <ResponsiveContainer width="100%" height="100%">
                       <AreaChart data={weeklyTrends}>
                         <defs>
@@ -54,9 +54,9 @@ export default function Analytics() {
                           </linearGradient>
                         </defs>
                         <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 13%, 91%)" />
-                        <XAxis dataKey="week" stroke="hsl(220, 9%, 46%)" fontSize={12} />
-                        <YAxis stroke="hsl(220, 9%, 46%)" fontSize={12} domain={[0, 100]} />
-                        <Tooltip contentStyle={{ backgroundColor: 'white', border: '1px solid hsl(220, 13%, 91%)', borderRadius: '8px' }} />
+                        <XAxis dataKey="week" stroke="hsl(220, 9%, 46%)" fontSize={10} />
+                        <YAxis stroke="hsl(220, 9%, 46%)" fontSize={10} domain={[0, 100]} />
+                        <Tooltip contentStyle={{ backgroundColor: 'white', border: '1px solid hsl(220, 13%, 91%)', borderRadius: '4px', fontSize: '11px' }} />
                         <Area type="monotone" dataKey="score" stroke="hsl(221, 83%, 53%)" strokeWidth={2} fillOpacity={1} fill="url(#trendGradient)" />
                       </AreaChart>
                     </ResponsiveContainer>
@@ -65,17 +65,17 @@ export default function Analytics() {
               </Card>
 
               <Card>
-                <CardHeader>
-                  <CardTitle>Market Radar</CardTitle>
-                  <CardDescription>Key metrics overview</CardDescription>
+                <CardHeader className="py-2 px-3">
+                  <CardTitle className="text-sm font-medium">Market Radar</CardTitle>
+                  <CardDescription className="text-xs">Key metrics overview</CardDescription>
                 </CardHeader>
-                <CardContent>
-                  <div className="h-64">
+                <CardContent className="p-2">
+                  <div className="h-48">
                     <ResponsiveContainer width="100%" height="100%">
                       <RadarChart data={radarData}>
                         <PolarGrid stroke="hsl(220, 13%, 91%)" />
-                        <PolarAngleAxis dataKey="subject" tick={{ fill: 'hsl(220, 9%, 46%)', fontSize: 10 }} />
-                        <PolarRadiusAxis angle={30} domain={[0, 100]} tick={{ fill: 'hsl(220, 9%, 46%)', fontSize: 10 }} />
+                        <PolarAngleAxis dataKey="subject" tick={{ fill: 'hsl(220, 9%, 46%)', fontSize: 8 }} />
+                        <PolarRadiusAxis angle={30} domain={[0, 100]} tick={{ fill: 'hsl(220, 9%, 46%)', fontSize: 8 }} />
                         <Radar name="Score" dataKey="A" stroke="hsl(221, 83%, 53%)" fill="hsl(221, 83%, 53%)" fillOpacity={0.3} />
                       </RadarChart>
                     </ResponsiveContainer>
@@ -85,21 +85,21 @@ export default function Analytics() {
             </div>
 
             <Card>
-              <CardHeader>
-                <CardTitle>Trending Topics</CardTitle>
+              <CardHeader className="py-2 px-3">
+                <CardTitle className="text-sm font-medium">Trending Topics</CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <CardContent className="p-2">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                   {mockTrendSignals.map((trend) => (
-                    <div key={trend.id} className="flex items-center gap-4 p-4 rounded-lg bg-secondary/50">
-                      <div className={`h-10 w-10 rounded-lg flex items-center justify-center ${trend.change > 0 ? 'bg-success/10' : 'bg-destructive/10'}`}>
-                        {trend.change > 0 ? <TrendingUp className="h-5 w-5 text-success" /> : <TrendingDown className="h-5 w-5 text-destructive" />}
+                    <div key={trend.id} className="flex items-center gap-2 p-2 rounded-md bg-secondary/50">
+                      <div className={`h-8 w-8 rounded-md flex items-center justify-center ${trend.change > 0 ? 'bg-success/10' : 'bg-destructive/10'}`}>
+                        {trend.change > 0 ? <TrendingUp className="h-4 w-4 text-success" /> : <TrendingDown className="h-4 w-4 text-destructive" />}
                       </div>
-                      <div className="flex-1">
-                        <h4 className="font-medium">{trend.topic}</h4>
-                        <p className="text-sm text-muted-foreground">{trend.description}</p>
+                      <div className="flex-1 min-w-0">
+                        <h4 className="text-xs font-medium">{trend.topic}</h4>
+                        <p className="text-[10px] text-muted-foreground truncate">{trend.description}</p>
                       </div>
-                      <div className={`text-sm font-medium ${trend.change > 0 ? 'text-success' : 'text-destructive'}`}>
+                      <div className={`text-xs font-medium ${trend.change > 0 ? 'text-success' : 'text-destructive'}`}>
                         {trend.change > 0 ? '+' : ''}{trend.change}%
                       </div>
                     </div>
@@ -109,19 +109,19 @@ export default function Analytics() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="sentiment" className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <TabsContent value="sentiment" className="space-y-3">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
               <Card>
-                <CardHeader>
-                  <CardTitle>Sentiment Over Time</CardTitle>
+                <CardHeader className="py-2 px-3">
+                  <CardTitle className="text-sm font-medium">Sentiment Over Time</CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <div className="h-72">
+                <CardContent className="p-2">
+                  <div className="h-52">
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={chartData.sentimentTrend}>
                         <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 13%, 91%)" />
-                        <XAxis dataKey="date" stroke="hsl(220, 9%, 46%)" fontSize={12} />
-                        <YAxis stroke="hsl(220, 9%, 46%)" fontSize={12} />
+                        <XAxis dataKey="date" stroke="hsl(220, 9%, 46%)" fontSize={10} />
+                        <YAxis stroke="hsl(220, 9%, 46%)" fontSize={10} />
                         <Bar dataKey="positive" stackId="a" fill="hsl(142, 71%, 45%)" />
                         <Bar dataKey="neutral" stackId="a" fill="hsl(220, 9%, 70%)" />
                         <Bar dataKey="negative" stackId="a" fill="hsl(0, 84%, 60%)" />
@@ -132,22 +132,22 @@ export default function Analytics() {
               </Card>
 
               <Card>
-                <CardHeader>
-                  <CardTitle>Recent Sentiment Signals</CardTitle>
+                <CardHeader className="py-2 px-3">
+                  <CardTitle className="text-sm font-medium">Recent Sentiment Signals</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4">
+                <CardContent className="space-y-2 px-3 pb-3 pt-0">
                   {mockSentimentSignals.map((signal) => (
-                    <div key={signal.id} className="flex items-center gap-4 p-4 rounded-lg bg-secondary/50">
-                      <div className={`h-10 w-10 rounded-lg flex items-center justify-center ${signal.sentimentScore > 0 ? 'bg-success/10' : 'bg-destructive/10'}`}>
-                        <span className={`font-bold ${signal.sentimentScore > 0 ? 'text-success' : 'text-destructive'}`}>
+                    <div key={signal.id} className="flex items-center gap-2 p-2 rounded-md bg-secondary/50">
+                      <div className={`h-8 w-8 rounded-md flex items-center justify-center ${signal.sentimentScore > 0 ? 'bg-success/10' : 'bg-destructive/10'}`}>
+                        <span className={`text-xs font-bold ${signal.sentimentScore > 0 ? 'text-success' : 'text-destructive'}`}>
                           {signal.sentimentScore > 0 ? '+' : ''}{signal.sentimentScore}
                         </span>
                       </div>
-                      <div className="flex-1">
-                        <h4 className="font-medium">{signal.topic}</h4>
-                        <p className="text-sm text-muted-foreground">Source: {signal.source}</p>
+                      <div className="flex-1 min-w-0">
+                        <h4 className="text-xs font-medium">{signal.topic}</h4>
+                        <p className="text-[10px] text-muted-foreground">Source: {signal.source}</p>
                       </div>
-                      <Badge variant={signal.sentimentScore > 0 ? 'success' : 'destructive'}>
+                      <Badge variant={signal.sentimentScore > 0 ? 'success' : 'destructive'} className="text-[10px]">
                         {signal.sentimentScore > 30 ? 'Positive' : signal.sentimentScore < -30 ? 'Negative' : 'Neutral'}
                       </Badge>
                     </div>
@@ -157,57 +157,57 @@ export default function Analytics() {
             </div>
           </TabsContent>
 
-          <TabsContent value="signals" className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <TabsContent value="signals" className="space-y-3">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <Card>
-                <CardContent className="p-6 text-center">
-                  <div className="h-14 w-14 rounded-xl bg-success/10 flex items-center justify-center mx-auto mb-4">
-                    <Target className="h-7 w-7 text-success" />
+                <CardContent className="p-3 text-center">
+                  <div className="h-10 w-10 rounded-md bg-success/10 flex items-center justify-center mx-auto mb-2">
+                    <Target className="h-5 w-5 text-success" />
                   </div>
-                  <h3 className="text-2xl font-bold">23</h3>
-                  <p className="text-sm text-muted-foreground">Opportunity Signals</p>
+                  <h3 className="text-xl font-bold">23</h3>
+                  <p className="text-xs text-muted-foreground">Opportunity Signals</p>
                 </CardContent>
               </Card>
               <Card>
-                <CardContent className="p-6 text-center">
-                  <div className="h-14 w-14 rounded-xl bg-warning/10 flex items-center justify-center mx-auto mb-4">
-                    <AlertTriangle className="h-7 w-7 text-warning" />
+                <CardContent className="p-3 text-center">
+                  <div className="h-10 w-10 rounded-md bg-warning/10 flex items-center justify-center mx-auto mb-2">
+                    <AlertTriangle className="h-5 w-5 text-warning" />
                   </div>
-                  <h3 className="text-2xl font-bold">7</h3>
-                  <p className="text-sm text-muted-foreground">Risk Signals</p>
+                  <h3 className="text-xl font-bold">7</h3>
+                  <p className="text-xs text-muted-foreground">Risk Signals</p>
                 </CardContent>
               </Card>
               <Card>
-                <CardContent className="p-6 text-center">
-                  <div className="h-14 w-14 rounded-xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                    <Zap className="h-7 w-7 text-primary" />
+                <CardContent className="p-3 text-center">
+                  <div className="h-10 w-10 rounded-md bg-primary/10 flex items-center justify-center mx-auto mb-2">
+                    <Zap className="h-5 w-5 text-primary" />
                   </div>
-                  <h3 className="text-2xl font-bold">12</h3>
-                  <p className="text-sm text-muted-foreground">Action Items</p>
+                  <h3 className="text-xl font-bold">12</h3>
+                  <p className="text-xs text-muted-foreground">Action Items</p>
                 </CardContent>
               </Card>
             </div>
           </TabsContent>
 
-          <TabsContent value="alerts" className="space-y-6">
+          <TabsContent value="alerts" className="space-y-3">
             <Card>
-              <CardHeader>
-                <CardTitle>Alert Configuration</CardTitle>
+              <CardHeader className="py-2 px-3">
+                <CardTitle className="text-sm font-medium">Alert Configuration</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center justify-between p-4 rounded-lg bg-secondary/50">
-                  <div className="flex items-center gap-4">
-                    <div className="h-10 w-10 rounded-lg bg-warning/10 flex items-center justify-center">
-                      <AlertTriangle className="h-5 w-5 text-warning" />
+              <CardContent className="space-y-2 px-3 pb-3 pt-0">
+                <div className="flex items-center justify-between p-2 rounded-md bg-secondary/50">
+                  <div className="flex items-center gap-2">
+                    <div className="h-8 w-8 rounded-md bg-warning/10 flex items-center justify-center">
+                      <AlertTriangle className="h-4 w-4 text-warning" />
                     </div>
                     <div>
-                      <h4 className="font-medium">Negative Sentiment Alerts</h4>
-                      <p className="text-sm text-muted-foreground">Alert when sentiment drops below -30</p>
+                      <h4 className="text-xs font-medium">Negative Sentiment Alerts</h4>
+                      <p className="text-[10px] text-muted-foreground">Alert when sentiment drops below -30</p>
                     </div>
                   </div>
-                  <Badge variant="success">Active</Badge>
+                  <Badge variant="success" className="text-[10px]">Active</Badge>
                 </div>
-                <Button variant="outline" className="w-full">+ Add New Alert Rule</Button>
+                <Button variant="outline" size="sm" className="w-full h-8 text-xs">+ Add New Alert Rule</Button>
               </CardContent>
             </Card>
           </TabsContent>
