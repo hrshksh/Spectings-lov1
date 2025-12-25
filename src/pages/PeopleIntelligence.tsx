@@ -45,8 +45,8 @@ export default function PeopleIntelligence() {
           </CardContent>
         </Card>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2">
+        <div className={`grid grid-cols-1 gap-6 transition-all duration-300 ${selectedPerson ? 'lg:grid-cols-3' : 'lg:grid-cols-1'}`}>
+          <div className={`transition-all duration-300 ${selectedPerson ? 'lg:col-span-2' : 'lg:col-span-1'}`}>
             <Card>
               <CardHeader><CardTitle>Verified Leads ({filteredPeople.length})</CardTitle></CardHeader>
               <CardContent className="p-0">
@@ -95,19 +95,24 @@ export default function PeopleIntelligence() {
             </Card>
           </div>
 
-          <div>
-            {selectedPerson ? (
+          {selectedPerson && (
+            <div className="animate-fade-in">
               <Card className="sticky top-24 ring-2 ring-primary">
                 <CardHeader>
-                  <div className="flex items-center gap-4">
-                    <div className="h-14 w-14 rounded-xl bg-primary flex items-center justify-center">
-                      <span className="text-primary-foreground text-xl font-bold">{selectedPerson.name.split(' ').map(n => n[0]).join('')}</span>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="h-14 w-14 rounded-xl bg-primary flex items-center justify-center">
+                        <span className="text-primary-foreground text-xl font-bold">{selectedPerson.name.split(' ').map(n => n[0]).join('')}</span>
+                      </div>
+                      <div>
+                        <CardTitle>{selectedPerson.name}</CardTitle>
+                        <p className="text-sm text-muted-foreground">{selectedPerson.role}</p>
+                        <p className="text-sm text-primary">{selectedPerson.company}</p>
+                      </div>
                     </div>
-                    <div>
-                      <CardTitle>{selectedPerson.name}</CardTitle>
-                      <p className="text-sm text-muted-foreground">{selectedPerson.role}</p>
-                      <p className="text-sm text-primary">{selectedPerson.company}</p>
-                    </div>
+                    <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); setSelectedPerson(null); }}>
+                      <ExternalLink className="h-4 w-4 rotate-45" />
+                    </Button>
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -130,16 +135,8 @@ export default function PeopleIntelligence() {
                   </div>
                 </CardContent>
               </Card>
-            ) : (
-              <Card className="sticky top-24">
-                <CardContent className="p-12 text-center">
-                  <Search className="h-8 w-8 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="font-semibold mb-2">Select a Profile</h3>
-                  <p className="text-sm text-muted-foreground">Click on a person to view details.</p>
-                </CardContent>
-              </Card>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       </div>
     </DashboardLayout>
