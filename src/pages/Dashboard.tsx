@@ -2,14 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { DashboardLayout } from '@/components/layout';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+import { DataTable, Column } from '@/components/ui/data-table';
 import {
   Users,
   Building2,
@@ -20,10 +13,146 @@ import {
   FileText,
   ExternalLink,
 } from 'lucide-react';
-import { weeklyStats, mockAlerts, mockTrendSignals, mockCompanyEvents, mockLeads } from '@/data/mockData';
+import { weeklyStats, mockAlerts, mockTrendSignals, mockCompanyEvents } from '@/data/mockData';
 import { Link } from 'react-router-dom';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { chartData } from '@/data/mockData';
+import type { Alert, TrendSignal, CompanyEvent } from '@/types';
+
+// Column definitions
+const alertColumns: Column<Alert>[] = [
+  {
+    key: 'title',
+    header: 'Alert',
+    sortable: true,
+    render: (alert) => (
+      <div>
+        <div className="font-medium">{alert.title}</div>
+        <div className="text-sm text-muted-foreground truncate max-w-[200px]">{alert.message}</div>
+      </div>
+    ),
+  },
+  {
+    key: 'severity',
+    header: 'Severity',
+    sortable: true,
+    render: (alert) => (
+      <Badge variant={
+        alert.severity === 'critical' ? 'destructive' :
+        alert.severity === 'warning' ? 'warning' : 'secondary'
+      }>
+        {alert.severity}
+      </Badge>
+    ),
+  },
+  {
+    key: 'read',
+    header: 'Status',
+    sortable: true,
+    render: (alert) => (
+      alert.read ? (
+        <span className="text-muted-foreground text-sm">Read</span>
+      ) : (
+        <Badge variant="default">New</Badge>
+      )
+    ),
+  },
+];
+
+const trendColumns: Column<TrendSignal>[] = [
+  {
+    key: 'topic',
+    header: 'Topic',
+    sortable: true,
+    render: (trend) => (
+      <div>
+        <div className="font-medium">{trend.topic}</div>
+        <div className="text-sm text-muted-foreground">{trend.timeframe}</div>
+      </div>
+    ),
+  },
+  {
+    key: 'score',
+    header: 'Score',
+    sortable: true,
+    render: (trend) => (
+      <div className="flex items-center gap-2">
+        <div className="w-16 h-2 bg-muted rounded-full overflow-hidden">
+          <div
+            className="h-full bg-foreground rounded-full"
+            style={{ width: `${trend.score}%` }}
+          />
+        </div>
+        <span className="text-sm font-medium">{trend.score}%</span>
+      </div>
+    ),
+  },
+  {
+    key: 'change',
+    header: 'Change',
+    sortable: true,
+    render: (trend) => (
+      <div className={`flex items-center gap-1 ${
+        trend.change > 0 ? 'text-success' : trend.change < 0 ? 'text-destructive' : 'text-muted-foreground'
+      }`}>
+        {trend.change > 0 ? <ArrowUpRight className="h-4 w-4" /> : trend.change < 0 ? <ArrowDownRight className="h-4 w-4" /> : null}
+        <span className="font-medium">{Math.abs(trend.change)}%</span>
+      </div>
+    ),
+  },
+];
+
+const eventColumns: Column<CompanyEvent>[] = [
+  {
+    key: 'summary',
+    header: 'Event',
+    sortable: true,
+    render: (event) => (
+      <div className="font-medium max-w-[300px]">{event.summary}</div>
+    ),
+  },
+  {
+    key: 'eventType',
+    header: 'Type',
+    sortable: true,
+    render: (event) => (
+      <Badge variant="outline" className="capitalize">
+        {event.eventType.replace('_', ' ')}
+      </Badge>
+    ),
+  },
+  {
+    key: 'confidence',
+    header: 'Confidence',
+    sortable: true,
+    render: (event) => (
+      <div className="flex items-center gap-2">
+        <div className={`w-2 h-2 rounded-full ${
+          event.confidence >= 90 ? 'bg-success' :
+          event.confidence >= 70 ? 'bg-warning' : 'bg-destructive'
+        }`} />
+        <span>{event.confidence}%</span>
+      </div>
+    ),
+  },
+  {
+    key: 'publishedAt',
+    header: 'Date',
+    sortable: true,
+    render: (event) => (
+      <span className="text-muted-foreground">{event.publishedAt}</span>
+    ),
+  },
+  {
+    key: 'actions',
+    header: '',
+    render: () => (
+      <Button variant="ghost" size="sm">
+        <ExternalLink className="h-4 w-4" />
+      </Button>
+    ),
+  },
+];
 
 export default function Dashboard() {
   return (
@@ -73,36 +202,35 @@ export default function Dashboard() {
                 <AreaChart data={chartData.sentimentTrend}>
                   <defs>
                     <linearGradient id="colorPositive" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="hsl(221, 83%, 53%)" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="hsl(221, 83%, 53%)" stopOpacity={0} />
+                      <stop offset="5%" stopColor="hsl(0, 0%, 9%)" stopOpacity={0.2} />
+                      <stop offset="95%" stopColor="hsl(0, 0%, 9%)" stopOpacity={0} />
                     </linearGradient>
                     <linearGradient id="colorNegative" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="hsl(0, 84%, 60%)" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="hsl(0, 84%, 60%)" stopOpacity={0} />
+                      <stop offset="5%" stopColor="hsl(0, 72%, 51%)" stopOpacity={0.2} />
+                      <stop offset="95%" stopColor="hsl(0, 72%, 51%)" stopOpacity={0} />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 13%, 91%)" />
-                  <XAxis dataKey="date" stroke="hsl(220, 9%, 46%)" fontSize={12} />
-                  <YAxis stroke="hsl(220, 9%, 46%)" fontSize={12} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(0, 0%, 90%)" />
+                  <XAxis dataKey="date" stroke="hsl(0, 0%, 45%)" fontSize={12} />
+                  <YAxis stroke="hsl(0, 0%, 45%)" fontSize={12} />
                   <Tooltip
                     contentStyle={{
                       backgroundColor: 'hsl(0, 0%, 100%)',
-                      border: '1px solid hsl(220, 13%, 91%)',
-                      borderRadius: '8px',
-                      boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
+                      border: '1px solid hsl(0, 0%, 90%)',
+                      borderRadius: '6px',
                     }}
                   />
                   <Area
                     type="monotone"
                     dataKey="positive"
-                    stroke="hsl(221, 83%, 53%)"
+                    stroke="hsl(0, 0%, 9%)"
                     fillOpacity={1}
                     fill="url(#colorPositive)"
                   />
                   <Area
                     type="monotone"
                     dataKey="negative"
-                    stroke="hsl(0, 84%, 60%)"
+                    stroke="hsl(0, 72%, 51%)"
                     fillOpacity={1}
                     fill="url(#colorNegative)"
                   />
@@ -126,40 +254,7 @@ export default function Dashboard() {
               </Button>
             </CardHeader>
             <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Alert</TableHead>
-                    <TableHead>Severity</TableHead>
-                    <TableHead>Status</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {mockAlerts.slice(0, 5).map((alert) => (
-                    <TableRow key={alert.id}>
-                      <TableCell>
-                        <div className="font-medium">{alert.title}</div>
-                        <div className="text-sm text-muted-foreground truncate max-w-[200px]">{alert.message}</div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={
-                          alert.severity === 'critical' ? 'destructive' :
-                          alert.severity === 'warning' ? 'warning' : 'secondary'
-                        }>
-                          {alert.severity}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        {alert.read ? (
-                          <span className="text-muted-foreground text-sm">Read</span>
-                        ) : (
-                          <Badge variant="default">New</Badge>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+              <DataTable data={mockAlerts} columns={alertColumns} pageSize={5} />
             </CardContent>
           </Card>
 
@@ -175,44 +270,7 @@ export default function Dashboard() {
               </Button>
             </CardHeader>
             <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Topic</TableHead>
-                    <TableHead>Score</TableHead>
-                    <TableHead>Change</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {mockTrendSignals.map((trend) => (
-                    <TableRow key={trend.id}>
-                      <TableCell>
-                        <div className="font-medium">{trend.topic}</div>
-                        <div className="text-sm text-muted-foreground">{trend.timeframe}</div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <div className="w-16 h-2 bg-muted rounded-full overflow-hidden">
-                            <div
-                              className="h-full bg-primary rounded-full"
-                              style={{ width: `${trend.score}%` }}
-                            />
-                          </div>
-                          <span className="text-sm font-medium">{trend.score}%</span>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className={`flex items-center gap-1 ${
-                          trend.change > 0 ? 'text-success' : trend.change < 0 ? 'text-destructive' : 'text-muted-foreground'
-                        }`}>
-                          {trend.change > 0 ? <ArrowUpRight className="h-4 w-4" /> : trend.change < 0 ? <ArrowDownRight className="h-4 w-4" /> : null}
-                          <span className="font-medium">{Math.abs(trend.change)}%</span>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+              <DataTable data={mockTrendSignals} columns={trendColumns} pageSize={5} />
             </CardContent>
           </Card>
         </div>
@@ -229,51 +287,12 @@ export default function Dashboard() {
             </Button>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Event</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Confidence</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {mockCompanyEvents.map((event) => (
-                  <TableRow key={event.id}>
-                    <TableCell>
-                      <div className="font-medium max-w-[300px]">{event.summary}</div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className="capitalize">
-                        {event.eventType.replace('_', ' ')}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <div className={`w-2 h-2 rounded-full ${
-                          event.confidence >= 90 ? 'bg-success' :
-                          event.confidence >= 70 ? 'bg-warning' : 'bg-destructive'
-                        }`} />
-                        <span>{event.confidence}%</span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">{event.publishedAt}</TableCell>
-                    <TableCell className="text-right">
-                      <Button variant="ghost" size="sm">
-                        <ExternalLink className="h-4 w-4" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+            <DataTable data={mockCompanyEvents} columns={eventColumns} pageSize={5} />
           </CardContent>
         </Card>
 
         {/* Quick Actions */}
-        <Card className="border-primary/20">
+        <Card>
           <CardContent className="p-6">
             <div className="flex items-center justify-between flex-wrap gap-4">
               <div>
@@ -318,18 +337,18 @@ interface StatCardProps {
 
 function StatCard({ title, value, change, icon: Icon, color }: StatCardProps) {
   const colorClasses = {
-    primary: 'bg-primary/10 text-primary',
-    accent: 'bg-accent/10 text-accent',
+    primary: 'bg-foreground/5 text-foreground',
+    accent: 'bg-foreground/5 text-foreground',
     success: 'bg-success/10 text-success',
     warning: 'bg-warning/10 text-warning',
   };
 
   return (
-    <Card className="hover:shadow-md transition-shadow">
+    <Card>
       <CardContent className="p-6">
         <div className="flex items-start justify-between">
-          <div className={`h-12 w-12 rounded-xl ${colorClasses[color]} flex items-center justify-center`}>
-            <Icon className="h-6 w-6" />
+          <div className={`h-10 w-10 rounded-lg ${colorClasses[color]} flex items-center justify-center`}>
+            <Icon className="h-5 w-5" />
           </div>
           {change !== 0 && (
             <div className={`flex items-center gap-1 text-sm ${change > 0 ? 'text-success' : 'text-destructive'}`}>
@@ -339,7 +358,7 @@ function StatCard({ title, value, change, icon: Icon, color }: StatCardProps) {
           )}
         </div>
         <div className="mt-4">
-          <p className="text-3xl font-bold">{value}</p>
+          <p className="text-2xl font-semibold">{value}</p>
           <p className="text-sm text-muted-foreground mt-1">{title}</p>
         </div>
       </CardContent>
