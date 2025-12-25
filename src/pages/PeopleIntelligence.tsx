@@ -23,32 +23,32 @@ export default function PeopleIntelligence() {
 
   return (
     <DashboardLayout title="People Intelligence" subtitle="Verified leads and contact database">
-      <div className="space-y-3 animate-fade-in">
+      <div className="space-y-2 animate-fade-in">
         <Card>
-          <CardContent className="p-3">
+          <CardContent className="p-2">
             <div className="flex flex-wrap items-center gap-2">
               <div className="relative flex-1 min-w-64">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input placeholder="Search by name, company, or role..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-10 h-9" />
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input placeholder="Search by name, company, or role..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-8 h-8 text-sm" />
               </div>
               <Select defaultValue="all">
-                <SelectTrigger className="w-40 h-9"><SelectValue placeholder="Industry" /></SelectTrigger>
+                <SelectTrigger className="w-36 h-8 text-sm"><SelectValue placeholder="Industry" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Industries</SelectItem>
                   <SelectItem value="saas">SaaS</SelectItem>
                   <SelectItem value="fintech">FinTech</SelectItem>
                 </SelectContent>
               </Select>
-              <Button variant="outline" size="sm"><Filter className="h-4 w-4 mr-2" />More Filters</Button>
-              <Button size="sm"><Download className="h-4 w-4 mr-2" />Export CSV</Button>
+              <Button variant="outline" size="sm" className="h-8"><Filter className="h-3.5 w-3.5 mr-1.5" />Filters</Button>
+              <Button size="sm" className="h-8"><Download className="h-3.5 w-3.5 mr-1.5" />Export</Button>
             </div>
           </CardContent>
         </Card>
 
-        <div className={`grid grid-cols-1 gap-3 transition-all duration-300 ${selectedPerson ? 'lg:grid-cols-3' : 'lg:grid-cols-1'}`}>
+        <div className={`grid grid-cols-1 gap-2 transition-all duration-300 ${selectedPerson ? 'lg:grid-cols-3' : 'lg:grid-cols-1'}`}>
           <div className={`transition-all duration-300 ${selectedPerson ? 'lg:col-span-2' : 'lg:col-span-1'}`}>
             <Card>
-              <CardHeader className="py-3 px-4"><CardTitle className="text-base">Verified Leads ({filteredPeople.length})</CardTitle></CardHeader>
+              <CardHeader className="py-2 px-3"><CardTitle className="text-sm font-medium">Verified Leads ({filteredPeople.length})</CardTitle></CardHeader>
               <CardContent className="p-0">
                 <Table>
                   <TableHeader>
@@ -63,29 +63,29 @@ export default function PeopleIntelligence() {
                   <TableBody>
                     {filteredPeople.map((person) => (
                       <TableRow key={person.id} className={`cursor-pointer ${selectedPerson?.id === person.id ? 'bg-primary/5' : ''}`} onClick={() => setSelectedPerson(person)}>
-                        <TableCell>
-                          <div className="flex items-center gap-3">
-                            <div className="h-10 w-10 rounded-full bg-primary flex items-center justify-center">
-                              <span className="text-primary-foreground text-sm font-medium">{person.name.split(' ').map(n => n[0]).join('')}</span>
+                        <TableCell className="py-2">
+                          <div className="flex items-center gap-2">
+                            <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center">
+                              <span className="text-primary-foreground text-xs font-medium">{person.name.split(' ').map(n => n[0]).join('')}</span>
                             </div>
                             <div>
-                              <p className="font-medium">{person.name}</p>
+                              <p className="font-medium text-sm">{person.name}</p>
                               <p className="text-xs text-muted-foreground">{person.email}</p>
                             </div>
                           </div>
                         </TableCell>
-                        <TableCell>{person.role}</TableCell>
-                        <TableCell>{person.company}</TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <div className="h-2 w-16 bg-muted rounded-full overflow-hidden">
+                        <TableCell className="py-2 text-sm">{person.role}</TableCell>
+                        <TableCell className="py-2 text-sm">{person.company}</TableCell>
+                        <TableCell className="py-2">
+                          <div className="flex items-center gap-1.5">
+                            <div className="h-1.5 w-12 bg-muted rounded-full overflow-hidden">
                               <div className={`h-full rounded-full ${person.confidence >= 90 ? 'bg-success' : person.confidence >= 80 ? 'bg-primary' : 'bg-warning'}`} style={{ width: `${person.confidence}%` }} />
                             </div>
-                            <span className="text-sm">{person.confidence}%</span>
+                            <span className="text-xs">{person.confidence}%</span>
                           </div>
                         </TableCell>
-                        <TableCell className="text-right">
-                          <Button variant="ghost" size="icon"><ChevronRight className="h-4 w-4" /></Button>
+                        <TableCell className="py-2 text-right">
+                          <Button variant="ghost" size="icon" className="h-7 w-7"><ChevronRight className="h-3.5 w-3.5" /></Button>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -98,40 +98,40 @@ export default function PeopleIntelligence() {
           {selectedPerson && (
             <div className="animate-fade-in">
               <Card className="sticky top-20 ring-1 ring-primary">
-                <CardHeader className="py-3 px-4">
+                <CardHeader className="py-2 px-3">
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="h-11 w-11 rounded-lg bg-primary flex items-center justify-center">
-                        <span className="text-primary-foreground text-lg font-bold">{selectedPerson.name.split(' ').map(n => n[0]).join('')}</span>
+                    <div className="flex items-center gap-2">
+                      <div className="h-9 w-9 rounded-md bg-primary flex items-center justify-center">
+                        <span className="text-primary-foreground text-sm font-bold">{selectedPerson.name.split(' ').map(n => n[0]).join('')}</span>
                       </div>
                       <div>
-                        <CardTitle className="text-base">{selectedPerson.name}</CardTitle>
+                        <CardTitle className="text-sm">{selectedPerson.name}</CardTitle>
                         <p className="text-xs text-muted-foreground">{selectedPerson.role}</p>
                         <p className="text-xs text-primary">{selectedPerson.company}</p>
                       </div>
                     </div>
-                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => { e.stopPropagation(); setSelectedPerson(null); }}>
-                      <ExternalLink className="h-4 w-4 rotate-45" />
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); setSelectedPerson(null); }}>
+                      <ExternalLink className="h-3.5 w-3.5 rotate-45" />
                     </Button>
                   </div>
                 </CardHeader>
-                <CardContent className="space-y-3 pt-0 px-4 pb-4">
-                  <div className="space-y-1">
-                    <a href={`mailto:${selectedPerson.email}`} className="flex items-center gap-2 p-1.5 rounded-md hover:bg-secondary text-sm">
-                      <Mail className="h-4 w-4 text-primary" />{selectedPerson.email}
+                <CardContent className="space-y-2 pt-0 px-3 pb-3">
+                  <div className="space-y-0.5">
+                    <a href={`mailto:${selectedPerson.email}`} className="flex items-center gap-1.5 p-1 rounded hover:bg-secondary text-xs">
+                      <Mail className="h-3.5 w-3.5 text-primary" />{selectedPerson.email}
                     </a>
                     {selectedPerson.phone && (
-                      <a href={`tel:${selectedPerson.phone}`} className="flex items-center gap-2 p-1.5 rounded-md hover:bg-secondary text-sm">
-                        <Phone className="h-4 w-4 text-primary" />{selectedPerson.phone}
+                      <a href={`tel:${selectedPerson.phone}`} className="flex items-center gap-1.5 p-1 rounded hover:bg-secondary text-xs">
+                        <Phone className="h-3.5 w-3.5 text-primary" />{selectedPerson.phone}
                       </a>
                     )}
                   </div>
-                  <div className="flex flex-wrap gap-1.5">
-                    {selectedPerson.tags.map((tag) => (<Badge key={tag} variant="secondary" className="text-xs">{tag}</Badge>))}
+                  <div className="flex flex-wrap gap-1">
+                    {selectedPerson.tags.map((tag) => (<Badge key={tag} variant="secondary" className="text-[10px] px-1.5 py-0">{tag}</Badge>))}
                   </div>
-                  <div className="flex gap-2 pt-3 border-t">
-                    <Button className="flex-1"><Mail className="h-4 w-4 mr-2" />Contact</Button>
-                    <Button variant="outline" className="flex-1"><Download className="h-4 w-4 mr-2" />Export</Button>
+                  <div className="flex gap-1.5 pt-2 border-t">
+                    <Button size="sm" className="flex-1 h-7 text-xs"><Mail className="h-3 w-3 mr-1" />Contact</Button>
+                    <Button variant="outline" size="sm" className="flex-1 h-7 text-xs"><Download className="h-3 w-3 mr-1" />Export</Button>
                   </div>
                 </CardContent>
               </Card>
