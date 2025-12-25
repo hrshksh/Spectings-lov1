@@ -14,16 +14,391 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      companies: {
+        Row: {
+          competitors: string[] | null
+          created_at: string
+          description: string | null
+          domain: string | null
+          founded: number | null
+          id: string
+          industry: string | null
+          logo_url: string | null
+          name: string
+          size: string | null
+          updated_at: string
+        }
+        Insert: {
+          competitors?: string[] | null
+          created_at?: string
+          description?: string | null
+          domain?: string | null
+          founded?: number | null
+          id?: string
+          industry?: string | null
+          logo_url?: string | null
+          name: string
+          size?: string | null
+          updated_at?: string
+        }
+        Update: {
+          competitors?: string[] | null
+          created_at?: string
+          description?: string | null
+          domain?: string | null
+          founded?: number | null
+          id?: string
+          industry?: string | null
+          logo_url?: string | null
+          name?: string
+          size?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      company_events: {
+        Row: {
+          company_id: string
+          confidence: number | null
+          created_at: string
+          event_type: Database["public"]["Enums"]["company_event_type"]
+          evidence_ids: string[] | null
+          id: string
+          published_at: string | null
+          summary: string | null
+        }
+        Insert: {
+          company_id: string
+          confidence?: number | null
+          created_at?: string
+          event_type: Database["public"]["Enums"]["company_event_type"]
+          evidence_ids?: string[] | null
+          id?: string
+          published_at?: string | null
+          summary?: string | null
+        }
+        Update: {
+          company_id?: string
+          confidence?: number | null
+          created_at?: string
+          event_type?: Database["public"]["Enums"]["company_event_type"]
+          evidence_ids?: string[] | null
+          id?: string
+          published_at?: string | null
+          summary?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_events_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      leads: {
+        Row: {
+          created_at: string
+          id: string
+          notes: string | null
+          person_id: string | null
+          source: string | null
+          status: Database["public"]["Enums"]["lead_status"]
+          updated_at: string
+          verified_at: string | null
+          verified_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          person_id?: string | null
+          source?: string | null
+          status?: Database["public"]["Enums"]["lead_status"]
+          updated_at?: string
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          person_id?: string | null
+          source?: string | null
+          status?: Database["public"]["Enums"]["lead_status"]
+          updated_at?: string
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leads_person_id_fkey"
+            columns: ["person_id"]
+            isOneToOne: false
+            referencedRelation: "people"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      organization_members: {
+        Row: {
+          created_at: string
+          id: string
+          organization_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          organization_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          organization_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organization_members_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      organizations: {
+        Row: {
+          created_at: string
+          id: string
+          industry: string | null
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          industry?: string | null
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          industry?: string | null
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      people: {
+        Row: {
+          company: string | null
+          confidence: number | null
+          created_at: string
+          email: string | null
+          id: string
+          linkedin: string | null
+          name: string
+          phone: string | null
+          role: string | null
+          tags: string[] | null
+          updated_at: string
+        }
+        Insert: {
+          company?: string | null
+          confidence?: number | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          linkedin?: string | null
+          name: string
+          phone?: string | null
+          role?: string | null
+          tags?: string[] | null
+          updated_at?: string
+        }
+        Update: {
+          company?: string | null
+          confidence?: number | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          linkedin?: string | null
+          name?: string
+          phone?: string | null
+          role?: string | null
+          tags?: string[] | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          email: string
+          full_name: string | null
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          email: string
+          full_name?: string | null
+          id: string
+          updated_at?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          email?: string
+          full_name?: string | null
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      raw_evidence: {
+        Row: {
+          created_at: string
+          id: string
+          ingested_at: string
+          published_at: string | null
+          screenshot_url: string | null
+          source_type: Database["public"]["Enums"]["evidence_source_type"]
+          status: Database["public"]["Enums"]["evidence_status"]
+          text: string | null
+          updated_at: string
+          url: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          ingested_at?: string
+          published_at?: string | null
+          screenshot_url?: string | null
+          source_type: Database["public"]["Enums"]["evidence_source_type"]
+          status?: Database["public"]["Enums"]["evidence_status"]
+          text?: string | null
+          updated_at?: string
+          url?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          ingested_at?: string
+          published_at?: string | null
+          screenshot_url?: string | null
+          source_type?: Database["public"]["Enums"]["evidence_source_type"]
+          status?: Database["public"]["Enums"]["evidence_status"]
+          text?: string | null
+          updated_at?: string
+          url?: string | null
+        }
+        Relationships: []
+      }
+      tasks: {
+        Row: {
+          assigned_to: string | null
+          created_at: string
+          description: string | null
+          id: string
+          priority: Database["public"]["Enums"]["task_priority"]
+          reference_id: string | null
+          status: Database["public"]["Enums"]["task_status"]
+          title: string
+          type: Database["public"]["Enums"]["task_type"]
+          updated_at: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          priority?: Database["public"]["Enums"]["task_priority"]
+          reference_id?: string | null
+          status?: Database["public"]["Enums"]["task_status"]
+          title: string
+          type: Database["public"]["Enums"]["task_type"]
+          updated_at?: string
+        }
+        Update: {
+          assigned_to?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          priority?: Database["public"]["Enums"]["task_priority"]
+          reference_id?: string | null
+          status?: Database["public"]["Enums"]["task_status"]
+          title?: string
+          type?: Database["public"]["Enums"]["task_type"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      is_admin: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
-      [_ in never]: never
+      app_role:
+        | "super_admin"
+        | "researcher"
+        | "analyst"
+        | "qc"
+        | "customer_admin"
+        | "customer_user"
+      company_event_type:
+        | "pricing_change"
+        | "product_launch"
+        | "hiring"
+        | "campaign"
+        | "news"
+        | "review"
+        | "funding"
+        | "acquisition"
+      evidence_source_type: "website" | "social" | "news" | "review" | "api"
+      evidence_status: "pending" | "parsed" | "published" | "rejected"
+      lead_status: "pending" | "verified" | "rejected"
+      task_priority: "low" | "medium" | "high"
+      task_status: "pending" | "in_progress" | "completed" | "rejected"
+      task_type: "evidence" | "lead" | "company" | "trend"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +525,31 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: [
+        "super_admin",
+        "researcher",
+        "analyst",
+        "qc",
+        "customer_admin",
+        "customer_user",
+      ],
+      company_event_type: [
+        "pricing_change",
+        "product_launch",
+        "hiring",
+        "campaign",
+        "news",
+        "review",
+        "funding",
+        "acquisition",
+      ],
+      evidence_source_type: ["website", "social", "news", "review", "api"],
+      evidence_status: ["pending", "parsed", "published", "rejected"],
+      lead_status: ["pending", "verified", "rejected"],
+      task_priority: ["low", "medium", "high"],
+      task_status: ["pending", "in_progress", "completed", "rejected"],
+      task_type: ["evidence", "lead", "company", "trend"],
+    },
   },
 } as const
