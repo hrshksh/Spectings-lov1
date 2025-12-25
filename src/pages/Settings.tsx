@@ -24,51 +24,66 @@ const plans = [
 export default function Settings() {
   return (
     <DashboardLayout title="Settings" subtitle="Manage your preferences and subscription">
-      <div className="space-y-6 animate-fade-in">
-        <Tabs defaultValue="general" className="space-y-6">
-          <TabsList>
-            <TabsTrigger value="general">General</TabsTrigger>
-            <TabsTrigger value="competitors">Competitors</TabsTrigger>
-            <TabsTrigger value="alerts">Alerts</TabsTrigger>
-            <TabsTrigger value="billing">Billing</TabsTrigger>
-            <TabsTrigger value="team">Team</TabsTrigger>
+      <div className="space-y-3 animate-fade-in">
+        <Tabs defaultValue="general" className="space-y-3">
+          <TabsList className="h-8">
+            <TabsTrigger value="general" className="text-xs h-7">General</TabsTrigger>
+            <TabsTrigger value="competitors" className="text-xs h-7">Competitors</TabsTrigger>
+            <TabsTrigger value="alerts" className="text-xs h-7">Alerts</TabsTrigger>
+            <TabsTrigger value="billing" className="text-xs h-7">Billing</TabsTrigger>
+            <TabsTrigger value="team" className="text-xs h-7">Team</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="general" className="space-y-6">
+          <TabsContent value="general" className="space-y-3">
             <Card>
-              <CardHeader>
-                <CardTitle>Organization Details</CardTitle>
+              <CardHeader className="py-2 px-3">
+                <CardTitle className="text-sm font-medium">Organization Details</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-2"><Label>Organization Name</Label><Input defaultValue="Acme Corp" /></div>
-                  <div className="space-y-2">
-                    <Label>Industry</Label>
-                    <Select defaultValue="saas"><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="saas">SaaS</SelectItem><SelectItem value="fintech">FinTech</SelectItem></SelectContent></Select>
+              <CardContent className="space-y-3 px-3 pb-3 pt-0">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <Label className="text-xs">Organization Name</Label>
+                    <Input defaultValue="Acme Corp" className="h-8 text-sm" />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">Industry</Label>
+                    <Select defaultValue="saas">
+                      <SelectTrigger className="h-8 text-sm"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="saas">SaaS</SelectItem>
+                        <SelectItem value="fintech">FinTech</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
-                <Button>Save Changes</Button>
+                <Button size="sm" className="h-8">Save Changes</Button>
               </CardContent>
             </Card>
           </TabsContent>
 
-          <TabsContent value="competitors" className="space-y-6">
+          <TabsContent value="competitors" className="space-y-3">
             <Card>
-              <CardHeader>
+              <CardHeader className="py-2 px-3">
                 <div className="flex items-center justify-between">
-                  <CardTitle>Tracked Competitors</CardTitle>
-                  <Button><Plus className="h-4 w-4 mr-2" />Add Competitor</Button>
+                  <CardTitle className="text-sm font-medium">Tracked Competitors</CardTitle>
+                  <Button size="sm" className="h-7 text-xs"><Plus className="h-3 w-3 mr-1" />Add Competitor</Button>
                 </div>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
+              <CardContent className="px-3 pb-3 pt-0">
+                <div className="space-y-2">
                   {competitors.map((c) => (
-                    <div key={c.id} className="flex items-center justify-between p-4 rounded-lg bg-secondary/50">
-                      <div className="flex items-center gap-4">
-                        <div className="h-10 w-10 rounded-lg bg-muted flex items-center justify-center"><Building2 className="h-5 w-5 text-muted-foreground" /></div>
-                        <div><h4 className="font-medium">{c.name}</h4><p className="text-sm text-muted-foreground">{c.tracked ? 'Actively tracking' : 'Not tracked'}</p></div>
+                    <div key={c.id} className="flex items-center justify-between p-2 rounded-md bg-secondary/50">
+                      <div className="flex items-center gap-2">
+                        <div className="h-8 w-8 rounded-md bg-muted flex items-center justify-center"><Building2 className="h-4 w-4 text-muted-foreground" /></div>
+                        <div>
+                          <h4 className="text-xs font-medium">{c.name}</h4>
+                          <p className="text-[10px] text-muted-foreground">{c.tracked ? 'Actively tracking' : 'Not tracked'}</p>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-4"><Switch checked={c.tracked} /><Button variant="ghost" size="icon"><Trash2 className="h-4 w-4" /></Button></div>
+                      <div className="flex items-center gap-2">
+                        <Switch checked={c.tracked} />
+                        <Button variant="ghost" size="icon" className="h-7 w-7"><Trash2 className="h-3.5 w-3.5" /></Button>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -76,15 +91,15 @@ export default function Settings() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="alerts" className="space-y-6">
+          <TabsContent value="alerts" className="space-y-3">
             <Card>
-              <CardHeader><CardTitle>Alert Preferences</CardTitle></CardHeader>
-              <CardContent className="space-y-4">
+              <CardHeader className="py-2 px-3"><CardTitle className="text-sm font-medium">Alert Preferences</CardTitle></CardHeader>
+              <CardContent className="space-y-2 px-3 pb-3 pt-0">
                 {[{ title: 'Competitor Events', icon: Building2 }, { title: 'Trend Spikes', icon: Globe }, { title: 'Negative Sentiment', icon: Bell }, { title: 'New Leads', icon: Users }].map((alert, i) => (
-                  <div key={i} className="flex items-center justify-between p-4 rounded-lg bg-secondary/50">
-                    <div className="flex items-center gap-4">
-                      <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center"><alert.icon className="h-5 w-5 text-primary" /></div>
-                      <h4 className="font-medium">{alert.title}</h4>
+                  <div key={i} className="flex items-center justify-between p-2 rounded-md bg-secondary/50">
+                    <div className="flex items-center gap-2">
+                      <div className="h-8 w-8 rounded-md bg-primary/10 flex items-center justify-center"><alert.icon className="h-4 w-4 text-primary" /></div>
+                      <h4 className="text-xs font-medium">{alert.title}</h4>
                     </div>
                     <Switch defaultChecked />
                   </div>
@@ -93,38 +108,49 @@ export default function Settings() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="billing" className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <TabsContent value="billing" className="space-y-3">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
               {plans.map((plan) => (
-                <Card key={plan.id} className={plan.current ? 'ring-2 ring-primary' : ''}>
-                  <CardContent className="p-6">
-                    {plan.current && <Badge className="mb-4">Current Plan</Badge>}
-                    <h3 className="text-xl font-bold">{plan.name}</h3>
-                    <div className="mt-2 mb-6"><span className="text-3xl font-bold">{plan.price}</span><span className="text-muted-foreground">/month</span></div>
-                    <ul className="space-y-3 mb-6">
-                      {plan.features.map((f, i) => (<li key={i} className="flex items-center gap-2 text-sm"><Check className="h-4 w-4 text-success" />{f}</li>))}
+                <Card key={plan.id} className={plan.current ? 'ring-1 ring-primary' : ''}>
+                  <CardContent className="p-3">
+                    {plan.current && <Badge className="mb-2 text-[10px]">Current Plan</Badge>}
+                    <h3 className="text-sm font-bold">{plan.name}</h3>
+                    <div className="mt-1 mb-3"><span className="text-xl font-bold">{plan.price}</span><span className="text-xs text-muted-foreground">/month</span></div>
+                    <ul className="space-y-1.5 mb-3">
+                      {plan.features.map((f, i) => (<li key={i} className="flex items-center gap-1.5 text-xs"><Check className="h-3 w-3 text-success" />{f}</li>))}
                     </ul>
-                    <Button variant={plan.current ? 'outline' : 'default'} className="w-full" disabled={plan.current}>{plan.current ? 'Current Plan' : 'Upgrade'}</Button>
+                    <Button variant={plan.current ? 'outline' : 'default'} size="sm" className="w-full h-8 text-xs" disabled={plan.current}>{plan.current ? 'Current Plan' : 'Upgrade'}</Button>
                   </CardContent>
                 </Card>
               ))}
             </div>
           </TabsContent>
 
-          <TabsContent value="team" className="space-y-6">
+          <TabsContent value="team" className="space-y-3">
             <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between"><CardTitle>Team Members</CardTitle><Button><Plus className="h-4 w-4 mr-2" />Invite Member</Button></div>
+              <CardHeader className="py-2 px-3">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-sm font-medium">Team Members</CardTitle>
+                  <Button size="sm" className="h-7 text-xs"><Plus className="h-3 w-3 mr-1" />Invite Member</Button>
+                </div>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
+              <CardContent className="px-3 pb-3 pt-0">
+                <div className="space-y-2">
                   {[{ name: 'John Doe', email: 'john@acme.com', role: 'Admin' }, { name: 'Jane Smith', email: 'jane@acme.com', role: 'Member' }].map((m, i) => (
-                    <div key={i} className="flex items-center justify-between p-4 rounded-lg bg-secondary/50">
-                      <div className="flex items-center gap-4">
-                        <div className="h-10 w-10 rounded-full bg-primary flex items-center justify-center"><span className="text-primary-foreground text-sm font-medium">{m.name.split(' ').map(n => n[0]).join('')}</span></div>
-                        <div><h4 className="font-medium">{m.name}</h4><p className="text-sm text-muted-foreground">{m.email}</p></div>
+                    <div key={i} className="flex items-center justify-between p-2 rounded-md bg-secondary/50">
+                      <div className="flex items-center gap-2">
+                        <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center">
+                          <span className="text-primary-foreground text-xs font-medium">{m.name.split(' ').map(n => n[0]).join('')}</span>
+                        </div>
+                        <div>
+                          <h4 className="text-xs font-medium">{m.name}</h4>
+                          <p className="text-[10px] text-muted-foreground">{m.email}</p>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-4"><Badge variant={m.role === 'Admin' ? 'default' : 'secondary'}>{m.role}</Badge><Button variant="ghost" size="icon"><Trash2 className="h-4 w-4" /></Button></div>
+                      <div className="flex items-center gap-2">
+                        <Badge variant={m.role === 'Admin' ? 'default' : 'secondary'} className="text-[10px]">{m.role}</Badge>
+                        <Button variant="ghost" size="icon" className="h-7 w-7"><Trash2 className="h-3.5 w-3.5" /></Button>
+                      </div>
                     </div>
                   ))}
                 </div>

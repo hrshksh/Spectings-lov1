@@ -28,14 +28,14 @@ const alertColumns: Column<Alert>[] = [
     searchable: true,
     render: (alert) => (
       <div>
-        <div className="font-medium">{alert.title}</div>
-        <div className="text-sm text-muted-foreground truncate max-w-[200px]">{alert.message}</div>
+        <div className="font-medium text-sm">{alert.title}</div>
+        <div className="text-xs text-muted-foreground truncate max-w-[200px]">{alert.message}</div>
       </div>
     ),
     mobileRender: (alert) => (
       <div className="text-right">
-        <div className="font-medium">{alert.title}</div>
-        <div className="text-sm text-muted-foreground">{alert.message}</div>
+        <div className="font-medium text-sm">{alert.title}</div>
+        <div className="text-xs text-muted-foreground">{alert.message}</div>
       </div>
     ),
   },
@@ -53,7 +53,7 @@ const alertColumns: Column<Alert>[] = [
       <Badge variant={
         alert.severity === 'critical' ? 'destructive' :
         alert.severity === 'warning' ? 'warning' : 'secondary'
-      }>
+      } className="text-xs">
         {alert.severity}
       </Badge>
     ),
@@ -65,9 +65,9 @@ const alertColumns: Column<Alert>[] = [
     mobileHidden: true,
     render: (alert) => (
       alert.read ? (
-        <span className="text-muted-foreground text-sm">Read</span>
+        <span className="text-muted-foreground text-xs">Read</span>
       ) : (
-        <Badge variant="default">New</Badge>
+        <Badge variant="default" className="text-xs">New</Badge>
       )
     ),
   },
@@ -81,14 +81,14 @@ const trendColumns: Column<TrendSignal>[] = [
     searchable: true,
     render: (trend) => (
       <div>
-        <div className="font-medium">{trend.topic}</div>
-        <div className="text-sm text-muted-foreground">{trend.timeframe}</div>
+        <div className="font-medium text-sm">{trend.topic}</div>
+        <div className="text-xs text-muted-foreground">{trend.timeframe}</div>
       </div>
     ),
     mobileRender: (trend) => (
       <div className="text-right">
-        <div className="font-medium">{trend.topic}</div>
-        <div className="text-sm text-muted-foreground">{trend.timeframe}</div>
+        <div className="font-medium text-sm">{trend.topic}</div>
+        <div className="text-xs text-muted-foreground">{trend.timeframe}</div>
       </div>
     ),
   },
@@ -97,18 +97,18 @@ const trendColumns: Column<TrendSignal>[] = [
     header: 'Score',
     sortable: true,
     render: (trend) => (
-      <div className="flex items-center gap-2">
-        <div className="w-16 h-2 bg-muted rounded-full overflow-hidden">
+      <div className="flex items-center gap-1.5">
+        <div className="w-12 h-1.5 bg-muted rounded-full overflow-hidden">
           <div
             className="h-full bg-foreground rounded-full"
             style={{ width: `${trend.score}%` }}
           />
         </div>
-        <span className="text-sm font-medium">{trend.score}%</span>
+        <span className="text-xs font-medium">{trend.score}%</span>
       </div>
     ),
     mobileRender: (trend) => (
-      <span className="text-sm font-medium">{trend.score}%</span>
+      <span className="text-xs font-medium">{trend.score}%</span>
     ),
   },
   {
@@ -116,10 +116,10 @@ const trendColumns: Column<TrendSignal>[] = [
     header: 'Change',
     sortable: true,
     render: (trend) => (
-      <div className={`flex items-center gap-1 ${
+      <div className={`flex items-center gap-0.5 text-xs ${
         trend.change > 0 ? 'text-success' : trend.change < 0 ? 'text-destructive' : 'text-muted-foreground'
       }`}>
-        {trend.change > 0 ? <ArrowUpRight className="h-4 w-4" /> : trend.change < 0 ? <ArrowDownRight className="h-4 w-4" /> : null}
+        {trend.change > 0 ? <ArrowUpRight className="h-3 w-3" /> : trend.change < 0 ? <ArrowDownRight className="h-3 w-3" /> : null}
         <span className="font-medium">{Math.abs(trend.change)}%</span>
       </div>
     ),
@@ -133,10 +133,10 @@ const eventColumns: Column<CompanyEvent>[] = [
     sortable: true,
     searchable: true,
     render: (event) => (
-      <div className="font-medium max-w-[300px]">{event.summary}</div>
+      <div className="font-medium text-sm max-w-[300px]">{event.summary}</div>
     ),
     mobileRender: (event) => (
-      <div className="font-medium text-right">{event.summary}</div>
+      <div className="font-medium text-sm text-right">{event.summary}</div>
     ),
   },
   {
@@ -151,7 +151,7 @@ const eventColumns: Column<CompanyEvent>[] = [
       { label: 'Funding', value: 'funding' },
     ],
     render: (event) => (
-      <Badge variant="outline" className="capitalize">
+      <Badge variant="outline" className="capitalize text-xs">
         {event.eventType.replace('_', ' ')}
       </Badge>
     ),
@@ -162,8 +162,8 @@ const eventColumns: Column<CompanyEvent>[] = [
     sortable: true,
     mobileHidden: true,
     render: (event) => (
-      <div className="flex items-center gap-2">
-        <div className={`w-2 h-2 rounded-full ${
+      <div className="flex items-center gap-1.5 text-xs">
+        <div className={`w-1.5 h-1.5 rounded-full ${
           event.confidence >= 90 ? 'bg-success' :
           event.confidence >= 70 ? 'bg-warning' : 'bg-destructive'
         }`} />
@@ -177,7 +177,7 @@ const eventColumns: Column<CompanyEvent>[] = [
     sortable: true,
     mobileHidden: true,
     render: (event) => (
-      <span className="text-muted-foreground">{event.publishedAt}</span>
+      <span className="text-muted-foreground text-xs">{event.publishedAt}</span>
     ),
   },
   {
@@ -185,8 +185,8 @@ const eventColumns: Column<CompanyEvent>[] = [
     header: '',
     hidden: false,
     render: () => (
-      <Button variant="ghost" size="sm">
-        <ExternalLink className="h-4 w-4" />
+      <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
+        <ExternalLink className="h-3.5 w-3.5" />
       </Button>
     ),
   },
@@ -195,9 +195,9 @@ const eventColumns: Column<CompanyEvent>[] = [
 export default function Dashboard() {
   return (
     <DashboardLayout title="Weekly Intelligence Summary" subtitle="December 19-25, 2025">
-      <div className="space-y-6 animate-fade-in">
+      <div className="space-y-3 animate-fade-in">
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2">
           <StatCard
             title="New Leads"
             value={weeklyStats.newLeads}
@@ -230,12 +230,12 @@ export default function Dashboard() {
 
         {/* Sentiment Chart */}
         <Card>
-          <CardHeader>
-            <CardTitle>Weekly Sentiment Trend</CardTitle>
-            <CardDescription>Positive vs Negative sentiment across all tracked topics</CardDescription>
+          <CardHeader className="py-2 px-3">
+            <CardTitle className="text-sm font-medium">Weekly Sentiment Trend</CardTitle>
+            <CardDescription className="text-xs">Positive vs Negative sentiment across all tracked topics</CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="h-64">
+          <CardContent className="p-2">
+            <div className="h-48">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={chartData.sentimentTrend}>
                   <defs>
@@ -249,13 +249,14 @@ export default function Dashboard() {
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(0, 0%, 90%)" />
-                  <XAxis dataKey="date" stroke="hsl(0, 0%, 45%)" fontSize={12} />
-                  <YAxis stroke="hsl(0, 0%, 45%)" fontSize={12} />
+                  <XAxis dataKey="date" stroke="hsl(0, 0%, 45%)" fontSize={10} />
+                  <YAxis stroke="hsl(0, 0%, 45%)" fontSize={10} />
                   <Tooltip
                     contentStyle={{
                       backgroundColor: 'hsl(0, 0%, 100%)',
                       border: '1px solid hsl(0, 0%, 90%)',
-                      borderRadius: '6px',
+                      borderRadius: '4px',
+                      fontSize: '11px',
                     }}
                   />
                   <Area
@@ -279,19 +280,19 @@ export default function Dashboard() {
         </Card>
 
         {/* Tables Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
           {/* Recent Alerts Table */}
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
+            <CardHeader className="py-2 px-3 flex flex-row items-center justify-between">
               <div>
-                <CardTitle>Recent Alerts</CardTitle>
-                <CardDescription>Latest intelligence updates</CardDescription>
+                <CardTitle className="text-sm font-medium">Recent Alerts</CardTitle>
+                <CardDescription className="text-xs">Latest intelligence updates</CardDescription>
               </div>
-              <Button variant="outline" size="sm" asChild>
+              <Button variant="outline" size="sm" className="h-7 text-xs" asChild>
                 <Link to="/analytics">View all</Link>
               </Button>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-2">
               <DataTable 
                 data={mockAlerts} 
                 columns={alertColumns} 
@@ -304,16 +305,16 @@ export default function Dashboard() {
 
           {/* Trending Topics Table */}
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
+            <CardHeader className="py-2 px-3 flex flex-row items-center justify-between">
               <div>
-                <CardTitle>Trending Topics</CardTitle>
-                <CardDescription>This week's top trends</CardDescription>
+                <CardTitle className="text-sm font-medium">Trending Topics</CardTitle>
+                <CardDescription className="text-xs">This week's top trends</CardDescription>
               </div>
-              <Button variant="outline" size="sm" asChild>
+              <Button variant="outline" size="sm" className="h-7 text-xs" asChild>
                 <Link to="/analytics">View all</Link>
               </Button>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-2">
               <DataTable 
                 data={mockTrendSignals} 
                 columns={trendColumns} 
@@ -327,16 +328,16 @@ export default function Dashboard() {
 
         {/* Competitor Events Table */}
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
+          <CardHeader className="py-2 px-3 flex flex-row items-center justify-between">
             <div>
-              <CardTitle>Competitor Updates</CardTitle>
-              <CardDescription>Latest company events</CardDescription>
+              <CardTitle className="text-sm font-medium">Competitor Updates</CardTitle>
+              <CardDescription className="text-xs">Latest company events</CardDescription>
             </div>
-            <Button variant="outline" size="sm" asChild>
+            <Button variant="outline" size="sm" className="h-7 text-xs" asChild>
               <Link to="/companies">View all</Link>
             </Button>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-2">
             <DataTable 
               data={mockCompanyEvents} 
               columns={eventColumns} 
@@ -349,28 +350,28 @@ export default function Dashboard() {
 
         {/* Quick Actions */}
         <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between flex-wrap gap-4">
+          <CardContent className="p-3">
+            <div className="flex items-center justify-between flex-wrap gap-2">
               <div>
-                <h3 className="text-lg font-semibold">Quick Actions</h3>
-                <p className="text-sm text-muted-foreground">Jump to common tasks</p>
+                <h3 className="text-sm font-semibold">Quick Actions</h3>
+                <p className="text-xs text-muted-foreground">Jump to common tasks</p>
               </div>
-              <div className="flex gap-3 flex-wrap">
-                <Button asChild>
+              <div className="flex gap-2 flex-wrap">
+                <Button size="sm" className="h-8" asChild>
                   <Link to="/people">
-                    <Users className="h-4 w-4 mr-2" />
+                    <Users className="h-3.5 w-3.5 mr-1.5" />
                     Browse Leads
                   </Link>
                 </Button>
-                <Button variant="outline" asChild>
+                <Button variant="outline" size="sm" className="h-8" asChild>
                   <Link to="/companies">
-                    <Building2 className="h-4 w-4 mr-2" />
+                    <Building2 className="h-3.5 w-3.5 mr-1.5" />
                     Track Competitors
                   </Link>
                 </Button>
-                <Button variant="outline" asChild>
+                <Button variant="outline" size="sm" className="h-8" asChild>
                   <Link to="/reports">
-                    <FileText className="h-4 w-4 mr-2" />
+                    <FileText className="h-3.5 w-3.5 mr-1.5" />
                     Download Report
                   </Link>
                 </Button>
@@ -401,21 +402,21 @@ function StatCard({ title, value, change, icon: Icon, color }: StatCardProps) {
 
   return (
     <Card>
-      <CardContent className="p-6">
+      <CardContent className="p-3">
         <div className="flex items-start justify-between">
-          <div className={`h-10 w-10 rounded-lg ${colorClasses[color]} flex items-center justify-center`}>
-            <Icon className="h-5 w-5" />
+          <div className={`h-8 w-8 rounded-md ${colorClasses[color]} flex items-center justify-center`}>
+            <Icon className="h-4 w-4" />
           </div>
           {change !== 0 && (
-            <div className={`flex items-center gap-1 text-sm ${change > 0 ? 'text-success' : 'text-destructive'}`}>
-              {change > 0 ? <ArrowUpRight className="h-4 w-4" /> : <ArrowDownRight className="h-4 w-4" />}
+            <div className={`flex items-center gap-0.5 text-xs ${change > 0 ? 'text-success' : 'text-destructive'}`}>
+              {change > 0 ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
               {Math.abs(change)}%
             </div>
           )}
         </div>
-        <div className="mt-4">
-          <p className="text-2xl font-semibold">{value}</p>
-          <p className="text-sm text-muted-foreground mt-1">{title}</p>
+        <div className="mt-2">
+          <p className="text-xl font-semibold">{value}</p>
+          <p className="text-xs text-muted-foreground">{title}</p>
         </div>
       </CardContent>
     </Card>
