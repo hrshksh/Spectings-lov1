@@ -26,7 +26,6 @@ const userNavItems = [
   { icon: Users, label: 'People', path: '/people' },
   { icon: Building2, label: 'Companies', path: '/companies' },
   { icon: TrendingUp, label: 'Analytics', path: '/analytics' },
-  { icon: BookOpen, label: 'Case Studies', path: '/case-studies' },
   { icon: FileText, label: 'Reports', path: '/reports' },
   { icon: Settings, label: 'Settings', path: '/settings' },
 ];
@@ -110,6 +109,21 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
 
         {/* Bottom section */}
         <div className="border-t border-sidebar-border p-3 space-y-1">
+          {!isAdmin && (
+            <Link
+              to="/case-studies"
+              className={cn(
+                'flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors',
+                location.pathname === '/case-studies'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'text-sidebar-foreground hover:bg-sidebar-accent',
+                collapsed && 'justify-center px-2'
+              )}
+            >
+              <BookOpen className="h-5 w-5" />
+              {!collapsed && <span>Case Studies</span>}
+            </Link>
+          )}
           {!isAdmin && (
             <Link
               to="/admin"
