@@ -23,32 +23,32 @@ export default function PeopleIntelligence() {
 
   return (
     <DashboardLayout title="People Intelligence" subtitle="Verified leads and contact database">
-      <div className="space-y-6 animate-fade-in">
+      <div className="space-y-3 animate-fade-in">
         <Card>
-          <CardContent className="p-4">
-            <div className="flex flex-wrap items-center gap-4">
+          <CardContent className="p-3">
+            <div className="flex flex-wrap items-center gap-2">
               <div className="relative flex-1 min-w-64">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input placeholder="Search by name, company, or role..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-10" />
+                <Input placeholder="Search by name, company, or role..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-10 h-9" />
               </div>
               <Select defaultValue="all">
-                <SelectTrigger className="w-40"><SelectValue placeholder="Industry" /></SelectTrigger>
+                <SelectTrigger className="w-40 h-9"><SelectValue placeholder="Industry" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Industries</SelectItem>
                   <SelectItem value="saas">SaaS</SelectItem>
                   <SelectItem value="fintech">FinTech</SelectItem>
                 </SelectContent>
               </Select>
-              <Button variant="outline"><Filter className="h-4 w-4 mr-2" />More Filters</Button>
-              <Button><Download className="h-4 w-4 mr-2" />Export CSV</Button>
+              <Button variant="outline" size="sm"><Filter className="h-4 w-4 mr-2" />More Filters</Button>
+              <Button size="sm"><Download className="h-4 w-4 mr-2" />Export CSV</Button>
             </div>
           </CardContent>
         </Card>
 
-        <div className={`grid grid-cols-1 gap-6 transition-all duration-300 ${selectedPerson ? 'lg:grid-cols-3' : 'lg:grid-cols-1'}`}>
+        <div className={`grid grid-cols-1 gap-3 transition-all duration-300 ${selectedPerson ? 'lg:grid-cols-3' : 'lg:grid-cols-1'}`}>
           <div className={`transition-all duration-300 ${selectedPerson ? 'lg:col-span-2' : 'lg:col-span-1'}`}>
             <Card>
-              <CardHeader><CardTitle>Verified Leads ({filteredPeople.length})</CardTitle></CardHeader>
+              <CardHeader className="py-3 px-4"><CardTitle className="text-base">Verified Leads ({filteredPeople.length})</CardTitle></CardHeader>
               <CardContent className="p-0">
                 <Table>
                   <TableHeader>
@@ -97,39 +97,39 @@ export default function PeopleIntelligence() {
 
           {selectedPerson && (
             <div className="animate-fade-in">
-              <Card className="sticky top-24 ring-2 ring-primary">
-                <CardHeader>
+              <Card className="sticky top-20 ring-1 ring-primary">
+                <CardHeader className="py-3 px-4">
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <div className="h-14 w-14 rounded-xl bg-primary flex items-center justify-center">
-                        <span className="text-primary-foreground text-xl font-bold">{selectedPerson.name.split(' ').map(n => n[0]).join('')}</span>
+                    <div className="flex items-center gap-3">
+                      <div className="h-11 w-11 rounded-lg bg-primary flex items-center justify-center">
+                        <span className="text-primary-foreground text-lg font-bold">{selectedPerson.name.split(' ').map(n => n[0]).join('')}</span>
                       </div>
                       <div>
-                        <CardTitle>{selectedPerson.name}</CardTitle>
-                        <p className="text-sm text-muted-foreground">{selectedPerson.role}</p>
-                        <p className="text-sm text-primary">{selectedPerson.company}</p>
+                        <CardTitle className="text-base">{selectedPerson.name}</CardTitle>
+                        <p className="text-xs text-muted-foreground">{selectedPerson.role}</p>
+                        <p className="text-xs text-primary">{selectedPerson.company}</p>
                       </div>
                     </div>
-                    <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); setSelectedPerson(null); }}>
+                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => { e.stopPropagation(); setSelectedPerson(null); }}>
                       <ExternalLink className="h-4 w-4 rotate-45" />
                     </Button>
                   </div>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <a href={`mailto:${selectedPerson.email}`} className="flex items-center gap-3 p-2 rounded-lg hover:bg-secondary">
-                      <Mail className="h-4 w-4 text-primary" /><span className="text-sm">{selectedPerson.email}</span>
+                <CardContent className="space-y-3 pt-0 px-4 pb-4">
+                  <div className="space-y-1">
+                    <a href={`mailto:${selectedPerson.email}`} className="flex items-center gap-2 p-1.5 rounded-md hover:bg-secondary text-sm">
+                      <Mail className="h-4 w-4 text-primary" />{selectedPerson.email}
                     </a>
                     {selectedPerson.phone && (
-                      <a href={`tel:${selectedPerson.phone}`} className="flex items-center gap-3 p-2 rounded-lg hover:bg-secondary">
-                        <Phone className="h-4 w-4 text-primary" /><span className="text-sm">{selectedPerson.phone}</span>
+                      <a href={`tel:${selectedPerson.phone}`} className="flex items-center gap-2 p-1.5 rounded-md hover:bg-secondary text-sm">
+                        <Phone className="h-4 w-4 text-primary" />{selectedPerson.phone}
                       </a>
                     )}
                   </div>
-                  <div className="flex flex-wrap gap-2">
-                    {selectedPerson.tags.map((tag) => (<Badge key={tag} variant="secondary">{tag}</Badge>))}
+                  <div className="flex flex-wrap gap-1.5">
+                    {selectedPerson.tags.map((tag) => (<Badge key={tag} variant="secondary" className="text-xs">{tag}</Badge>))}
                   </div>
-                  <div className="flex gap-2 pt-4 border-t">
+                  <div className="flex gap-2 pt-3 border-t">
                     <Button className="flex-1"><Mail className="h-4 w-4 mr-2" />Contact</Button>
                     <Button variant="outline" className="flex-1"><Download className="h-4 w-4 mr-2" />Export</Button>
                   </div>
