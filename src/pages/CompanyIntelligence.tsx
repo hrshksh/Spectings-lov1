@@ -225,42 +225,45 @@ export default function CompanyIntelligence() {
                       </div>
                       
                       {events.length > 0 ? (
-                        <div className="relative pl-4">
+                        <div className="relative ml-2">
                           {/* Timeline line */}
-                          <div className="absolute left-[7px] top-2 bottom-2 w-0.5 bg-border" />
+                          <div className="absolute left-[5px] top-1 bottom-1 w-0.5 bg-border" />
                           
-                          <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+                          <div className="space-y-3">
                             {events.map((event) => (
-                              <div key={event.id} className="relative pl-5">
+                              <div key={event.id} className="relative pl-6 flex items-start gap-3">
                                 {/* Timeline dot */}
                                 <div className={cn(
-                                  "absolute left-0 top-3 h-3 w-3 rounded-full",
+                                  "absolute left-0 top-1.5 h-3 w-3 rounded-full ring-2 ring-background",
                                   getEventColor(event.eventType)
                                 )} />
                                 
-                                <div className="bg-muted/50 rounded-lg p-3">
-                                  <div className="flex items-start justify-between gap-2 mb-1.5">
-                                    <span className={cn(
-                                      "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium",
-                                      getEventBadgeVariant(event.eventType)
-                                    )}>
-                                      {getEventIcon(event.eventType)}
-                                      {formatEventType(event.eventType)}
-                                    </span>
-                                    <span className="text-[10px] text-muted-foreground whitespace-nowrap">
-                                      {new Date(event.publishedAt).toLocaleDateString('en-US', { 
-                                        month: 'short', 
-                                        day: 'numeric'
-                                      })}
-                                    </span>
-                                  </div>
-                                  <p className="text-xs text-foreground leading-relaxed line-clamp-2">
-                                    {event.summary}
-                                  </p>
-                                  <Badge variant="outline" className="text-[9px] px-1 py-0 mt-2">
-                                    {Math.round(event.confidence * 100)}% confidence
-                                  </Badge>
-                                </div>
+                                {/* Date */}
+                                <span className="text-[10px] text-muted-foreground whitespace-nowrap min-w-[60px]">
+                                  {new Date(event.publishedAt).toLocaleDateString('en-US', { 
+                                    month: 'short', 
+                                    day: 'numeric'
+                                  })}
+                                </span>
+                                
+                                {/* Event badge */}
+                                <span className={cn(
+                                  "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium whitespace-nowrap",
+                                  getEventBadgeVariant(event.eventType)
+                                )}>
+                                  {getEventIcon(event.eventType)}
+                                  {formatEventType(event.eventType)}
+                                </span>
+                                
+                                {/* Summary */}
+                                <p className="text-xs text-foreground leading-relaxed flex-1">
+                                  {event.summary}
+                                </p>
+                                
+                                {/* Confidence */}
+                                <Badge variant="outline" className="text-[9px] px-1.5 py-0 whitespace-nowrap">
+                                  {Math.round(event.confidence * 100)}%
+                                </Badge>
                               </div>
                             ))}
                           </div>
