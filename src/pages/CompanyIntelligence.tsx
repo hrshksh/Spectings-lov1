@@ -102,8 +102,8 @@ export default function CompanyIntelligence() {
           </CardContent>
         </Card>
 
-        {/* Competitors Grid */}
-        <div className="flex gap-3 overflow-x-auto pb-2">
+        {/* Competitors List - Row wise */}
+        <div className="space-y-2">
           {filteredCompanies.map((company) => {
             const events = getCompanyEvents(company.id);
             const isSelected = selectedCompetitor === company.id;
@@ -112,166 +112,163 @@ export default function CompanyIntelligence() {
               <Card 
                 key={company.id}
                 className={cn(
-                  "flex-shrink-0 cursor-pointer transition-all duration-300 ease-in-out",
+                  "cursor-pointer transition-all duration-300 ease-in-out",
                   isSelected 
-                    ? "w-[400px] ring-2 ring-primary shadow-lg" 
-                    : "w-[200px] hover:shadow-md hover:border-primary/50"
+                    ? "ring-2 ring-primary shadow-lg" 
+                    : "hover:shadow-md hover:border-primary/50"
                 )}
                 onClick={() => setSelectedCompetitor(isSelected ? null : company.id)}
               >
-                <CardHeader className="p-3 pb-2">
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-2">
+                <CardContent className="p-3">
+                  {/* Row Header */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3 flex-1">
                       <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
                         <Building2 className="h-5 w-5 text-primary" />
                       </div>
-                      <div className="min-w-0">
-                        <CardTitle className="text-sm font-semibold truncate">{company.name}</CardTitle>
-                        <a 
-                          href={`https://${company.domain}`} 
-                          target="_blank" 
-                          rel="noopener noreferrer" 
-                          className="text-xs text-muted-foreground hover:text-primary flex items-center gap-0.5"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          {company.domain}
-                          <ExternalLink className="h-2.5 w-2.5" />
-                        </a>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <h3 className="text-sm font-semibold truncate">{company.name}</h3>
+                          <a 
+                            href={`https://${company.domain}`} 
+                            target="_blank" 
+                            rel="noopener noreferrer" 
+                            className="text-xs text-muted-foreground hover:text-primary flex items-center gap-0.5"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            {company.domain}
+                            <ExternalLink className="h-2.5 w-2.5" />
+                          </a>
+                        </div>
+                        <div className="flex items-center gap-2 mt-1">
+                          <Badge variant="secondary" className="text-[10px] px-1.5 py-0">{company.industry}</Badge>
+                          <Badge variant="outline" className="text-[10px] px-1.5 py-0">{company.size}</Badge>
+                          <span className="text-[10px] text-muted-foreground flex items-center gap-1">
+                            <Activity className="h-3 w-3" />
+                            {events.length} activities
+                          </span>
+                        </div>
                       </div>
                     </div>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                        <Button variant="ghost" size="icon" className="h-7 w-7 -mr-1 -mt-1">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-44">
-                        <DropdownMenuItem className="text-xs">
-                          <Eye className="h-3 w-3 mr-2" />View Details
-                        </DropdownMenuItem>
-                        <DropdownMenuItem className="text-xs">
-                          <Globe className="h-3 w-3 mr-2" />Visit Website
-                        </DropdownMenuItem>
-                        <DropdownMenuItem className="text-xs">
-                          <FileText className="h-3 w-3 mr-2" />Generate Report
-                        </DropdownMenuItem>
-                        <DropdownMenuItem className="text-xs">
-                          <Bell className="h-3 w-3 mr-2" />Set Alerts
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem className="text-xs text-destructive">
-                          <Trash2 className="h-3 w-3 mr-2" />Remove
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-                </CardHeader>
-                
-                <CardContent className="p-3 pt-0">
-                  {/* Quick Stats */}
-                  <div className="flex items-center gap-2 mb-2">
-                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0">{company.industry}</Badge>
-                    <Badge variant="outline" className="text-[10px] px-1.5 py-0">{company.size}</Badge>
-                  </div>
-                  
-                  {/* Event Count */}
-                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-2">
-                    <Activity className="h-3 w-3" />
-                    <span>{events.length} activities tracked</span>
+                    
+                    {/* Latest Events Preview (when collapsed) */}
+                    {!isSelected && events.length > 0 && (
+                      <div className="hidden md:flex items-center gap-2 mr-4">
+                        {events.slice(0, 3).map((event) => (
+                          <span 
+                            key={event.id}
+                            className={cn(
+                              "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium",
+                              getEventBadgeVariant(event.eventType)
+                            )}
+                          >
+                            {getEventIcon(event.eventType)}
+                            {formatEventType(event.eventType)}
+                          </span>
+                        ))}
+                        {events.length > 3 && (
+                          <span className="text-[10px] text-muted-foreground">+{events.length - 3}</span>
+                        )}
+                      </div>
+                    )}
+                    
+                    <div className="flex items-center gap-1">
+                      <ChevronDown className={cn(
+                        "h-4 w-4 text-muted-foreground transition-transform",
+                        isSelected && "rotate-180"
+                      )} />
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                          <Button variant="ghost" size="icon" className="h-7 w-7">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-44">
+                          <DropdownMenuItem className="text-xs">
+                            <Eye className="h-3 w-3 mr-2" />View Details
+                          </DropdownMenuItem>
+                          <DropdownMenuItem className="text-xs">
+                            <Globe className="h-3 w-3 mr-2" />Visit Website
+                          </DropdownMenuItem>
+                          <DropdownMenuItem className="text-xs">
+                            <FileText className="h-3 w-3 mr-2" />Generate Report
+                          </DropdownMenuItem>
+                          <DropdownMenuItem className="text-xs">
+                            <Bell className="h-3 w-3 mr-2" />Set Alerts
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem className="text-xs text-destructive">
+                            <Trash2 className="h-3 w-3 mr-2" />Remove
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
                   </div>
 
                   {/* Expanded Timeline View */}
                   {isSelected && (
-                    <div className="mt-3 pt-3 border-t" onClick={(e) => e.stopPropagation()}>
-                      <div className="flex items-center justify-between mb-3">
+                    <div className="mt-4 pt-4 border-t" onClick={(e) => e.stopPropagation()}>
+                      <div className="flex items-center justify-between mb-4">
                         <h4 className="text-sm font-medium flex items-center gap-1.5">
                           <Calendar className="h-4 w-4 text-primary" />
                           Activity Timeline
                         </h4>
                         <Button 
                           variant="ghost" 
-                          size="icon" 
-                          className="h-6 w-6"
+                          size="sm" 
+                          className="h-7 text-xs"
                           onClick={() => setSelectedCompetitor(null)}
                         >
-                          <X className="h-4 w-4" />
+                          <X className="h-3 w-3 mr-1" />
+                          Collapse
                         </Button>
                       </div>
                       
-                      <ScrollArea className="h-[300px] pr-3">
-                        {events.length > 0 ? (
-                          <div className="relative">
-                            {/* Timeline line */}
-                            <div className="absolute left-[7px] top-2 bottom-2 w-0.5 bg-border" />
-                            
-                            <div className="space-y-4">
-                              {events.map((event, index) => (
-                                <div key={event.id} className="relative pl-6">
-                                  {/* Timeline dot */}
-                                  <div className={cn(
-                                    "absolute left-0 top-1 h-4 w-4 rounded-full flex items-center justify-center text-white",
-                                    getEventColor(event.eventType)
-                                  )}>
-                                    <div className="h-2 w-2 rounded-full bg-white" />
+                      {events.length > 0 ? (
+                        <div className="relative pl-4">
+                          {/* Timeline line */}
+                          <div className="absolute left-[7px] top-2 bottom-2 w-0.5 bg-border" />
+                          
+                          <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+                            {events.map((event) => (
+                              <div key={event.id} className="relative pl-5">
+                                {/* Timeline dot */}
+                                <div className={cn(
+                                  "absolute left-0 top-3 h-3 w-3 rounded-full",
+                                  getEventColor(event.eventType)
+                                )} />
+                                
+                                <div className="bg-muted/50 rounded-lg p-3">
+                                  <div className="flex items-start justify-between gap-2 mb-1.5">
+                                    <span className={cn(
+                                      "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium",
+                                      getEventBadgeVariant(event.eventType)
+                                    )}>
+                                      {getEventIcon(event.eventType)}
+                                      {formatEventType(event.eventType)}
+                                    </span>
+                                    <span className="text-[10px] text-muted-foreground whitespace-nowrap">
+                                      {new Date(event.publishedAt).toLocaleDateString('en-US', { 
+                                        month: 'short', 
+                                        day: 'numeric'
+                                      })}
+                                    </span>
                                   </div>
-                                  
-                                  <div className="bg-muted/50 rounded-lg p-3">
-                                    <div className="flex items-start justify-between gap-2 mb-1.5">
-                                      <span className={cn(
-                                        "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium",
-                                        getEventBadgeVariant(event.eventType)
-                                      )}>
-                                        {getEventIcon(event.eventType)}
-                                        {formatEventType(event.eventType)}
-                                      </span>
-                                      <span className="text-[10px] text-muted-foreground whitespace-nowrap">
-                                        {new Date(event.publishedAt).toLocaleDateString('en-US', { 
-                                          month: 'short', 
-                                          day: 'numeric',
-                                          year: 'numeric'
-                                        })}
-                                      </span>
-                                    </div>
-                                    <p className="text-xs text-foreground leading-relaxed">
-                                      {event.summary}
-                                    </p>
-                                    <div className="flex items-center gap-2 mt-2">
-                                      <Badge variant="outline" className="text-[9px] px-1 py-0">
-                                        {Math.round(event.confidence * 100)}% confidence
-                                      </Badge>
-                                    </div>
-                                  </div>
+                                  <p className="text-xs text-foreground leading-relaxed line-clamp-2">
+                                    {event.summary}
+                                  </p>
+                                  <Badge variant="outline" className="text-[9px] px-1 py-0 mt-2">
+                                    {Math.round(event.confidence * 100)}% confidence
+                                  </Badge>
                                 </div>
-                              ))}
-                            </div>
+                              </div>
+                            ))}
                           </div>
-                        ) : (
-                          <div className="text-center py-8 text-sm text-muted-foreground">
-                            No activities tracked yet
-                          </div>
-                        )}
-                      </ScrollArea>
-                    </div>
-                  )}
-                  
-                  {/* Collapsed: Show latest events preview */}
-                  {!isSelected && events.length > 0 && (
-                    <div className="space-y-1.5 mt-2">
-                      {events.slice(0, 2).map((event) => (
-                        <div key={event.id} className="flex items-center gap-1.5">
-                          <span className={cn(
-                            "h-2 w-2 rounded-full flex-shrink-0",
-                            getEventColor(event.eventType)
-                          )} />
-                          <span className="text-[10px] text-muted-foreground truncate">
-                            {formatEventType(event.eventType)}
-                          </span>
                         </div>
-                      ))}
-                      {events.length > 2 && (
-                        <span className="text-[10px] text-muted-foreground">
-                          +{events.length - 2} more
-                        </span>
+                      ) : (
+                        <div className="text-center py-6 text-sm text-muted-foreground">
+                          No activities tracked yet
+                        </div>
                       )}
                     </div>
                   )}
@@ -281,7 +278,7 @@ export default function CompanyIntelligence() {
           })}
           
           {filteredCompanies.length === 0 && (
-            <div className="flex-1 text-center py-12 text-sm text-muted-foreground">
+            <div className="text-center py-12 text-sm text-muted-foreground">
               No competitors found matching your search
             </div>
           )}
