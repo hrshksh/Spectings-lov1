@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Search, Download, Mail, Phone, ExternalLink, ChevronRight, Loader2, CheckCircle } from 'lucide-react';
+import { Search, Download, Mail, Phone, ExternalLink, ChevronRight, Loader2, Users } from 'lucide-react';
 import { useRealtimeTable } from '@/hooks/useRealtimeData';
 import type { Tables } from '@/integrations/supabase/types';
 import { supabase } from '@/integrations/supabase/client';
@@ -14,22 +14,18 @@ import { useQuery } from '@tanstack/react-query';
 
 type Person = Tables<'people'>;
 
-// Fetch verified leads with person data
-function useVerifiedLeads() {
+// Fetch verified lead person IDs
+function useVerifiedLeadIds() {
   return useQuery({
-    queryKey: ['verified-leads-with-people'],
+    queryKey: ['verified-lead-ids'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('leads')
-        .select(`
-          *,
-          person:people(*)
-        `)
-        .eq('status', 'verified')
-        .order('verified_at', { ascending: false });
+        .select('person_id')
+        .eq('status', 'verified');
       
       if (error) throw error;
-      return data;
+      return new Set(data?.map(l => l.person_id) || []);
     },
   });
 }
@@ -39,19 +35,14 @@ export default function PeopleIntelligence() {
   const [selectedPerson, setSelectedPerson] = useState<Person | null>(null);
   const [confidenceFilter, setConfidenceFilter] = useState<string>('all');
   
-  const { data: leadsData, isLoading } = useVerifiedLeads();
+  const { data: people, loading: peopleLoading } = useRealtimeTable<Person>('people');
+  const { data: verifiedIds, isLoading: verifiedLoading } = useVerifiedLeadIds();
 
-  // Extract verified people from leads
-  const verifiedPeople = useMemo(() => {
-    if (!leadsData) return [];
-    return leadsData
-      .filter(lead => lead.person)
-      .map(lead => lead.person as Person);
-  }, [leadsData]);
+  const isLoading = peopleLoading || verifiedLoading;
 
-  // Filter verified people based on search and confidence
+  // Filter people based on search and confidence
   const filteredPeople = useMemo(() => {
-    return verifiedPeople.filter((person) => {
+    return people.filter((person) => {
       // Search filter
       const matchesSearch = 
         person.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -72,20 +63,22 @@ export default function PeopleIntelligence() {
 
       return matchesSearch && matchesConfidence;
     });
-  }, [verifiedPeople, searchQuery, confidenceFilter]);
+  }, [people, searchQuery, confidenceFilter]);
+
+  const isVerified = (personId: string) => verifiedIds?.has(personId) ?? false;
 
   return (
-    <DashboardLayout title="Verified Leads" subtitle="Search and manage verified contacts">
+    <DashboardLayout title="People Database" subtitle="Search and manage contacts">
       <div className="space-y-2 animate-fade-in">
         {/* Stats Card */}
         <Card>
           <CardContent className="p-3 flex items-center gap-3">
-            <div className="h-10 w-10 rounded-lg flex items-center justify-center bg-success/10 text-success">
-              <CheckCircle className="h-5 w-5" />
+            <div className="h-10 w-10 rounded-lg flex items-center justify-center bg-primary/10 text-primary">
+              <Users className="h-5 w-5" />
             </div>
             <div>
-              <p className="text-xl font-bold">{verifiedPeople.length}</p>
-              <p className="text-xs text-muted-foreground">Verified Leads</p>
+              <p className="text-xl font-bold">{people.length}</p>
+              <p className="text-xs text-muted-foreground">Total Contacts</p>
             </div>
           </CardContent>
         </Card>
@@ -126,7 +119,7 @@ export default function PeopleIntelligence() {
             <Card>
               <CardHeader className="py-2 px-3">
                 <CardTitle className="text-sm font-medium">
-                  Verified Leads ({filteredPeople.length})
+                  People ({filteredPeople.length})
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-0">
@@ -141,6 +134,7 @@ export default function PeopleIntelligence() {
                         <TableHead>Name</TableHead>
                         <TableHead>Role</TableHead>
                         <TableHead>Company</TableHead>
+                        <TableHead>Status</TableHead>
                         <TableHead>Confidence</TableHead>
                         <TableHead className="text-right">Actions</TableHead>
                       </TableRow>
@@ -168,6 +162,13 @@ export default function PeopleIntelligence() {
                           <TableCell className="py-2 text-sm">{person.role || '-'}</TableCell>
                           <TableCell className="py-2 text-sm">{person.company || '-'}</TableCell>
                           <TableCell className="py-2">
+                            {isVerified(person.id) ? (
+                              <Badge variant="success" className="text-xs">Verified</Badge>
+                            ) : (
+                              <Badge variant="outline" className="text-xs">Contact</Badge>
+                            )}
+                          </TableCell>
+                          <TableCell className="py-2">
                             <div className="flex items-center gap-1.5">
                               <div className="h-1.5 w-12 bg-muted rounded-full overflow-hidden">
                                 <div 
@@ -193,8 +194,8 @@ export default function PeopleIntelligence() {
                 ) : (
                   <div className="text-center py-12 text-muted-foreground">
                     {searchQuery || confidenceFilter !== 'all' 
-                      ? 'No leads match your search' 
-                      : 'No verified leads yet'}
+                      ? 'No people match your search' 
+                      : 'No people in database yet'}
                   </div>
                 )}
               </CardContent>
@@ -213,7 +214,12 @@ export default function PeopleIntelligence() {
                         </span>
                       </div>
                       <div>
-                        <CardTitle className="text-sm">{selectedPerson.name}</CardTitle>
+                        <div className="flex items-center gap-1.5">
+                          <CardTitle className="text-sm">{selectedPerson.name}</CardTitle>
+                          {isVerified(selectedPerson.id) && (
+                            <Badge variant="success" className="text-[10px] px-1 py-0">Verified</Badge>
+                          )}
+                        </div>
                         <p className="text-xs text-muted-foreground">{selectedPerson.role || 'No role'}</p>
                         <p className="text-xs text-primary">{selectedPerson.company || 'No company'}</p>
                       </div>
