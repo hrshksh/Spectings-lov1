@@ -12,120 +12,17 @@ import {
   ArrowDownRight,
   FileText,
   ExternalLink,
+  Loader2,
 } from 'lucide-react';
-import { weeklyStats, mockAlerts, mockTrendSignals, mockCompanyEvents } from '@/data/mockData';
 import { Link } from 'react-router-dom';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { chartData } from '@/data/mockData';
-import type { Alert, TrendSignal, CompanyEvent } from '@/types';
+import { useRealtimeStats } from '@/hooks/useRealtimeData';
+import type { Tables } from '@/integrations/supabase/types';
 
-// Column definitions
-const alertColumns: Column<Alert>[] = [
-  {
-    key: 'title',
-    header: 'Alert',
-    sortable: true,
-    searchable: true,
-    render: (alert) => (
-      <div>
-        <div className="font-medium text-sm">{alert.title}</div>
-        <div className="text-xs text-muted-foreground truncate max-w-[200px]">{alert.message}</div>
-      </div>
-    ),
-    mobileRender: (alert) => (
-      <div className="text-right">
-        <div className="font-medium text-sm">{alert.title}</div>
-        <div className="text-xs text-muted-foreground">{alert.message}</div>
-      </div>
-    ),
-  },
-  {
-    key: 'severity',
-    header: 'Severity',
-    sortable: true,
-    filterable: true,
-    filterOptions: [
-      { label: 'Critical', value: 'critical' },
-      { label: 'Warning', value: 'warning' },
-      { label: 'Info', value: 'info' },
-    ],
-    render: (alert) => (
-      <Badge variant={
-        alert.severity === 'critical' ? 'destructive' :
-        alert.severity === 'warning' ? 'warning' : 'secondary'
-      } className="text-xs">
-        {alert.severity}
-      </Badge>
-    ),
-  },
-  {
-    key: 'read',
-    header: 'Status',
-    sortable: true,
-    mobileHidden: true,
-    render: (alert) => (
-      alert.read ? (
-        <span className="text-muted-foreground text-xs">Read</span>
-      ) : (
-        <Badge variant="default" className="text-xs">New</Badge>
-      )
-    ),
-  },
-];
+type CompanyEvent = Tables<'company_events'>;
 
-const trendColumns: Column<TrendSignal>[] = [
-  {
-    key: 'topic',
-    header: 'Topic',
-    sortable: true,
-    searchable: true,
-    render: (trend) => (
-      <div>
-        <div className="font-medium text-sm">{trend.topic}</div>
-        <div className="text-xs text-muted-foreground">{trend.timeframe}</div>
-      </div>
-    ),
-    mobileRender: (trend) => (
-      <div className="text-right">
-        <div className="font-medium text-sm">{trend.topic}</div>
-        <div className="text-xs text-muted-foreground">{trend.timeframe}</div>
-      </div>
-    ),
-  },
-  {
-    key: 'score',
-    header: 'Score',
-    sortable: true,
-    render: (trend) => (
-      <div className="flex items-center gap-1.5">
-        <div className="w-12 h-1.5 bg-muted rounded-full overflow-hidden">
-          <div
-            className="h-full bg-foreground rounded-full"
-            style={{ width: `${trend.score}%` }}
-          />
-        </div>
-        <span className="text-xs font-medium">{trend.score}%</span>
-      </div>
-    ),
-    mobileRender: (trend) => (
-      <span className="text-xs font-medium">{trend.score}%</span>
-    ),
-  },
-  {
-    key: 'change',
-    header: 'Change',
-    sortable: true,
-    render: (trend) => (
-      <div className={`flex items-center gap-0.5 text-xs ${
-        trend.change > 0 ? 'text-success' : trend.change < 0 ? 'text-destructive' : 'text-muted-foreground'
-      }`}>
-        {trend.change > 0 ? <ArrowUpRight className="h-3 w-3" /> : trend.change < 0 ? <ArrowDownRight className="h-3 w-3" /> : null}
-        <span className="font-medium">{Math.abs(trend.change)}%</span>
-      </div>
-    ),
-  },
-];
-
+// Column definitions for company events
 const eventColumns: Column<CompanyEvent>[] = [
   {
     key: 'summary',
@@ -133,14 +30,14 @@ const eventColumns: Column<CompanyEvent>[] = [
     sortable: true,
     searchable: true,
     render: (event) => (
-      <div className="font-medium text-sm max-w-[300px]">{event.summary}</div>
+      <div className="font-medium text-sm max-w-[300px]">{event.summary || 'No summary'}</div>
     ),
     mobileRender: (event) => (
-      <div className="font-medium text-sm text-right">{event.summary}</div>
+      <div className="font-medium text-sm text-right">{event.summary || 'No summary'}</div>
     ),
   },
   {
-    key: 'eventType',
+    key: 'event_type',
     header: 'Type',
     sortable: true,
     filterable: true,
@@ -152,7 +49,7 @@ const eventColumns: Column<CompanyEvent>[] = [
     ],
     render: (event) => (
       <Badge variant="outline" className="capitalize text-xs">
-        {event.eventType.replace('_', ' ')}
+        {event.event_type.replace('_', ' ')}
       </Badge>
     ),
   },
@@ -164,20 +61,22 @@ const eventColumns: Column<CompanyEvent>[] = [
     render: (event) => (
       <div className="flex items-center gap-1.5 text-xs">
         <div className={`w-1.5 h-1.5 rounded-full ${
-          event.confidence >= 90 ? 'bg-success' :
-          event.confidence >= 70 ? 'bg-warning' : 'bg-destructive'
+          (event.confidence || 0) >= 90 ? 'bg-success' :
+          (event.confidence || 0) >= 70 ? 'bg-warning' : 'bg-destructive'
         }`} />
-        <span>{event.confidence}%</span>
+        <span>{event.confidence || 0}%</span>
       </div>
     ),
   },
   {
-    key: 'publishedAt',
+    key: 'published_at',
     header: 'Date',
     sortable: true,
     mobileHidden: true,
     render: (event) => (
-      <span className="text-muted-foreground text-xs">{event.publishedAt}</span>
+      <span className="text-muted-foreground text-xs">
+        {event.published_at ? new Date(event.published_at).toLocaleDateString() : 'N/A'}
+      </span>
     ),
   },
   {
@@ -193,36 +92,48 @@ const eventColumns: Column<CompanyEvent>[] = [
 ];
 
 export default function Dashboard() {
+  const { stats, companyEvents, loading } = useRealtimeStats();
+
+  if (loading) {
+    return (
+      <DashboardLayout title="Weekly Intelligence Summary" subtitle="Loading...">
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      </DashboardLayout>
+    );
+  }
+
   return (
-    <DashboardLayout title="Weekly Intelligence Summary" subtitle="December 19-25, 2025">
+    <DashboardLayout title="Weekly Intelligence Summary" subtitle="Live Data">
       <div className="space-y-3 animate-fade-in">
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2">
           <StatCard
             title="New Leads"
-            value={weeklyStats.newLeads}
-            change={12}
+            value={stats.newLeads}
+            subtitle={`${stats.verifiedLeads} verified`}
             icon={Users}
             color="primary"
           />
           <StatCard
-            title="Competitor Changes"
-            value={weeklyStats.competitorChanges}
-            change={-3}
+            title="Tracked Companies"
+            value={stats.trackedCompanies}
+            subtitle={`${stats.totalCompanies} total`}
             icon={Building2}
             color="accent"
           />
           <StatCard
-            title="Trend Spikes"
-            value={weeklyStats.trendSpikes}
-            change={8}
+            title="Company Events"
+            value={stats.recentEvents}
+            subtitle="This period"
             icon={TrendingUp}
             color="success"
           />
           <StatCard
-            title="Sentiment Alerts"
-            value={weeklyStats.sentimentAlerts}
-            change={0}
+            title="Pending Tasks"
+            value={stats.pendingTasks}
+            subtitle={`${stats.inProgressTasks} in progress`}
             icon={AlertTriangle}
             color="warning"
           />
@@ -240,21 +151,21 @@ export default function Dashboard() {
                 <AreaChart data={chartData.sentimentTrend}>
                   <defs>
                     <linearGradient id="colorPositive" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="hsl(0, 0%, 9%)" stopOpacity={0.2} />
-                      <stop offset="95%" stopColor="hsl(0, 0%, 9%)" stopOpacity={0} />
+                      <stop offset="5%" stopColor="hsl(var(--foreground))" stopOpacity={0.2} />
+                      <stop offset="95%" stopColor="hsl(var(--foreground))" stopOpacity={0} />
                     </linearGradient>
                     <linearGradient id="colorNegative" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="hsl(0, 72%, 51%)" stopOpacity={0.2} />
-                      <stop offset="95%" stopColor="hsl(0, 72%, 51%)" stopOpacity={0} />
+                      <stop offset="5%" stopColor="hsl(var(--destructive))" stopOpacity={0.2} />
+                      <stop offset="95%" stopColor="hsl(var(--destructive))" stopOpacity={0} />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(0, 0%, 90%)" />
-                  <XAxis dataKey="date" stroke="hsl(0, 0%, 45%)" fontSize={10} />
-                  <YAxis stroke="hsl(0, 0%, 45%)" fontSize={10} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                  <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" fontSize={10} />
+                  <YAxis stroke="hsl(var(--muted-foreground))" fontSize={10} />
                   <Tooltip
                     contentStyle={{
-                      backgroundColor: 'hsl(0, 0%, 100%)',
-                      border: '1px solid hsl(0, 0%, 90%)',
+                      backgroundColor: 'hsl(var(--background))',
+                      border: '1px solid hsl(var(--border))',
                       borderRadius: '4px',
                       fontSize: '11px',
                     }}
@@ -262,14 +173,14 @@ export default function Dashboard() {
                   <Area
                     type="monotone"
                     dataKey="positive"
-                    stroke="hsl(0, 0%, 9%)"
+                    stroke="hsl(var(--foreground))"
                     fillOpacity={1}
                     fill="url(#colorPositive)"
                   />
                   <Area
                     type="monotone"
                     dataKey="negative"
-                    stroke="hsl(0, 72%, 51%)"
+                    stroke="hsl(var(--destructive))"
                     fillOpacity={1}
                     fill="url(#colorNegative)"
                   />
@@ -279,49 +190,55 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        {/* Tables Grid */}
+        {/* Live Stats Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-          {/* Recent Alerts Table */}
+          {/* People Stats */}
           <Card>
             <CardHeader className="py-2 px-3 flex flex-row items-center justify-between">
               <div>
-                <CardTitle className="text-sm font-medium">Recent Alerts</CardTitle>
-                <CardDescription className="text-xs">Latest intelligence updates</CardDescription>
+                <CardTitle className="text-sm font-medium">People Intelligence</CardTitle>
+                <CardDescription className="text-xs">Real-time contact database</CardDescription>
               </div>
               <Button variant="outline" size="sm" className="h-7 text-xs" asChild>
-                <Link to="/analytics">View all</Link>
+                <Link to="/people">View all</Link>
               </Button>
             </CardHeader>
-            <CardContent className="p-2">
-              <DataTable 
-                data={mockAlerts} 
-                columns={alertColumns} 
-                pageSize={5}
-                showSearch
-                searchPlaceholder="Search alerts..."
-              />
+            <CardContent className="p-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="p-3 bg-muted/50 rounded-lg">
+                  <p className="text-2xl font-bold">{stats.totalPeople}</p>
+                  <p className="text-xs text-muted-foreground">Total Contacts</p>
+                </div>
+                <div className="p-3 bg-muted/50 rounded-lg">
+                  <p className="text-2xl font-bold">{stats.verifiedLeads}</p>
+                  <p className="text-xs text-muted-foreground">Verified Leads</p>
+                </div>
+              </div>
             </CardContent>
           </Card>
 
-          {/* Trending Topics Table */}
+          {/* Evidence Stats */}
           <Card>
             <CardHeader className="py-2 px-3 flex flex-row items-center justify-between">
               <div>
-                <CardTitle className="text-sm font-medium">Trending Topics</CardTitle>
-                <CardDescription className="text-xs">This week's top trends</CardDescription>
+                <CardTitle className="text-sm font-medium">Evidence Pipeline</CardTitle>
+                <CardDescription className="text-xs">Real-time evidence tracking</CardDescription>
               </div>
-              <Button variant="outline" size="sm" className="h-7 text-xs" asChild>
-                <Link to="/analytics">View all</Link>
-              </Button>
+              <Badge variant="outline" className="text-xs">
+                {stats.pendingEvidence} pending
+              </Badge>
             </CardHeader>
-            <CardContent className="p-2">
-              <DataTable 
-                data={mockTrendSignals} 
-                columns={trendColumns} 
-                pageSize={5}
-                showSearch
-                searchPlaceholder="Search topics..."
-              />
+            <CardContent className="p-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="p-3 bg-muted/50 rounded-lg">
+                  <p className="text-2xl font-bold">{stats.pendingEvidence}</p>
+                  <p className="text-xs text-muted-foreground">Pending Review</p>
+                </div>
+                <div className="p-3 bg-muted/50 rounded-lg">
+                  <p className="text-2xl font-bold">{stats.publishedEvidence}</p>
+                  <p className="text-xs text-muted-foreground">Published</p>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </div>
@@ -331,20 +248,26 @@ export default function Dashboard() {
           <CardHeader className="py-2 px-3 flex flex-row items-center justify-between">
             <div>
               <CardTitle className="text-sm font-medium">Competitor Updates</CardTitle>
-              <CardDescription className="text-xs">Latest company events</CardDescription>
+              <CardDescription className="text-xs">Real-time company events</CardDescription>
             </div>
             <Button variant="outline" size="sm" className="h-7 text-xs" asChild>
               <Link to="/companies">View all</Link>
             </Button>
           </CardHeader>
           <CardContent className="p-2">
-            <DataTable 
-              data={mockCompanyEvents} 
-              columns={eventColumns} 
-              pageSize={5}
-              showSearch
-              searchPlaceholder="Search events..."
-            />
+            {companyEvents.length > 0 ? (
+              <DataTable 
+                data={companyEvents} 
+                columns={eventColumns} 
+                pageSize={5}
+                showSearch
+                searchPlaceholder="Search events..."
+              />
+            ) : (
+              <div className="text-center py-8 text-muted-foreground text-sm">
+                No company events yet. Events will appear here in real-time.
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -387,12 +310,12 @@ export default function Dashboard() {
 interface StatCardProps {
   title: string;
   value: number;
-  change: number;
+  subtitle: string;
   icon: React.ElementType;
   color: 'primary' | 'accent' | 'success' | 'warning';
 }
 
-function StatCard({ title, value, change, icon: Icon, color }: StatCardProps) {
+function StatCard({ title, value, subtitle, icon: Icon, color }: StatCardProps) {
   const colorClasses = {
     primary: 'bg-foreground/5 text-foreground',
     accent: 'bg-foreground/5 text-foreground',
@@ -407,16 +330,12 @@ function StatCard({ title, value, change, icon: Icon, color }: StatCardProps) {
           <div className={`h-8 w-8 rounded-md ${colorClasses[color]} flex items-center justify-center`}>
             <Icon className="h-4 w-4" />
           </div>
-          {change !== 0 && (
-            <div className={`flex items-center gap-0.5 text-xs ${change > 0 ? 'text-success' : 'text-destructive'}`}>
-              {change > 0 ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
-              {Math.abs(change)}%
-            </div>
-          )}
+          <Badge variant="outline" className="text-xs">Live</Badge>
         </div>
         <div className="mt-2">
           <p className="text-xl font-semibold">{value}</p>
           <p className="text-xs text-muted-foreground">{title}</p>
+          <p className="text-xs text-muted-foreground/70">{subtitle}</p>
         </div>
       </CardContent>
     </Card>
