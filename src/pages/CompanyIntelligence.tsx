@@ -260,49 +260,57 @@ export default function CompanyIntelligence() {
                       </div>
                       
                       {events.length > 0 ? (
-                        <div className="bg-background rounded-lg border overflow-hidden">
-                          {/* Table Header */}
-                          <div className="grid grid-cols-[100px_140px_1fr] gap-4 px-4 py-2 bg-muted/50 border-b text-xs font-medium text-muted-foreground">
-                            <span>Date</span>
-                            <span>Event Type</span>
-                            <span>Details</span>
-                          </div>
+                        <div className="relative">
+                          {/* Timeline line */}
+                          <div className="absolute left-3 top-0 bottom-0 w-px bg-border" />
                           
-                          {/* Timeline Rows */}
-                          <div className="divide-y">
+                          <div className="space-y-0">
                             {events.map((event) => (
                               <div 
                                 key={event.id} 
-                                className="grid grid-cols-[100px_140px_1fr] gap-4 px-4 py-3 hover:bg-muted/30 transition-colors items-center"
+                                className="relative pl-8 py-3 border-b last:border-b-0 hover:bg-muted/50 transition-colors"
                               >
-                                {/* Date */}
-                                <div>
-                                  <p className="text-sm font-medium">
-                                    {new Date(event.publishedAt).toLocaleDateString('en-US', { 
-                                      month: 'short', 
-                                      day: 'numeric'
-                                    })}
-                                  </p>
-                                  <p className="text-[10px] text-muted-foreground">
-                                    {new Date(event.publishedAt).getFullYear()}
-                                  </p>
+                                {/* Timeline dot */}
+                                <div className={cn(
+                                  "absolute left-1.5 top-4 h-4 w-4 rounded-full ring-4 ring-background flex items-center justify-center",
+                                  getEventColor(event.eventType)
+                                )}>
+                                  <div className="h-1.5 w-1.5 rounded-full bg-white" />
                                 </div>
                                 
-                                {/* Event Type */}
-                                <div>
-                                  <span className={cn(
-                                    "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium",
-                                    getEventBadgeVariant(event.eventType)
-                                  )}>
-                                    {getEventIcon(event.eventType)}
-                                    {formatEventType(event.eventType)}
-                                  </span>
+                                {/* Event Content */}
+                                <div className="flex items-start gap-4">
+                                  {/* Date Column */}
+                                  <div className="w-20 flex-shrink-0">
+                                    <p className="text-xs font-medium">
+                                      {new Date(event.publishedAt).toLocaleDateString('en-US', { 
+                                        month: 'short', 
+                                        day: 'numeric'
+                                      })}
+                                    </p>
+                                    <p className="text-[10px] text-muted-foreground">
+                                      {new Date(event.publishedAt).getFullYear()}
+                                    </p>
+                                  </div>
+                                  
+                                  {/* Event Type */}
+                                  <div className="w-32 flex-shrink-0">
+                                    <span className={cn(
+                                      "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium",
+                                      getEventBadgeVariant(event.eventType)
+                                    )}>
+                                      {getEventIcon(event.eventType)}
+                                      {formatEventType(event.eventType)}
+                                    </span>
+                                  </div>
+                                  
+                                  {/* Summary */}
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-sm text-foreground leading-relaxed">
+                                      {event.summary}
+                                    </p>
+                                  </div>
                                 </div>
-                                
-                                {/* Summary */}
-                                <p className="text-sm text-foreground leading-relaxed">
-                                  {event.summary}
-                                </p>
                               </div>
                             ))}
                           </div>
