@@ -26,13 +26,14 @@ export default function CompanyIntelligence() {
   const [selectedCompetitor, setSelectedCompetitor] = useState<string | null>(null);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
 
-  // Fetch companies from database
+  // Fetch only tracked companies from database
   const { data: companies = [], isLoading: companiesLoading, error: companiesError } = useQuery({
-    queryKey: ['companies'],
+    queryKey: ['companies', 'tracked'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('companies')
         .select('*')
+        .eq('is_tracked', true)
         .order('name');
       if (error) throw error;
       return data as Company[];
