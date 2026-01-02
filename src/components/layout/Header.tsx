@@ -24,25 +24,25 @@ export function Header({ title, subtitle }: HeaderProps) {
   const unreadAlerts = mockAlerts.filter((a) => !a.read).length;
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-border bg-background/95 backdrop-blur-sm px-6">
+    <header className="sticky top-0 z-30 flex h-12 items-center justify-between border-b border-border bg-background/95 backdrop-blur-sm px-4">
       <div className="flex flex-col">
-        <h1 className="text-xl font-semibold text-foreground">{title}</h1>
-        {subtitle && <p className="text-sm text-muted-foreground">{subtitle}</p>}
+        <h1 className="text-base font-semibold text-foreground">{title}</h1>
+        {subtitle && <p className="text-xs text-muted-foreground">{subtitle}</p>}
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1">
         {/* Search */}
         <div className="relative">
           {searchOpen ? (
             <Input
               placeholder="Search people, companies, trends..."
-              className="w-64 bg-secondary border-border"
+              className="w-56 h-7 text-sm bg-secondary border-border"
               autoFocus
               onBlur={() => setSearchOpen(false)}
             />
           ) : (
-            <Button variant="ghost" size="icon" onClick={() => setSearchOpen(true)}>
-              <Search className="h-5 w-5 text-muted-foreground" />
+            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setSearchOpen(true)}>
+              <Search className="h-4 w-4 text-muted-foreground" />
             </Button>
           )}
         </div>
@@ -53,32 +53,32 @@ export function Header({ title, subtitle }: HeaderProps) {
         {/* Notifications */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="relative">
-              <Bell className="h-5 w-5 text-muted-foreground" />
+            <Button variant="ghost" size="icon" className="relative h-7 w-7">
+              <Bell className="h-4 w-4 text-muted-foreground" />
               {unreadAlerts > 0 && (
                 <Badge
                   variant="destructive"
-                  className="absolute -right-1 -top-1 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs"
+                  className="absolute -right-0.5 -top-0.5 h-4 w-4 rounded-full p-0 flex items-center justify-center text-[10px]"
                 >
                   {unreadAlerts}
                 </Badge>
               )}
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-80">
-            <DropdownMenuLabel className="font-semibold">Notifications</DropdownMenuLabel>
+          <DropdownMenuContent align="end" className="w-72">
+            <DropdownMenuLabel className="font-semibold text-sm py-1.5">Notifications</DropdownMenuLabel>
             <DropdownMenuSeparator />
             {mockAlerts.slice(0, 4).map((alert) => (
-              <DropdownMenuItem key={alert.id} className="flex flex-col items-start gap-1 py-3">
-                <div className="flex items-center gap-2">
-                  {!alert.read && <div className="h-2 w-2 rounded-full bg-primary" />}
-                  <span className="font-medium text-sm">{alert.title}</span>
+              <DropdownMenuItem key={alert.id} className="flex flex-col items-start gap-0.5 py-2">
+                <div className="flex items-center gap-1.5">
+                  {!alert.read && <div className="h-1.5 w-1.5 rounded-full bg-primary" />}
+                  <span className="font-medium text-xs">{alert.title}</span>
                 </div>
-                <span className="text-xs text-muted-foreground line-clamp-1">{alert.message}</span>
+                <span className="text-[11px] text-muted-foreground line-clamp-1">{alert.message}</span>
               </DropdownMenuItem>
             ))}
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="text-center text-primary font-medium">
+            <DropdownMenuItem className="text-center text-primary font-medium text-xs py-1.5">
               View all notifications
             </DropdownMenuItem>
           </DropdownMenuContent>
@@ -87,35 +87,35 @@ export function Header({ title, subtitle }: HeaderProps) {
         {/* User Menu */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="relative">
-              <div className="h-8 w-8 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center">
-                <span className="text-primary-foreground text-sm font-medium">JD</span>
+            <Button variant="ghost" size="icon" className="relative h-7 w-7">
+              <div className="h-6 w-6 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center">
+                <span className="text-primary-foreground text-[10px] font-medium">JD</span>
               </div>
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56">
-            <DropdownMenuLabel>
+          <DropdownMenuContent align="end" className="w-48">
+            <DropdownMenuLabel className="py-1.5">
               <div className="flex flex-col">
-                <span>John Doe</span>
-                <span className="text-xs text-muted-foreground font-normal">john@company.com</span>
+                <span className="text-sm">John Doe</span>
+                <span className="text-[11px] text-muted-foreground font-normal">john@company.com</span>
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
-              <User className="mr-2 h-4 w-4" />
+            <DropdownMenuItem className="text-xs py-1.5">
+              <User className="mr-2 h-3.5 w-3.5" />
               Profile
             </DropdownMenuItem>
-            <DropdownMenuItem>
-              <Settings className="mr-2 h-4 w-4" />
+            <DropdownMenuItem className="text-xs py-1.5">
+              <Settings className="mr-2 h-3.5 w-3.5" />
               Settings
             </DropdownMenuItem>
-            <DropdownMenuItem>
-              <HelpCircle className="mr-2 h-4 w-4" />
+            <DropdownMenuItem className="text-xs py-1.5">
+              <HelpCircle className="mr-2 h-3.5 w-3.5" />
               Help & Support
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="text-destructive">
-              <LogOut className="mr-2 h-4 w-4" />
+            <DropdownMenuItem className="text-destructive text-xs py-1.5">
+              <LogOut className="mr-2 h-3.5 w-3.5" />
               Sign Out
             </DropdownMenuItem>
           </DropdownMenuContent>
