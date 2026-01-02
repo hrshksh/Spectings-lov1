@@ -6,20 +6,18 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Search, Download, Mail, Phone, ExternalLink, ChevronRight, Loader2, Users, CheckCircle, Clock } from 'lucide-react';
+import { Search, Download, Mail, Phone, ExternalLink, ChevronRight, Loader2, CheckCircle } from 'lucide-react';
 import { useRealtimeTable } from '@/hooks/useRealtimeData';
 import type { Tables } from '@/integrations/supabase/types';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 
 type Person = Tables<'people'>;
-type Lead = Tables<'leads'>;
 
-// Fetch leads with person data
-function useLeadsWithPeople() {
+// Fetch verified leads with person data
+function useVerifiedLeads() {
   return useQuery({
-    queryKey: ['leads-with-people'],
+    queryKey: ['verified-leads-with-people'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('leads')
@@ -27,7 +25,8 @@ function useLeadsWithPeople() {
           *,
           person:people(*)
         `)
-        .order('created_at', { ascending: false });
+        .eq('status', 'verified')
+        .order('verified_at', { ascending: false });
       
       if (error) throw error;
       return data;
@@ -38,38 +37,27 @@ function useLeadsWithPeople() {
 export default function PeopleIntelligence() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedPerson, setSelectedPerson] = useState<Person | null>(null);
-  const [viewMode, setViewMode] = useState<'all' | 'verified' | 'pending'>('verified');
   const [confidenceFilter, setConfidenceFilter] = useState<string>('all');
   
-  const { data: people, loading: peopleLoading } = useRealtimeTable<Person>('people');
-  const { data: leadsData, isLoading: leadsLoading } = useLeadsWithPeople();
+  const { data: leadsData, isLoading } = useVerifiedLeads();
 
-  // Get verified and pending person IDs from leads
-  const verifiedPersonIds = useMemo(() => {
-    return new Set(leadsData?.filter(l => l.status === 'verified').map(l => l.person_id) || []);
+  // Extract verified people from leads
+  const verifiedPeople = useMemo(() => {
+    if (!leadsData) return [];
+    return leadsData
+      .filter(lead => lead.person)
+      .map(lead => lead.person as Person);
   }, [leadsData]);
 
-  const pendingPersonIds = useMemo(() => {
-    return new Set(leadsData?.filter(l => l.status === 'pending').map(l => l.person_id) || []);
-  }, [leadsData]);
-
-  // Filter people based on search, view mode, and confidence
+  // Filter verified people based on search and confidence
   const filteredPeople = useMemo(() => {
-    return people.filter((person) => {
+    return verifiedPeople.filter((person) => {
       // Search filter
       const matchesSearch = 
         person.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         (person.company?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false) ||
         (person.role?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false) ||
         (person.email?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false);
-      
-      // View mode filter
-      let matchesViewMode = true;
-      if (viewMode === 'verified') {
-        matchesViewMode = verifiedPersonIds.has(person.id);
-      } else if (viewMode === 'pending') {
-        matchesViewMode = pendingPersonIds.has(person.id);
-      }
 
       // Confidence filter
       let matchesConfidence = true;
@@ -82,63 +70,25 @@ export default function PeopleIntelligence() {
         matchesConfidence = confidence < 70;
       }
 
-      return matchesSearch && matchesViewMode && matchesConfidence;
+      return matchesSearch && matchesConfidence;
     });
-  }, [people, searchQuery, viewMode, confidenceFilter, verifiedPersonIds, pendingPersonIds]);
-
-  const stats = useMemo(() => ({
-    total: people.length,
-    verified: verifiedPersonIds.size,
-    pending: pendingPersonIds.size,
-  }), [people.length, verifiedPersonIds.size, pendingPersonIds.size]);
-
-  const isLoading = peopleLoading || leadsLoading;
-
-  const getLeadStatus = (personId: string) => {
-    if (verifiedPersonIds.has(personId)) return 'verified';
-    if (pendingPersonIds.has(personId)) return 'pending';
-    return null;
-  };
+  }, [verifiedPeople, searchQuery, confidenceFilter]);
 
   return (
-    <DashboardLayout title="People Intelligence" subtitle="Contact database and verified leads">
+    <DashboardLayout title="Verified Leads" subtitle="Search and manage verified contacts">
       <div className="space-y-2 animate-fade-in">
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-          <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setViewMode('all')}>
-            <CardContent className="p-3 flex items-center gap-3">
-              <div className={`h-10 w-10 rounded-lg flex items-center justify-center ${viewMode === 'all' ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
-                <Users className="h-5 w-5" />
-              </div>
-              <div>
-                <p className="text-xl font-bold">{stats.total}</p>
-                <p className="text-xs text-muted-foreground">Total People</p>
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setViewMode('verified')}>
-            <CardContent className="p-3 flex items-center gap-3">
-              <div className={`h-10 w-10 rounded-lg flex items-center justify-center ${viewMode === 'verified' ? 'bg-success text-success-foreground' : 'bg-success/10 text-success'}`}>
-                <CheckCircle className="h-5 w-5" />
-              </div>
-              <div>
-                <p className="text-xl font-bold">{stats.verified}</p>
-                <p className="text-xs text-muted-foreground">Verified Leads</p>
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setViewMode('pending')}>
-            <CardContent className="p-3 flex items-center gap-3">
-              <div className={`h-10 w-10 rounded-lg flex items-center justify-center ${viewMode === 'pending' ? 'bg-warning text-warning-foreground' : 'bg-warning/10 text-warning'}`}>
-                <Clock className="h-5 w-5" />
-              </div>
-              <div>
-                <p className="text-xl font-bold">{stats.pending}</p>
-                <p className="text-xs text-muted-foreground">Pending Review</p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+        {/* Stats Card */}
+        <Card>
+          <CardContent className="p-3 flex items-center gap-3">
+            <div className="h-10 w-10 rounded-lg flex items-center justify-center bg-success/10 text-success">
+              <CheckCircle className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="text-xl font-bold">{verifiedPeople.length}</p>
+              <p className="text-xs text-muted-foreground">Verified Leads</p>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Search and Filters */}
         <Card>
@@ -153,13 +103,6 @@ export default function PeopleIntelligence() {
                   className="pl-8 h-8 text-sm" 
                 />
               </div>
-              <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as 'all' | 'verified' | 'pending')}>
-                <TabsList className="h-8">
-                  <TabsTrigger value="all" className="text-xs h-6">All</TabsTrigger>
-                  <TabsTrigger value="verified" className="text-xs h-6">Verified</TabsTrigger>
-                  <TabsTrigger value="pending" className="text-xs h-6">Pending</TabsTrigger>
-                </TabsList>
-              </Tabs>
               <Select value={confidenceFilter} onValueChange={setConfidenceFilter}>
                 <SelectTrigger className="w-36 h-8 text-sm">
                   <SelectValue placeholder="Confidence" />
@@ -183,8 +126,7 @@ export default function PeopleIntelligence() {
             <Card>
               <CardHeader className="py-2 px-3">
                 <CardTitle className="text-sm font-medium">
-                  {viewMode === 'all' ? 'People Database' : viewMode === 'verified' ? 'Verified Leads' : 'Pending Leads'} 
-                  ({filteredPeople.length})
+                  Verified Leads ({filteredPeople.length})
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-0">
@@ -199,73 +141,60 @@ export default function PeopleIntelligence() {
                         <TableHead>Name</TableHead>
                         <TableHead>Role</TableHead>
                         <TableHead>Company</TableHead>
-                        <TableHead>Status</TableHead>
                         <TableHead>Confidence</TableHead>
                         <TableHead className="text-right">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {filteredPeople.map((person) => {
-                        const leadStatus = getLeadStatus(person.id);
-                        return (
-                          <TableRow 
-                            key={person.id} 
-                            className={`cursor-pointer transition-all duration-150 ${selectedPerson?.id === person.id ? 'bg-muted/80 border-l-2 border-l-foreground' : 'hover:bg-muted/40'}`} 
-                            onClick={() => setSelectedPerson(person)}
-                          >
-                            <TableCell className="py-2">
-                              <div className="flex items-center gap-2">
-                                <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center">
-                                  <span className="text-primary-foreground text-xs font-medium">
-                                    {person.name.split(' ').map(n => n[0]).join('')}
-                                  </span>
-                                </div>
-                                <div>
-                                  <p className="font-medium text-sm">{person.name}</p>
-                                  <p className="text-xs text-muted-foreground">{person.email || 'No email'}</p>
-                                </div>
+                      {filteredPeople.map((person) => (
+                        <TableRow 
+                          key={person.id} 
+                          className={`cursor-pointer transition-all duration-150 ${selectedPerson?.id === person.id ? 'bg-muted/80 border-l-2 border-l-foreground' : 'hover:bg-muted/40'}`} 
+                          onClick={() => setSelectedPerson(person)}
+                        >
+                          <TableCell className="py-2">
+                            <div className="flex items-center gap-2">
+                              <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center">
+                                <span className="text-primary-foreground text-xs font-medium">
+                                  {person.name.split(' ').map(n => n[0]).join('')}
+                                </span>
                               </div>
-                            </TableCell>
-                            <TableCell className="py-2 text-sm">{person.role || '-'}</TableCell>
-                            <TableCell className="py-2 text-sm">{person.company || '-'}</TableCell>
-                            <TableCell className="py-2">
-                              {leadStatus === 'verified' ? (
-                                <Badge variant="success" className="text-xs">Verified</Badge>
-                              ) : leadStatus === 'pending' ? (
-                                <Badge variant="warning" className="text-xs">Pending</Badge>
-                              ) : (
-                                <Badge variant="outline" className="text-xs">Contact</Badge>
-                              )}
-                            </TableCell>
-                            <TableCell className="py-2">
-                              <div className="flex items-center gap-1.5">
-                                <div className="h-1.5 w-12 bg-muted rounded-full overflow-hidden">
-                                  <div 
-                                    className={`h-full rounded-full ${
-                                      (person.confidence || 0) >= 90 ? 'bg-success' : 
-                                      (person.confidence || 0) >= 70 ? 'bg-primary' : 'bg-warning'
-                                    }`} 
-                                    style={{ width: `${person.confidence || 0}%` }} 
-                                  />
-                                </div>
-                                <span className="text-xs">{person.confidence || 0}%</span>
+                              <div>
+                                <p className="font-medium text-sm">{person.name}</p>
+                                <p className="text-xs text-muted-foreground">{person.email || 'No email'}</p>
                               </div>
-                            </TableCell>
-                            <TableCell className="py-2 text-right">
-                              <Button variant="ghost" size="icon" className="h-7 w-7">
-                                <ChevronRight className="h-3.5 w-3.5" />
-                              </Button>
-                            </TableCell>
-                          </TableRow>
-                        );
-                      })}
+                            </div>
+                          </TableCell>
+                          <TableCell className="py-2 text-sm">{person.role || '-'}</TableCell>
+                          <TableCell className="py-2 text-sm">{person.company || '-'}</TableCell>
+                          <TableCell className="py-2">
+                            <div className="flex items-center gap-1.5">
+                              <div className="h-1.5 w-12 bg-muted rounded-full overflow-hidden">
+                                <div 
+                                  className={`h-full rounded-full ${
+                                    (person.confidence || 0) >= 90 ? 'bg-success' : 
+                                    (person.confidence || 0) >= 70 ? 'bg-primary' : 'bg-warning'
+                                  }`} 
+                                  style={{ width: `${person.confidence || 0}%` }} 
+                                />
+                              </div>
+                              <span className="text-xs">{person.confidence || 0}%</span>
+                            </div>
+                          </TableCell>
+                          <TableCell className="py-2 text-right">
+                            <Button variant="ghost" size="icon" className="h-7 w-7">
+                              <ChevronRight className="h-3.5 w-3.5" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
                     </TableBody>
                   </Table>
                 ) : (
                   <div className="text-center py-12 text-muted-foreground">
-                    {searchQuery || viewMode !== 'all' || confidenceFilter !== 'all' 
-                      ? 'No people match your filters' 
-                      : 'No people in database yet'}
+                    {searchQuery || confidenceFilter !== 'all' 
+                      ? 'No leads match your search' 
+                      : 'No verified leads yet'}
                   </div>
                 )}
               </CardContent>
