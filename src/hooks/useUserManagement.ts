@@ -379,6 +379,36 @@ export function useDeleteLead() {
   });
 }
 
+export function useUpdateLeadStatus() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async ({ leadId, status }: { leadId: string; status: Database['public']['Enums']['lead_status'] }) => {
+      const { error } = await supabase
+        .from('leads')
+        .update({ 
+          status,
+          verified_at: status === 'verified' ? new Date().toISOString() : null,
+        })
+        .eq('id', leadId);
+      if (error) throw error;
+    },
+    onSuccess: (_, { status }) => {
+      queryClient.invalidateQueries({ queryKey: ['admin-leads'] });
+      queryClient.invalidateQueries({ queryKey: ['leads-for-user'] });
+      toast({ title: `Lead ${status}` });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Error updating lead status',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
+}
+
 export function useUpdatePersonTags() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
