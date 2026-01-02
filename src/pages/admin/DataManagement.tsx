@@ -57,6 +57,7 @@ import {
   useCreateLead,
   useDeleteLead,
   useUpdatePersonTags,
+  useUpdateLeadStatus,
 } from '@/hooks/useUserManagement';
 import { useCompanies } from '@/hooks/useAdminData';
 import { Constants } from '@/integrations/supabase/types';
@@ -183,6 +184,7 @@ export default function DataManagement() {
   const createLead = useCreateLead();
   const deleteLead = useDeleteLead();
   const updatePersonTags = useUpdatePersonTags();
+  const updateLeadStatus = useUpdateLeadStatus();
   const [leadDialogOpen, setLeadDialogOpen] = useState(false);
   const [newLead, setNewLead] = useState({ person_id: '', notes: '', source: '', tags: '' });
   const [editTagsDialogOpen, setEditTagsDialogOpen] = useState(false);
@@ -979,12 +981,35 @@ export default function DataManagement() {
                             </TableCell>
                             <TableCell>{lead.source || '-'}</TableCell>
                             <TableCell>
-                              <Badge variant={
-                                lead.status === 'verified' ? 'success' : 
-                                lead.status === 'rejected' ? 'destructive' : 'outline'
-                              }>
-                                {lead.status}
-                              </Badge>
+                              <Select
+                                value={lead.status}
+                                onValueChange={(value) => 
+                                  updateLeadStatus.mutate({ 
+                                    leadId: lead.id, 
+                                    status: value as Database['public']['Enums']['lead_status'] 
+                                  })
+                                }
+                              >
+                                <SelectTrigger className="w-[120px] h-8">
+                                  <Badge variant={
+                                    lead.status === 'verified' ? 'success' : 
+                                    lead.status === 'rejected' ? 'destructive' : 'outline'
+                                  }>
+                                    {lead.status}
+                                  </Badge>
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="pending">
+                                    <Badge variant="outline">pending</Badge>
+                                  </SelectItem>
+                                  <SelectItem value="verified">
+                                    <Badge variant="success">verified</Badge>
+                                  </SelectItem>
+                                  <SelectItem value="rejected">
+                                    <Badge variant="destructive">rejected</Badge>
+                                  </SelectItem>
+                                </SelectContent>
+                              </Select>
                             </TableCell>
                             <TableCell className="text-right">
                               <div className="flex justify-end gap-1">
