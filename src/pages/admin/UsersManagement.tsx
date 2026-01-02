@@ -21,11 +21,14 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Search, MoreHorizontal, Shield, UserPlus, Loader2, X } from 'lucide-react';
+import { Search, MoreHorizontal, Shield, UserPlus, Loader2, X, Tag } from 'lucide-react';
 import { useUsers, useAssignRole, useRemoveRole } from '@/hooks/useUserManagement';
 import { useAuth } from '@/contexts/AuthContext';
 import { Constants } from '@/integrations/supabase/types';
 import type { Database } from '@/integrations/supabase/types';
+import { UserTagsDialog } from '@/components/admin/UserTagsDialog';
+import { supabase } from '@/integrations/supabase/client';
+import { useQuery } from '@tanstack/react-query';
 
 type AppRole = Database['public']['Enums']['app_role'];
 
@@ -47,12 +50,38 @@ const roleLabels: Record<AppRole, string> = {
   customer_user: 'Customer User',
 };
 
+// Fetch all user tags for display
+function useAllUserTags() {
+  return useQuery({
+    queryKey: ['all-user-tags'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('user_tags')
+        .select('user_id, tag');
+      
+      if (error) throw error;
+      
+      // Group tags by user_id
+      const tagsByUser: Record<string, string[]> = {};
+      data.forEach(item => {
+        if (!tagsByUser[item.user_id]) {
+          tagsByUser[item.user_id] = [];
+        }
+        tagsByUser[item.user_id].push(item.tag);
+      });
+      return tagsByUser;
+    },
+  });
+}
+
 export default function UsersManagement() {
   const { user: currentUser } = useAuth();
   const { data: users, isLoading } = useUsers();
+  const { data: userTagsMap = {} } = useAllUserTags();
   const assignRole = useAssignRole();
   const removeRole = useRemoveRole();
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedUserForTags, setSelectedUserForTags] = useState<{ id: string; name: string } | null>(null);
 
   const filteredUsers = users?.filter(user =>
     user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -111,6 +140,7 @@ export default function UsersManagement() {
                   <TableRow>
                     <TableHead>User</TableHead>
                     <TableHead>Roles</TableHead>
+                    <TableHead>Lead Tags</TableHead>
                     <TableHead>Joined</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
@@ -154,6 +184,36 @@ export default function UsersManagement() {
                           )}
                         </div>
                       </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1.5">
+                          <div className="flex flex-wrap gap-1 max-w-[200px]">
+                            {(userTagsMap[user.id] || []).slice(0, 2).map(tag => (
+                              <Badge key={tag} variant="secondary" className="text-xs">
+                                {tag}
+                              </Badge>
+                            ))}
+                            {(userTagsMap[user.id]?.length || 0) > 2 && (
+                              <Badge variant="outline" className="text-xs">
+                                +{(userTagsMap[user.id]?.length || 0) - 2}
+                              </Badge>
+                            )}
+                            {!(userTagsMap[user.id]?.length) && (
+                              <span className="text-sm text-muted-foreground">None</span>
+                            )}
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6"
+                            onClick={() => setSelectedUserForTags({ 
+                              id: user.id, 
+                              name: user.full_name || user.email 
+                            })}
+                          >
+                            <Tag className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+                      </TableCell>
                       <TableCell className="text-muted-foreground text-sm">
                         {new Date(user.created_at).toLocaleDateString()}
                       </TableCell>
@@ -195,6 +255,15 @@ export default function UsersManagement() {
           </CardContent>
         </Card>
       </div>
+      
+      {selectedUserForTags && (
+        <UserTagsDialog
+          open={!!selectedUserForTags}
+          onOpenChange={(open) => !open && setSelectedUserForTags(null)}
+          userId={selectedUserForTags.id}
+          userName={selectedUserForTags.name}
+        />
+      )}
     </DashboardLayout>
   );
 }
