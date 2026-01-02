@@ -53,6 +53,10 @@ import {
   useDeleteOrganization,
   useCreateCompanyEvent,
   useDeleteCompanyEvent,
+  useLeads,
+  useCreateLead,
+  useDeleteLead,
+  useUpdatePersonTags,
 } from '@/hooks/useUserManagement';
 import { useCompanies } from '@/hooks/useAdminData';
 import { Constants } from '@/integrations/supabase/types';
@@ -60,6 +64,7 @@ import type { Database } from '@/integrations/supabase/types';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from '@/hooks/use-toast';
+import { UserPlus } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 type CompanyEventType = Database['public']['Enums']['company_event_type'];
@@ -173,6 +178,17 @@ export default function DataManagement() {
   const [tagDialogOpen, setTagDialogOpen] = useState(false);
   const [newTagAssignment, setNewTagAssignment] = useState({ user_id: '', tag: '' });
 
+  // Leads state
+  const { data: leads, isLoading: leadsLoading } = useLeads();
+  const createLead = useCreateLead();
+  const deleteLead = useDeleteLead();
+  const updatePersonTags = useUpdatePersonTags();
+  const [leadDialogOpen, setLeadDialogOpen] = useState(false);
+  const [newLead, setNewLead] = useState({ person_id: '', notes: '', source: '', tags: '' });
+  const [editTagsDialogOpen, setEditTagsDialogOpen] = useState(false);
+  const [editingLead, setEditingLead] = useState<{ personId: string; personName: string; currentTags: string[] } | null>(null);
+  const [editTagsValue, setEditTagsValue] = useState('');
+
   const addUserTag = useMutation({
     mutationFn: async ({ user_id, tag }: { user_id: string; tag: string }) => {
       const { error } = await supabase
@@ -251,6 +267,55 @@ export default function DataManagement() {
     );
   };
 
+  const handleCreateLead = () => {
+    if (!newLead.person_id) return;
+    
+    // First update the person's tags if provided
+    const tagsArray = newLead.tags.split(',').map(t => t.trim()).filter(Boolean);
+    const selectedPerson = people?.find(p => p.id === newLead.person_id);
+    
+    if (tagsArray.length > 0 && selectedPerson) {
+      const existingTags = selectedPerson.tags || [];
+      const newTags = [...new Set([...existingTags, ...tagsArray])];
+      updatePersonTags.mutate({ personId: newLead.person_id, tags: newTags });
+    }
+    
+    createLead.mutate(
+      {
+        person_id: newLead.person_id,
+        notes: newLead.notes || undefined,
+        source: newLead.source || undefined,
+      },
+      {
+        onSuccess: () => {
+          setLeadDialogOpen(false);
+          setNewLead({ person_id: '', notes: '', source: '', tags: '' });
+        },
+      }
+    );
+  };
+
+  const handleEditTags = () => {
+    if (!editingLead) return;
+    const tagsArray = editTagsValue.split(',').map(t => t.trim()).filter(Boolean);
+    updatePersonTags.mutate(
+      { personId: editingLead.personId, tags: tagsArray },
+      {
+        onSuccess: () => {
+          setEditTagsDialogOpen(false);
+          setEditingLead(null);
+          setEditTagsValue('');
+        },
+      }
+    );
+  };
+
+  const openEditTagsDialog = (personId: string, personName: string, currentTags: string[]) => {
+    setEditingLead({ personId, personName, currentTags });
+    setEditTagsValue(currentTags.join(', '));
+    setEditTagsDialogOpen(true);
+  };
+
   const filteredPeople = people?.filter(
     (p) =>
       p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -283,6 +348,18 @@ export default function DataManagement() {
       p.full_name?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const filteredLeads = leads?.filter(
+    (l) =>
+      (l.person as any)?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (l.person as any)?.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (l.person as any)?.company?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      l.source?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  // Get people that are not already leads
+  const leadPersonIds = new Set(leads?.map(l => l.person_id) || []);
+  const availablePeopleForLeads = people?.filter(p => !leadPersonIds.has(p.id)) || [];
+
   const getInitials = (name: string | null, email: string) => {
     if (name) {
       return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
@@ -307,6 +384,10 @@ export default function DataManagement() {
               <TabsTrigger value="events" className="gap-2">
                 <Calendar className="h-4 w-4" />
                 Events
+              </TabsTrigger>
+              <TabsTrigger value="leads" className="gap-2">
+                <UserPlus className="h-4 w-4" />
+                Leads
               </TabsTrigger>
               <TabsTrigger value="user-tags" className="gap-2">
                 <Tag className="h-4 w-4" />
@@ -739,6 +820,258 @@ export default function DataManagement() {
                 )}
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* Leads Tab */}
+          <TabsContent value="leads">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle>Leads</CardTitle>
+                    <CardDescription>
+                      {leads?.length || 0} leads - Add people as leads with tags. Users see leads matching their assigned tags.
+                    </CardDescription>
+                  </div>
+                  <Dialog open={leadDialogOpen} onOpenChange={setLeadDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button>
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add Lead
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Add Person as Lead</DialogTitle>
+                        <DialogDescription>
+                          Select a person and assign tags. Users with matching tags will see this lead.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="grid gap-4 py-4">
+                        <div className="grid gap-2">
+                          <Label htmlFor="lead-person">Person *</Label>
+                          <Select
+                            value={newLead.person_id}
+                            onValueChange={(value) => setNewLead({ ...newLead, person_id: value })}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select a person" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {availablePeopleForLeads.map((person) => (
+                                <SelectItem key={person.id} value={person.id}>
+                                  {person.name} {person.company ? `(${person.company})` : ''}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          {availablePeopleForLeads.length === 0 && (
+                            <p className="text-sm text-muted-foreground">
+                              All people are already leads or no people exist.
+                            </p>
+                          )}
+                        </div>
+                        <div className="grid gap-2">
+                          <Label htmlFor="lead-tags">Tags (comma-separated)</Label>
+                          <Input
+                            id="lead-tags"
+                            value={newLead.tags}
+                            onChange={(e) => setNewLead({ ...newLead, tags: e.target.value })}
+                            placeholder="e.g., enterprise, healthcare, usa"
+                          />
+                          {availableTags.length > 0 && (
+                            <div className="flex flex-wrap gap-1.5 mt-1">
+                              {availableTags.slice(0, 8).map(tag => (
+                                <Badge 
+                                  key={tag} 
+                                  variant="outline"
+                                  className="cursor-pointer hover:bg-primary hover:text-primary-foreground transition-colors"
+                                  onClick={() => {
+                                    const currentTags = newLead.tags.split(',').map(t => t.trim()).filter(Boolean);
+                                    if (!currentTags.includes(tag)) {
+                                      setNewLead({ ...newLead, tags: [...currentTags, tag].join(', ') });
+                                    }
+                                  }}
+                                >
+                                  {tag}
+                                </Badge>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                        <div className="grid gap-2">
+                          <Label htmlFor="lead-source">Source</Label>
+                          <Input
+                            id="lead-source"
+                            value={newLead.source}
+                            onChange={(e) => setNewLead({ ...newLead, source: e.target.value })}
+                            placeholder="e.g., LinkedIn, Conference, Referral"
+                          />
+                        </div>
+                        <div className="grid gap-2">
+                          <Label htmlFor="lead-notes">Notes</Label>
+                          <Textarea
+                            id="lead-notes"
+                            value={newLead.notes}
+                            onChange={(e) => setNewLead({ ...newLead, notes: e.target.value })}
+                            placeholder="Additional notes about this lead..."
+                            rows={3}
+                          />
+                        </div>
+                      </div>
+                      <DialogFooter>
+                        <Button variant="outline" onClick={() => setLeadDialogOpen(false)}>
+                          Cancel
+                        </Button>
+                        <Button
+                          onClick={handleCreateLead}
+                          disabled={createLead.isPending || !newLead.person_id}
+                        >
+                          {createLead.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                          Add Lead
+                        </Button>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {leadsLoading ? (
+                  <div className="flex justify-center py-8">
+                    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                  </div>
+                ) : filteredLeads && filteredLeads.length > 0 ? (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Person</TableHead>
+                        <TableHead>Company</TableHead>
+                        <TableHead>Tags</TableHead>
+                        <TableHead>Source</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredLeads.map((lead) => {
+                        const person = lead.person as any;
+                        return (
+                          <TableRow key={lead.id}>
+                            <TableCell>
+                              <div>
+                                <div className="font-medium">{person?.name || 'Unknown'}</div>
+                                <div className="text-sm text-muted-foreground">{person?.email || '-'}</div>
+                              </div>
+                            </TableCell>
+                            <TableCell>{person?.company || '-'}</TableCell>
+                            <TableCell>
+                              <div className="flex flex-wrap gap-1">
+                                {person?.tags?.length > 0 ? (
+                                  person.tags.map((tag: string) => (
+                                    <Badge key={tag} variant="secondary" className="text-xs">
+                                      {tag}
+                                    </Badge>
+                                  ))
+                                ) : (
+                                  <span className="text-sm text-muted-foreground">No tags</span>
+                                )}
+                              </div>
+                            </TableCell>
+                            <TableCell>{lead.source || '-'}</TableCell>
+                            <TableCell>
+                              <Badge variant={
+                                lead.status === 'verified' ? 'success' : 
+                                lead.status === 'rejected' ? 'destructive' : 'outline'
+                              }>
+                                {lead.status}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <div className="flex justify-end gap-1">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => openEditTagsDialog(person?.id, person?.name, person?.tags || [])}
+                                >
+                                  <Tag className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="text-destructive hover:text-destructive"
+                                  onClick={() => deleteLead.mutate(lead.id)}
+                                  disabled={deleteLead.isPending}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    {searchQuery ? 'No leads found matching your search' : 'No leads found. Add people as leads to get started.'}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Edit Tags Dialog */}
+            <Dialog open={editTagsDialogOpen} onOpenChange={setEditTagsDialogOpen}>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Edit Tags for {editingLead?.personName}</DialogTitle>
+                  <DialogDescription>
+                    Update the tags for this lead. Users with matching tags will see this lead.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="edit-tags">Tags (comma-separated)</Label>
+                    <Input
+                      id="edit-tags"
+                      value={editTagsValue}
+                      onChange={(e) => setEditTagsValue(e.target.value)}
+                      placeholder="e.g., enterprise, healthcare, usa"
+                    />
+                    {availableTags.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5 mt-1">
+                        {availableTags.slice(0, 10).map(tag => (
+                          <Badge 
+                            key={tag} 
+                            variant="outline"
+                            className="cursor-pointer hover:bg-primary hover:text-primary-foreground transition-colors"
+                            onClick={() => {
+                              const currentTags = editTagsValue.split(',').map(t => t.trim()).filter(Boolean);
+                              if (!currentTags.includes(tag)) {
+                                setEditTagsValue([...currentTags, tag].join(', '));
+                              }
+                            }}
+                          >
+                            {tag}
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setEditTagsDialogOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={handleEditTags}
+                    disabled={updatePersonTags.isPending}
+                  >
+                    {updatePersonTags.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                    Save Tags
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
           </TabsContent>
 
           {/* User Tags Tab */}

@@ -306,3 +306,104 @@ export function useDeleteCompanyEvent() {
     },
   });
 }
+
+// Leads hooks
+export function useLeads() {
+  return useQuery({
+    queryKey: ['admin-leads'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('leads')
+        .select(`
+          *,
+          person:people(*)
+        `)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      return data;
+    },
+  });
+}
+
+export function useCreateLead() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async (lead: {
+      person_id: string;
+      notes?: string;
+      source?: string;
+      status?: Database['public']['Enums']['lead_status'];
+    }) => {
+      const { error } = await supabase.from('leads').insert(lead);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-leads'] });
+      queryClient.invalidateQueries({ queryKey: ['leads-for-user'] });
+      toast({ title: 'Lead created successfully' });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Error creating lead',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
+}
+
+export function useDeleteLead() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async (leadId: string) => {
+      const { error } = await supabase.from('leads').delete().eq('id', leadId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-leads'] });
+      queryClient.invalidateQueries({ queryKey: ['leads-for-user'] });
+      toast({ title: 'Lead deleted successfully' });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Error deleting lead',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
+}
+
+export function useUpdatePersonTags() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async ({ personId, tags }: { personId: string; tags: string[] }) => {
+      const { error } = await supabase
+        .from('people')
+        .update({ tags })
+        .eq('id', personId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-people'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-leads'] });
+      queryClient.invalidateQueries({ queryKey: ['leads-for-user'] });
+      queryClient.invalidateQueries({ queryKey: ['available-tags'] });
+      toast({ title: 'Tags updated successfully' });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Error updating tags',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
+}
