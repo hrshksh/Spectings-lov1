@@ -1,7 +1,9 @@
+import { useState, useMemo } from 'react';
 import { DashboardLayout } from '@/components/layout';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Table,
@@ -11,7 +13,14 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { CheckCircle, XCircle, Clock, Eye, AlertTriangle, Users, Building2, TrendingUp, ExternalLink, Loader2 } from 'lucide-react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { CheckCircle, XCircle, Clock, Eye, AlertTriangle, Users, Building2, TrendingUp, ExternalLink, Loader2, Search, Filter } from 'lucide-react';
 import { 
   useTasks, 
   useEvidence, 
@@ -48,6 +57,52 @@ export default function AdminDashboard() {
   const updateTaskStatus = useUpdateTaskStatus();
   const updateEvidenceStatus = useUpdateEvidenceStatus();
   const updateLeadStatus = useUpdateLeadStatus();
+
+  // Filters
+  const [searchQuery, setSearchQuery] = useState('');
+  const [taskStatusFilter, setTaskStatusFilter] = useState<string>('all');
+  const [taskPriorityFilter, setTaskPriorityFilter] = useState<string>('all');
+  const [evidenceStatusFilter, setEvidenceStatusFilter] = useState<string>('all');
+  const [leadStatusFilter, setLeadStatusFilter] = useState<string>('all');
+
+  // Filtered data
+  const filteredTasks = useMemo(() => {
+    if (!tasks) return [];
+    return tasks.filter(task => {
+      const matchesSearch = task.title.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesStatus = taskStatusFilter === 'all' || task.status === taskStatusFilter;
+      const matchesPriority = taskPriorityFilter === 'all' || task.priority === taskPriorityFilter;
+      return matchesSearch && matchesStatus && matchesPriority;
+    });
+  }, [tasks, searchQuery, taskStatusFilter, taskPriorityFilter]);
+
+  const filteredEvidence = useMemo(() => {
+    if (!evidence) return [];
+    return evidence.filter(ev => {
+      const matchesSearch = ev.text?.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                           ev.url?.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesStatus = evidenceStatusFilter === 'all' || ev.status === evidenceStatusFilter;
+      return matchesSearch && matchesStatus;
+    });
+  }, [evidence, searchQuery, evidenceStatusFilter]);
+
+  const filteredLeads = useMemo(() => {
+    if (!leads) return [];
+    return leads.filter(lead => {
+      const matchesSearch = lead.person?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                           lead.person?.company?.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesStatus = leadStatusFilter === 'all' || lead.status === leadStatusFilter;
+      return matchesSearch && matchesStatus;
+    });
+  }, [leads, searchQuery, leadStatusFilter]);
+
+  const filteredCompanies = useMemo(() => {
+    if (!companies) return [];
+    return companies.filter(company => {
+      return company.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+             company.industry?.toLowerCase().includes(searchQuery.toLowerCase());
+    });
+  }, [companies, searchQuery]);
 
   const handleApproveTask = (taskId: string) => {
     updateTaskStatus.mutate({ taskId, status: 'completed' });
@@ -108,19 +163,68 @@ export default function AdminDashboard() {
           ))}
         </div>
 
+        {/* Global Search */}
+        <div className="relative w-full max-w-md">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search across all queues..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-9"
+          />
+        </div>
+
         <Tabs defaultValue="all" className="space-y-6">
           <TabsList>
-            <TabsTrigger value="all">All Tasks</TabsTrigger>
-            <TabsTrigger value="evidence">Evidence</TabsTrigger>
-            <TabsTrigger value="leads">Leads</TabsTrigger>
-            <TabsTrigger value="companies">Companies</TabsTrigger>
+            <TabsTrigger value="all">
+              All Tasks
+              {filteredTasks.length > 0 && <Badge variant="secondary" className="ml-2">{filteredTasks.length}</Badge>}
+            </TabsTrigger>
+            <TabsTrigger value="evidence">
+              Evidence
+              {filteredEvidence.length > 0 && <Badge variant="secondary" className="ml-2">{filteredEvidence.length}</Badge>}
+            </TabsTrigger>
+            <TabsTrigger value="leads">
+              Leads
+              {filteredLeads.length > 0 && <Badge variant="secondary" className="ml-2">{filteredLeads.length}</Badge>}
+            </TabsTrigger>
+            <TabsTrigger value="companies">
+              Companies
+              {filteredCompanies.length > 0 && <Badge variant="secondary" className="ml-2">{filteredCompanies.length}</Badge>}
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="all">
             <Card>
               <CardHeader>
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <CardTitle>Task Queue</CardTitle>
+                  <div className="flex gap-2">
+                    <Select value={taskStatusFilter} onValueChange={setTaskStatusFilter}>
+                      <SelectTrigger className="w-[140px]">
+                        <Filter className="h-4 w-4 mr-2" />
+                        <SelectValue placeholder="Status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Status</SelectItem>
+                        <SelectItem value="pending">Pending</SelectItem>
+                        <SelectItem value="in_progress">In Progress</SelectItem>
+                        <SelectItem value="completed">Completed</SelectItem>
+                        <SelectItem value="rejected">Rejected</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Select value={taskPriorityFilter} onValueChange={setTaskPriorityFilter}>
+                      <SelectTrigger className="w-[140px]">
+                        <SelectValue placeholder="Priority" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Priority</SelectItem>
+                        <SelectItem value="low">Low</SelectItem>
+                        <SelectItem value="medium">Medium</SelectItem>
+                        <SelectItem value="high">High</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
               </CardHeader>
               <CardContent>
@@ -128,7 +232,7 @@ export default function AdminDashboard() {
                   <div className="flex justify-center py-8">
                     <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
                   </div>
-                ) : tasks && tasks.length > 0 ? (
+                ) : filteredTasks.length > 0 ? (
                   <Table>
                     <TableHeader>
                       <TableRow>
@@ -141,7 +245,7 @@ export default function AdminDashboard() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {tasks.map((task) => (
+                      {filteredTasks.map((task) => (
                         <TableRow key={task.id}>
                           <TableCell>
                             <div className={`h-8 w-8 rounded-lg flex items-center justify-center ${
@@ -209,7 +313,9 @@ export default function AdminDashboard() {
                   </Table>
                 ) : (
                   <div className="text-center py-8 text-muted-foreground">
-                    No tasks found. Tasks will appear here when created.
+                    {searchQuery || taskStatusFilter !== 'all' || taskPriorityFilter !== 'all' 
+                      ? 'No tasks match your filters' 
+                      : 'No tasks found. Tasks will appear here when created.'}
                   </div>
                 )}
               </CardContent>
@@ -219,15 +325,32 @@ export default function AdminDashboard() {
           <TabsContent value="evidence">
             <Card>
               <CardHeader>
-                <CardTitle>Evidence Queue</CardTitle>
-                <CardDescription>Review and publish raw evidence</CardDescription>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div>
+                    <CardTitle>Evidence Queue</CardTitle>
+                    <CardDescription>Review and publish raw evidence</CardDescription>
+                  </div>
+                  <Select value={evidenceStatusFilter} onValueChange={setEvidenceStatusFilter}>
+                    <SelectTrigger className="w-[140px]">
+                      <Filter className="h-4 w-4 mr-2" />
+                      <SelectValue placeholder="Status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Status</SelectItem>
+                      <SelectItem value="pending">Pending</SelectItem>
+                      <SelectItem value="parsed">Parsed</SelectItem>
+                      <SelectItem value="published">Published</SelectItem>
+                      <SelectItem value="rejected">Rejected</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </CardHeader>
               <CardContent>
                 {evidenceLoading ? (
                   <div className="flex justify-center py-8">
                     <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
                   </div>
-                ) : evidence && evidence.length > 0 ? (
+                ) : filteredEvidence.length > 0 ? (
                   <Table>
                     <TableHeader>
                       <TableRow>
@@ -240,7 +363,7 @@ export default function AdminDashboard() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {evidence.map((ev) => (
+                      {filteredEvidence.map((ev) => (
                         <TableRow key={ev.id}>
                           <TableCell>
                             <Badge variant="outline">{ev.source_type}</Badge>
@@ -299,7 +422,9 @@ export default function AdminDashboard() {
                   </Table>
                 ) : (
                   <div className="text-center py-8 text-muted-foreground">
-                    No evidence found. Evidence will appear here when ingested.
+                    {searchQuery || evidenceStatusFilter !== 'all' 
+                      ? 'No evidence matches your filters' 
+                      : 'No evidence found. Evidence will appear here when ingested.'}
                   </div>
                 )}
               </CardContent>
@@ -309,15 +434,31 @@ export default function AdminDashboard() {
           <TabsContent value="leads">
             <Card>
               <CardHeader>
-                <CardTitle>Lead Management Queue</CardTitle>
-                <CardDescription>Review and verify leads</CardDescription>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div>
+                    <CardTitle>Lead Management Queue</CardTitle>
+                    <CardDescription>Review and verify leads</CardDescription>
+                  </div>
+                  <Select value={leadStatusFilter} onValueChange={setLeadStatusFilter}>
+                    <SelectTrigger className="w-[140px]">
+                      <Filter className="h-4 w-4 mr-2" />
+                      <SelectValue placeholder="Status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Status</SelectItem>
+                      <SelectItem value="pending">Pending</SelectItem>
+                      <SelectItem value="verified">Verified</SelectItem>
+                      <SelectItem value="rejected">Rejected</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </CardHeader>
               <CardContent>
                 {leadsLoading ? (
                   <div className="flex justify-center py-8">
                     <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
                   </div>
-                ) : leads && leads.length > 0 ? (
+                ) : filteredLeads.length > 0 ? (
                   <Table>
                     <TableHeader>
                       <TableRow>
@@ -330,7 +471,7 @@ export default function AdminDashboard() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {leads.map((lead) => (
+                      {filteredLeads.map((lead) => (
                         <TableRow key={lead.id}>
                           <TableCell className="font-medium">
                             {lead.person?.name || 'Unknown'}
@@ -373,7 +514,9 @@ export default function AdminDashboard() {
                   </Table>
                 ) : (
                   <div className="text-center py-8 text-muted-foreground">
-                    No leads pending review
+                    {searchQuery || leadStatusFilter !== 'all' 
+                      ? 'No leads match your filters' 
+                      : 'No leads pending review'}
                   </div>
                 )}
               </CardContent>
@@ -391,7 +534,7 @@ export default function AdminDashboard() {
                   <div className="flex justify-center py-8">
                     <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
                   </div>
-                ) : companies && companies.length > 0 ? (
+                ) : filteredCompanies.length > 0 ? (
                   <Table>
                     <TableHeader>
                       <TableRow>
@@ -403,7 +546,7 @@ export default function AdminDashboard() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {companies.map((company) => (
+                      {filteredCompanies.map((company) => (
                         <TableRow key={company.id}>
                           <TableCell className="font-medium">{company.name}</TableCell>
                           <TableCell>{company.industry || '-'}</TableCell>
@@ -428,7 +571,7 @@ export default function AdminDashboard() {
                   </Table>
                 ) : (
                   <div className="text-center py-8 text-muted-foreground">
-                    No companies found
+                    {searchQuery ? 'No companies match your search' : 'No companies found'}
                   </div>
                 )}
               </CardContent>
