@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 import { DashboardLayout } from '@/components/layout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -25,9 +26,10 @@ export default function CompanyIntelligence() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCompetitor, setSelectedCompetitor] = useState<string | null>(null);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
+  const [isSearchingAll, setIsSearchingAll] = useState(false);
 
   // Fetch only tracked companies from database
-  const { data: companies = [], isLoading: companiesLoading, error: companiesError } = useQuery({
+  const { data: trackedCompanies = [], isLoading: companiesLoading, error: companiesError } = useQuery({
     queryKey: ['companies', 'tracked'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -38,6 +40,22 @@ export default function CompanyIntelligence() {
       if (error) throw error;
       return data as Company[];
     }
+  });
+
+  // Fetch ALL companies when searching
+  const { data: allCompanies = [], isLoading: allCompaniesLoading } = useQuery({
+    queryKey: ['companies', 'all', searchQuery],
+    queryFn: async () => {
+      if (!searchQuery.trim()) return [];
+      const { data, error } = await supabase
+        .from('companies')
+        .select('*')
+        .or(`name.ilike.%${searchQuery}%,domain.ilike.%${searchQuery}%,industry.ilike.%${searchQuery}%`)
+        .order('name');
+      if (error) throw error;
+      return data as Company[];
+    },
+    enabled: searchQuery.trim().length > 0 && isSearchingAll
   });
 
   // Fetch company events from database
@@ -55,11 +73,53 @@ export default function CompanyIntelligence() {
 
   const isLoading = companiesLoading || eventsLoading;
 
-  // Filter competitors based on search
-  const filteredCompanies = companies.filter((company) => {
+  // Filter tracked companies based on search (when not searching all)
+  const filteredTrackedCompanies = trackedCompanies.filter((company) => {
     const matchesSearch = company.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (company.domain?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false);
     return matchesSearch;
+  });
+
+  // Use appropriate company list based on search mode
+  const displayCompanies = isSearchingAll && searchQuery.trim() ? allCompanies : filteredTrackedCompanies;
+
+  const queryClient = useQueryClient();
+
+  // Track company mutation
+  const trackCompanyMutation = useMutation({
+    mutationFn: async (companyId: string) => {
+      const { error } = await supabase
+        .from('companies')
+        .update({ is_tracked: true })
+        .eq('id', companyId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['companies'] });
+      toast.success('Company added to tracking list');
+    },
+    onError: () => {
+      toast.error('Failed to track company');
+    }
+  });
+
+  // Untrack company mutation
+  const untrackCompanyMutation = useMutation({
+    mutationFn: async (companyId: string) => {
+      const { error } = await supabase
+        .from('companies')
+        .update({ is_tracked: false })
+        .eq('id', companyId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['companies'] });
+      toast.success('Company removed from tracking list');
+      setSelectedCompetitor(null);
+    },
+    onError: () => {
+      toast.error('Failed to untrack company');
+    }
   });
 
   const getCompanyEvents = (companyId: string) => {
@@ -120,26 +180,43 @@ export default function CompanyIntelligence() {
         {/* Search and Actions */}
         <Card>
           <CardContent className="p-2 sm:p-3">
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-              <div className="relative flex-1">
-                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input 
-                  placeholder="Search competitors..." 
-                  value={searchQuery} 
-                  onChange={(e) => setSearchQuery(e.target.value)} 
-                  className="pl-8 h-9 text-sm w-full" 
-                />
+            <div className="flex flex-col gap-2">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                <div className="relative flex-1">
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input 
+                    placeholder={isSearchingAll ? "Search all companies database..." : "Search tracked competitors..."} 
+                    value={searchQuery} 
+                    onChange={(e) => setSearchQuery(e.target.value)} 
+                    className="pl-8 h-9 text-sm w-full" 
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <Button 
+                    size="sm" 
+                    variant={isSearchingAll ? "default" : "outline"} 
+                    className="h-9 flex-1 sm:flex-none"
+                    onClick={() => setIsSearchingAll(!isSearchingAll)}
+                  >
+                    <Globe className="h-3.5 w-3.5 sm:mr-1.5" />
+                    <span className="hidden sm:inline">{isSearchingAll ? "Searching All" : "Search All"}</span>
+                  </Button>
+                  <Button size="sm" variant="outline" className="h-9 flex-1 sm:flex-none">
+                    <Download className="h-3.5 w-3.5 sm:mr-1.5" />
+                    <span className="hidden sm:inline">Export</span>
+                  </Button>
+                  <Button size="sm" className="h-9 flex-1 sm:flex-none" onClick={() => setAddDialogOpen(true)}>
+                    <Building2 className="h-3.5 w-3.5 sm:mr-1.5" />
+                    <span className="hidden sm:inline">Add Competitor</span>
+                  </Button>
+                </div>
               </div>
-              <div className="flex gap-2">
-                <Button size="sm" variant="outline" className="h-9 flex-1 sm:flex-none">
-                  <Download className="h-3.5 w-3.5 sm:mr-1.5" />
-                  <span className="hidden sm:inline">Export</span>
-                </Button>
-                <Button size="sm" className="h-9 flex-1 sm:flex-none" onClick={() => setAddDialogOpen(true)}>
-                  <Building2 className="h-3.5 w-3.5 sm:mr-1.5" />
-                  <span className="hidden sm:inline">Add Competitor</span>
-                </Button>
-              </div>
+              {isSearchingAll && (
+                <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+                  <Globe className="h-3 w-3" />
+                  Searching all {allCompaniesLoading ? "..." : allCompanies.length} companies in database. Click on a company to start tracking.
+                </p>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -180,7 +257,7 @@ export default function CompanyIntelligence() {
         {/* Competitors List - Row wise */}
         {!isLoading && !companiesError && (
           <div className="space-y-3">
-            {filteredCompanies.map((company) => {
+            {displayCompanies.map((company) => {
               const events = getCompanyEvents(company.id);
               const isSelected = selectedCompetitor === company.id;
               
@@ -190,6 +267,8 @@ export default function CompanyIntelligence() {
                 return acc;
               }, {} as Record<string, number>);
               
+              const isTracked = company.is_tracked;
+              
               return (
                 <Card 
                   key={company.id}
@@ -197,9 +276,16 @@ export default function CompanyIntelligence() {
                     "cursor-pointer transition-all duration-300 ease-in-out overflow-hidden",
                     isSelected 
                       ? "ring-2 ring-primary shadow-lg" 
-                      : "hover:shadow-md hover:border-primary/50"
+                      : "hover:shadow-md hover:border-primary/50",
+                    isSearchingAll && !isTracked && "border-dashed border-primary/30"
                   )}
-                  onClick={() => setSelectedCompetitor(isSelected ? null : company.id)}
+                  onClick={() => {
+                    if (isSearchingAll && !isTracked) {
+                      trackCompanyMutation.mutate(company.id);
+                    } else {
+                      setSelectedCompetitor(isSelected ? null : company.id);
+                    }
+                  }}
                 >
                   {/* Competitor Header */}
                   <div className="p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
@@ -259,41 +345,55 @@ export default function CompanyIntelligence() {
                     
                     {/* Actions */}
                     <div className="flex items-center justify-between sm:justify-end gap-2 mt-2 sm:mt-0">
-                      <Badge variant="outline" className="text-[10px] sm:text-xs">
-                        <Activity className="h-3 w-3 mr-1" />
-                        {events.length} events
-                      </Badge>
-                      <div className="flex items-center gap-1">
-                        <ChevronDown className={cn(
-                          "h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground transition-transform duration-300",
-                          isSelected && "rotate-180"
-                        )} />
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                            <Button variant="ghost" size="icon" className="h-8 w-8">
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-48">
-                            <DropdownMenuItem className="text-xs">
-                              <Eye className="h-3.5 w-3.5 mr-2" />View Full Profile
-                            </DropdownMenuItem>
-                            <DropdownMenuItem className="text-xs">
-                              <Globe className="h-3.5 w-3.5 mr-2" />Visit Website
-                            </DropdownMenuItem>
-                            <DropdownMenuItem className="text-xs">
-                              <FileText className="h-3.5 w-3.5 mr-2" />Generate Report
-                            </DropdownMenuItem>
-                            <DropdownMenuItem className="text-xs">
-                              <Bell className="h-3.5 w-3.5 mr-2" />Set Alerts
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem className="text-xs text-destructive">
-                              <Trash2 className="h-3.5 w-3.5 mr-2" />Stop Tracking
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
+                      {isSearchingAll && !isTracked ? (
+                        <Badge variant="outline" className="text-[10px] sm:text-xs border-primary text-primary">
+                          Click to track
+                        </Badge>
+                      ) : (
+                        <>
+                          <Badge variant="outline" className="text-[10px] sm:text-xs">
+                            <Activity className="h-3 w-3 mr-1" />
+                            {events.length} events
+                          </Badge>
+                          <div className="flex items-center gap-1">
+                            <ChevronDown className={cn(
+                              "h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground transition-transform duration-300",
+                              isSelected && "rotate-180"
+                            )} />
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                                <Button variant="ghost" size="icon" className="h-8 w-8">
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end" className="w-48">
+                                <DropdownMenuItem className="text-xs">
+                                  <Eye className="h-3.5 w-3.5 mr-2" />View Full Profile
+                                </DropdownMenuItem>
+                                <DropdownMenuItem className="text-xs">
+                                  <Globe className="h-3.5 w-3.5 mr-2" />Visit Website
+                                </DropdownMenuItem>
+                                <DropdownMenuItem className="text-xs">
+                                  <FileText className="h-3.5 w-3.5 mr-2" />Generate Report
+                                </DropdownMenuItem>
+                                <DropdownMenuItem className="text-xs">
+                                  <Bell className="h-3.5 w-3.5 mr-2" />Set Alerts
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem 
+                                  className="text-xs text-destructive"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    untrackCompanyMutation.mutate(company.id);
+                                  }}
+                                >
+                                  <Trash2 className="h-3.5 w-3.5 mr-2" />Stop Tracking
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </div>
+                        </>
+                      )}
                     </div>
                   </div>
 
@@ -416,12 +516,14 @@ export default function CompanyIntelligence() {
               );
             })}
             
-            {filteredCompanies.length === 0 && !isLoading && (
+            {displayCompanies.length === 0 && !isLoading && (
               <Card>
                 <CardContent className="py-12 text-center text-sm text-muted-foreground">
-                  {companies.length === 0 
-                    ? "No competitors being tracked yet. Add a competitor to get started."
-                    : "No competitors found matching your search"
+                  {isSearchingAll 
+                    ? (searchQuery.trim() ? "No companies found matching your search" : "Start typing to search all companies")
+                    : (trackedCompanies.length === 0 
+                        ? "No competitors being tracked yet. Add a competitor to get started."
+                        : "No competitors found matching your search")
                   }
                 </CardContent>
               </Card>
@@ -439,7 +541,7 @@ export default function CompanyIntelligence() {
                 </div>
                 <div>
                   <p className="text-[10px] text-muted-foreground">Total Tracked</p>
-                  <p className="text-lg font-semibold">{isLoading ? '-' : companies.length}</p>
+                  <p className="text-lg font-semibold">{isLoading ? '-' : trackedCompanies.length}</p>
                 </div>
               </div>
             </CardContent>
