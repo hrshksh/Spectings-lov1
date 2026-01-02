@@ -6,14 +6,16 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { 
   Building2, TrendingUp, Zap, FileText, ExternalLink, 
-  DollarSign, Search, Filter, Download, Users, Calendar,
-  Activity, ChevronDown, MoreHorizontal, Eye, Bell, Trash2
+  DollarSign, Search, Filter, Download, Users,
+  Activity, ChevronDown, MoreHorizontal, Eye, Bell, Trash2, Globe, Calendar
 } from 'lucide-react';
 import { mockCompanies, mockCompanyEvents } from '@/data/mockData';
-import { Company, CompanyEvent } from '@/types';
+
+// Get all unique competitors across all companies
+const allCompetitors = [...new Set(mockCompanies.flatMap(c => c.competitors || []))];
 
 export default function CompanyIntelligence() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -59,6 +61,11 @@ export default function CompanyIntelligence() {
       case 'funding': return 'bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-400';
       default: return 'bg-muted text-muted-foreground';
     }
+  };
+
+  // Check if a company tracks a specific competitor
+  const tracksCompetitor = (company: typeof mockCompanies[0], competitor: string) => {
+    return company.competitors?.includes(competitor) || false;
   };
 
   return (
@@ -109,7 +116,7 @@ export default function CompanyIntelligence() {
           </CardContent>
         </Card>
 
-        {/* Competitors Table */}
+        {/* Competitors Table with Column Dropdowns */}
         <Card>
           <CardHeader className="py-2 px-3">
             <CardTitle className="text-sm font-medium flex items-center justify-between">
@@ -119,28 +126,69 @@ export default function CompanyIntelligence() {
               </Button>
             </CardTitle>
           </CardHeader>
-          <CardContent className="p-0">
+          <CardContent className="p-0 overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-[220px]">Company</TableHead>
+                  <TableHead className="w-[180px] sticky left-0 bg-card z-10">Company</TableHead>
                   <TableHead>Industry</TableHead>
                   <TableHead>Size</TableHead>
-                  <TableHead>Founded</TableHead>
-                  <TableHead>Competitors</TableHead>
+                  {/* Dynamic competitor columns with dropdowns */}
+                  {allCompetitors.map((competitor) => (
+                    <TableHead key={competitor} className="min-w-[140px]">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="sm" className="h-7 text-xs font-medium -ml-2 hover:bg-secondary">
+                            {competitor}
+                            <ChevronDown className="h-3 w-3 ml-1" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="start" className="w-56">
+                          <div className="px-2 py-1.5">
+                            <p className="text-xs font-medium">{competitor}</p>
+                            <p className="text-[10px] text-muted-foreground">Competitor details</p>
+                          </div>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem className="text-xs">
+                            <Globe className="h-3 w-3 mr-2" />
+                            Visit Website
+                          </DropdownMenuItem>
+                          <DropdownMenuItem className="text-xs">
+                            <Eye className="h-3 w-3 mr-2" />
+                            View Profile
+                          </DropdownMenuItem>
+                          <DropdownMenuItem className="text-xs">
+                            <Activity className="h-3 w-3 mr-2" />
+                            View Activities
+                          </DropdownMenuItem>
+                          <DropdownMenuItem className="text-xs">
+                            <FileText className="h-3 w-3 mr-2" />
+                            Generate Report
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem className="text-xs">
+                            <Bell className="h-3 w-3 mr-2" />
+                            Set Alerts
+                          </DropdownMenuItem>
+                          <DropdownMenuItem className="text-xs">
+                            <Calendar className="h-3 w-3 mr-2" />
+                            View Timeline
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableHead>
+                  ))}
                   <TableHead>Latest Activity</TableHead>
-                  <TableHead>Events</TableHead>
-                  <TableHead className="text-right w-[80px]">Actions</TableHead>
+                  <TableHead className="text-right w-[60px]">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredCompanies.map((company) => {
                   const latestEvent = getLatestEvent(company.id);
-                  const eventCount = getCompanyEvents(company.id).length;
                   
                   return (
                     <TableRow key={company.id} className="hover:bg-muted/40">
-                      <TableCell className="py-2">
+                      <TableCell className="py-2 sticky left-0 bg-card z-10">
                         <div className="flex items-center gap-2">
                           <div className="h-8 w-8 rounded-md bg-primary/10 flex items-center justify-center flex-shrink-0">
                             <Building2 className="h-4 w-4 text-primary" />
@@ -165,31 +213,52 @@ export default function CompanyIntelligence() {
                       <TableCell className="py-2">
                         <span className="text-xs text-muted-foreground">{company.size}</span>
                       </TableCell>
-                      <TableCell className="py-2">
-                        <span className="text-xs text-muted-foreground">{company.founded || 'N/A'}</span>
-                      </TableCell>
-                      <TableCell className="py-2">
-                        {company.competitors && company.competitors.length > 0 ? (
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="outline" size="sm" className="h-7 text-xs">
-                                {company.competitors.length} competitors
-                                <ChevronDown className="h-3 w-3 ml-1" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="start" className="w-48">
-                              {company.competitors.map((comp) => (
-                                <DropdownMenuItem key={comp} className="text-xs">
-                                  <Building2 className="h-3 w-3 mr-2 text-muted-foreground" />
-                                  {comp}
+                      {/* Competitor tracking status for each column */}
+                      {allCompetitors.map((competitor) => (
+                        <TableCell key={competitor} className="py-2">
+                          {tracksCompetitor(company, competitor) ? (
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="outline" size="sm" className="h-6 text-[10px] px-2 border-green-200 bg-green-50 text-green-700 hover:bg-green-100 dark:border-green-800 dark:bg-green-950 dark:text-green-400">
+                                  Tracking
+                                  <ChevronDown className="h-2.5 w-2.5 ml-1" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="start" className="w-48">
+                                <div className="px-2 py-1.5">
+                                  <p className="text-xs font-medium">{company.name} vs {competitor}</p>
+                                </div>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem className="text-xs">
+                                  <TrendingUp className="h-3 w-3 mr-2" />
+                                  Compare Metrics
                                 </DropdownMenuItem>
-                              ))}
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        ) : (
-                          <span className="text-xs text-muted-foreground">None</span>
-                        )}
-                      </TableCell>
+                                <DropdownMenuItem className="text-xs">
+                                  <DollarSign className="h-3 w-3 mr-2" />
+                                  Pricing Comparison
+                                </DropdownMenuItem>
+                                <DropdownMenuItem className="text-xs">
+                                  <Zap className="h-3 w-3 mr-2" />
+                                  Feature Comparison
+                                </DropdownMenuItem>
+                                <DropdownMenuItem className="text-xs">
+                                  <Activity className="h-3 w-3 mr-2" />
+                                  Activity Log
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem className="text-xs text-destructive">
+                                  <Trash2 className="h-3 w-3 mr-2" />
+                                  Stop Tracking
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          ) : (
+                            <Button variant="ghost" size="sm" className="h-6 text-[10px] px-2 text-muted-foreground">
+                              —
+                            </Button>
+                          )}
+                        </TableCell>
+                      ))}
                       <TableCell className="py-2">
                         {latestEvent ? (
                           <div className="flex items-center gap-1.5">
@@ -197,16 +266,10 @@ export default function CompanyIntelligence() {
                               {getEventIcon(latestEvent.eventType)}
                               {latestEvent.eventType.replace('_', ' ')}
                             </span>
-                            <span className="text-[10px] text-muted-foreground">{latestEvent.publishedAt}</span>
                           </div>
                         ) : (
-                          <span className="text-xs text-muted-foreground">No activity</span>
+                          <span className="text-xs text-muted-foreground">—</span>
                         )}
-                      </TableCell>
-                      <TableCell className="py-2">
-                        <Badge variant="outline" className="text-[10px] px-1.5 py-0">
-                          {eventCount} events
-                        </Badge>
                       </TableCell>
                       <TableCell className="py-2 text-right">
                         <DropdownMenu>
@@ -228,6 +291,7 @@ export default function CompanyIntelligence() {
                               <Bell className="h-3 w-3 mr-2" />
                               Set Alerts
                             </DropdownMenuItem>
+                            <DropdownMenuSeparator />
                             <DropdownMenuItem className="text-xs text-destructive">
                               <Trash2 className="h-3 w-3 mr-2" />
                               Remove
