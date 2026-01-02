@@ -40,6 +40,8 @@ import {
   Calendar,
   Loader2,
   ExternalLink,
+  Tag,
+  X,
 } from 'lucide-react';
 import {
   usePeople,
@@ -55,6 +57,10 @@ import {
 import { useCompanies } from '@/hooks/useAdminData';
 import { Constants } from '@/integrations/supabase/types';
 import type { Database } from '@/integrations/supabase/types';
+import { supabase } from '@/integrations/supabase/client';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { toast } from '@/hooks/use-toast';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 type CompanyEventType = Database['public']['Enums']['company_event_type'];
 
@@ -69,9 +75,62 @@ const eventTypeLabels: Record<CompanyEventType, string> = {
   acquisition: 'Acquisition',
 };
 
+// Fetch all profiles for user tag assignment
+function useProfiles() {
+  return useQuery({
+    queryKey: ['profiles-for-tags'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .order('email');
+      
+      if (error) throw error;
+      return data;
+    },
+  });
+}
+
+// Fetch all user tags
+function useAllUserTags() {
+  return useQuery({
+    queryKey: ['all-user-tags'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('user_tags')
+        .select('*')
+        .order('tag');
+      
+      if (error) throw error;
+      return data;
+    },
+  });
+}
+
+// Fetch available tags from people table
+function useAvailableTags() {
+  return useQuery({
+    queryKey: ['available-tags'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('people')
+        .select('tags');
+      
+      if (error) throw error;
+      
+      const tags = new Set<string>();
+      data.forEach(person => {
+        person.tags?.forEach(tag => tags.add(tag));
+      });
+      return Array.from(tags).sort();
+    },
+  });
+}
+
 export default function DataManagement() {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState('people');
+  const queryClient = useQueryClient();
 
   // People state
   const { data: people, isLoading: peopleLoading } = usePeople();
@@ -105,6 +164,52 @@ export default function DataManagement() {
     event_type: '' as CompanyEventType | '',
     summary: '',
     confidence: 80,
+  });
+
+  // User Tags state
+  const { data: profiles, isLoading: profilesLoading } = useProfiles();
+  const { data: userTags, isLoading: tagsLoading } = useAllUserTags();
+  const { data: availableTags = [] } = useAvailableTags();
+  const [tagDialogOpen, setTagDialogOpen] = useState(false);
+  const [newTagAssignment, setNewTagAssignment] = useState({ user_id: '', tag: '' });
+
+  const addUserTag = useMutation({
+    mutationFn: async ({ user_id, tag }: { user_id: string; tag: string }) => {
+      const { error } = await supabase
+        .from('user_tags')
+        .insert({ user_id, tag: tag.trim() });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['all-user-tags'] });
+      setTagDialogOpen(false);
+      setNewTagAssignment({ user_id: '', tag: '' });
+      toast({ title: 'Tag assigned successfully' });
+    },
+    onError: (error: any) => {
+      if (error.code === '23505') {
+        toast({ title: 'Tag already assigned to this user', variant: 'destructive' });
+      } else {
+        toast({ title: 'Failed to assign tag', description: error.message, variant: 'destructive' });
+      }
+    },
+  });
+
+  const removeUserTag = useMutation({
+    mutationFn: async (tagId: string) => {
+      const { error } = await supabase
+        .from('user_tags')
+        .delete()
+        .eq('id', tagId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['all-user-tags'] });
+      toast({ title: 'Tag removed' });
+    },
+    onError: (error: any) => {
+      toast({ title: 'Failed to remove tag', description: error.message, variant: 'destructive' });
+    },
   });
 
   const handleCreatePerson = () => {
@@ -163,6 +268,28 @@ export default function DataManagement() {
       (e.company as any)?.name?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  // Group user tags by user_id for display
+  const userTagsMap = userTags?.reduce((acc, tag) => {
+    if (!acc[tag.user_id]) {
+      acc[tag.user_id] = [];
+    }
+    acc[tag.user_id].push(tag);
+    return acc;
+  }, {} as Record<string, typeof userTags>) || {};
+
+  const filteredProfiles = profiles?.filter(
+    (p) =>
+      p.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      p.full_name?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const getInitials = (name: string | null, email: string) => {
+    if (name) {
+      return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+    }
+    return email.slice(0, 2).toUpperCase();
+  };
+
   return (
     <DashboardLayout title="Data Management" subtitle="Manage people, organizations, and events" isAdmin>
       <div className="space-y-6 animate-fade-in">
@@ -180,6 +307,10 @@ export default function DataManagement() {
               <TabsTrigger value="events" className="gap-2">
                 <Calendar className="h-4 w-4" />
                 Events
+              </TabsTrigger>
+              <TabsTrigger value="user-tags" className="gap-2">
+                <Tag className="h-4 w-4" />
+                User Tags
               </TabsTrigger>
             </TabsList>
             <div className="relative w-full sm:w-64">
@@ -604,6 +735,169 @@ export default function DataManagement() {
                 ) : (
                   <div className="text-center py-8 text-muted-foreground">
                     {searchQuery ? 'No events found matching your search' : 'No events found'}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* User Tags Tab */}
+          <TabsContent value="user-tags">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle>User Tag Assignments</CardTitle>
+                    <CardDescription>
+                      Assign tags to users to control which leads they can see
+                    </CardDescription>
+                  </div>
+                  <Dialog open={tagDialogOpen} onOpenChange={setTagDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button>
+                        <Plus className="h-4 w-4 mr-2" />
+                        Assign Tag
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Assign Tag to User</DialogTitle>
+                        <DialogDescription>
+                          Select a user and tag to assign. Users will see leads matching their assigned tags.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="grid gap-4 py-4">
+                        <div className="grid gap-2">
+                          <Label htmlFor="user">User *</Label>
+                          <Select
+                            value={newTagAssignment.user_id}
+                            onValueChange={(value) => setNewTagAssignment({ ...newTagAssignment, user_id: value })}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select a user" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {profiles?.map((profile) => (
+                                <SelectItem key={profile.id} value={profile.id}>
+                                  {profile.full_name || profile.email} ({profile.email})
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="grid gap-2">
+                          <Label htmlFor="tag">Tag *</Label>
+                          <div className="space-y-2">
+                            <Input
+                              id="tag"
+                              value={newTagAssignment.tag}
+                              onChange={(e) => setNewTagAssignment({ ...newTagAssignment, tag: e.target.value })}
+                              placeholder="Enter tag name or select below"
+                            />
+                            {availableTags.length > 0 && (
+                              <div className="flex flex-wrap gap-1.5">
+                                {availableTags.slice(0, 10).map(tag => (
+                                  <Badge 
+                                    key={tag} 
+                                    variant="outline"
+                                    className="cursor-pointer hover:bg-primary hover:text-primary-foreground transition-colors"
+                                    onClick={() => setNewTagAssignment({ ...newTagAssignment, tag })}
+                                  >
+                                    {tag}
+                                  </Badge>
+                                ))}
+                                {availableTags.length > 10 && (
+                                  <Badge variant="secondary">+{availableTags.length - 10} more</Badge>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      <DialogFooter>
+                        <Button variant="outline" onClick={() => setTagDialogOpen(false)}>
+                          Cancel
+                        </Button>
+                        <Button
+                          onClick={() => addUserTag.mutate(newTagAssignment)}
+                          disabled={addUserTag.isPending || !newTagAssignment.user_id || !newTagAssignment.tag.trim()}
+                        >
+                          {addUserTag.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                          Assign
+                        </Button>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {profilesLoading || tagsLoading ? (
+                  <div className="flex justify-center py-8">
+                    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                  </div>
+                ) : filteredProfiles && filteredProfiles.length > 0 ? (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>User</TableHead>
+                        <TableHead>Assigned Tags</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredProfiles.map((profile) => (
+                        <TableRow key={profile.id}>
+                          <TableCell>
+                            <div className="flex items-center gap-3">
+                              <Avatar className="h-9 w-9">
+                                <AvatarImage src={profile.avatar_url || undefined} />
+                                <AvatarFallback>{getInitials(profile.full_name, profile.email)}</AvatarFallback>
+                              </Avatar>
+                              <div>
+                                <div className="font-medium">{profile.full_name || 'No name'}</div>
+                                <div className="text-sm text-muted-foreground">{profile.email}</div>
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex flex-wrap gap-1">
+                              {userTagsMap[profile.id]?.length > 0 ? (
+                                userTagsMap[profile.id].map((tag) => (
+                                  <Badge
+                                    key={tag.id}
+                                    variant="secondary"
+                                    className="cursor-pointer group"
+                                    onClick={() => removeUserTag.mutate(tag.id)}
+                                  >
+                                    {tag.tag}
+                                    <X className="ml-1 h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                  </Badge>
+                                ))
+                              ) : (
+                                <span className="text-sm text-muted-foreground">No tags assigned</span>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                setNewTagAssignment({ user_id: profile.id, tag: '' });
+                                setTagDialogOpen(true);
+                              }}
+                            >
+                              <Plus className="h-4 w-4 mr-1" />
+                              Add Tag
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    {searchQuery ? 'No users found matching your search' : 'No users found'}
                   </div>
                 )}
               </CardContent>
