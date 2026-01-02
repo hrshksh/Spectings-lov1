@@ -10,6 +10,7 @@ import { Search, Download, Mail, Phone, ExternalLink, ChevronRight, Loader2, Use
 import type { Tables } from '@/integrations/supabase/types';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
+import { useAuth } from '@/contexts/AuthContext';
 
 type Person = Tables<'people'>;
 type Lead = Tables<'leads'>;
@@ -18,10 +19,28 @@ interface LeadWithPerson extends Lead {
   person: Person | null;
 }
 
-// Fetch leads with person data (only people tagged as leads by admin)
-function useLeadsWithPeople() {
+// Fetch user's assigned tags
+function useUserTags(userId: string | undefined) {
   return useQuery({
-    queryKey: ['leads-with-people'],
+    queryKey: ['user-tags', userId],
+    queryFn: async () => {
+      if (!userId) return [];
+      const { data, error } = await supabase
+        .from('user_tags')
+        .select('tag')
+        .eq('user_id', userId);
+      
+      if (error) throw error;
+      return data.map(t => t.tag);
+    },
+    enabled: !!userId,
+  });
+}
+
+// Fetch leads with person data filtered by user's tags
+function useLeadsForUser(userTags: string[]) {
+  return useQuery({
+    queryKey: ['leads-for-user', userTags],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('leads')
@@ -32,18 +51,29 @@ function useLeadsWithPeople() {
         .order('created_at', { ascending: false });
       
       if (error) throw error;
-      return data as LeadWithPerson[];
+      
+      // Filter leads where person has at least one matching tag
+      const leads = data as LeadWithPerson[];
+      if (userTags.length === 0) return [];
+      
+      return leads.filter(lead => 
+        lead.person?.tags?.some(tag => userTags.includes(tag))
+      );
     },
+    enabled: userTags.length > 0,
   });
 }
 
 export default function PeopleIntelligence() {
+  const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedLead, setSelectedLead] = useState<LeadWithPerson | null>(null);
   const [tagFilter, setTagFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   
-  const { data: leads, isLoading } = useLeadsWithPeople();
+  const { data: userTags = [], isLoading: tagsLoading } = useUserTags(user?.id);
+  const { data: leads, isLoading: leadsLoading } = useLeadsForUser(userTags);
+  const isLoading = tagsLoading || leadsLoading;
 
   // Extract unique tags from all leads
   const allTags = useMemo(() => {
@@ -180,7 +210,18 @@ export default function PeopleIntelligence() {
                   <div className="flex justify-center py-12">
                     <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
                   </div>
-                ) : filteredLeads.length > 0 ? (
+                ) : userTags.length === 0 ? (
+                  <div className="text-center py-12 text-muted-foreground">
+                    <p>No tags assigned to your account yet.</p>
+                    <p className="text-sm">Contact an admin to assign tags to view relevant leads.</p>
+                  </div>
+                ) : filteredLeads.length === 0 ? (
+                  <div className="text-center py-12 text-muted-foreground">
+                    {searchQuery || tagFilter !== 'all' || statusFilter !== 'all'
+                      ? 'No leads match your filters' 
+                      : 'No leads match your assigned tags'}
+                  </div>
+                ) : (
                   <Table>
                     <TableHeader>
                       <TableRow>
@@ -244,12 +285,6 @@ export default function PeopleIntelligence() {
                       ))}
                     </TableBody>
                   </Table>
-                ) : (
-                  <div className="text-center py-12 text-muted-foreground">
-                    {searchQuery || tagFilter !== 'all' || statusFilter !== 'all'
-                      ? 'No leads match your filters' 
-                      : 'No leads available yet'}
-                  </div>
                 )}
               </CardContent>
             </Card>
