@@ -15,6 +15,8 @@ import Reports from "./pages/Reports";
 import Settings from "./pages/Settings";
 import Auth from "./pages/Auth";
 import AdminDashboard from "./pages/admin/AdminDashboard";
+import UsersManagement from "./pages/admin/UsersManagement";
+import DataManagement from "./pages/admin/DataManagement";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -67,6 +69,16 @@ const App = () => (
             <Route path="/admin" element={
               <ProtectedRoute requireAdmin>
                 <AdminDashboard />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/users" element={
+              <ProtectedRoute requireAdmin>
+                <UsersManagement />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/data" element={
+              <ProtectedRoute requireAdmin>
+                <DataManagement />
               </ProtectedRoute>
             } />
             <Route path="/admin/*" element={

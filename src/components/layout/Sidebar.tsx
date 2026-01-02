@@ -32,13 +32,9 @@ const userNavItems = [
 
 const adminNavItems = [
   { icon: LayoutDashboard, label: 'Task Queue', path: '/admin' },
-  { icon: FileText, label: 'Evidence Viewer', path: '/admin/evidence' },
-  { icon: Users, label: 'People Manager', path: '/admin/people' },
-  { icon: Building2, label: 'Company Manager', path: '/admin/companies' },
-  { icon: TrendingUp, label: 'Analytics Manager', path: '/admin/analytics' },
-  { icon: BookOpen, label: 'Case Studies', path: '/admin/case-studies' },
-  { icon: Settings, label: 'Automation', path: '/admin/automation' },
-  { icon: Shield, label: 'Quality Control', path: '/admin/qc' },
+  { icon: Users, label: 'Users & Roles', path: '/admin/users' },
+  { icon: FileText, label: 'Data Management', path: '/admin/data' },
+  { icon: Settings, label: 'Settings', path: '/settings' },
 ];
 
 export function Sidebar({ isAdmin = false }: SidebarProps) {
