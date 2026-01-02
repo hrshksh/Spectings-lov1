@@ -406,6 +406,19 @@ export default function DataManagement() {
   const leadPersonIds = new Set(leads?.map(l => l.person_id) || []);
   const availablePeopleForLeads = people?.filter(p => !leadPersonIds.has(p.id)) || [];
 
+  // Calculate lead counts per tag
+  const tagLeadCounts = leads?.reduce((acc, lead) => {
+    const person = lead.person as any;
+    const tags = person?.tags || [];
+    tags.forEach((tag: string) => {
+      acc[tag] = (acc[tag] || 0) + 1;
+    });
+    return acc;
+  }, {} as Record<string, number>) || {};
+
+  const sortedTagCounts = Object.entries(tagLeadCounts)
+    .sort(([, a], [, b]) => b - a);
+
   const getInitials = (name: string | null, email: string) => {
     if (name) {
       return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
@@ -872,20 +885,42 @@ export default function DataManagement() {
           <TabsContent value="leads">
             <Card>
               <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle>Leads</CardTitle>
-                    <CardDescription>
-                      {leads?.length || 0} leads - Add people as leads with tags. Users see leads matching their assigned tags.
-                    </CardDescription>
+                <div className="flex flex-col gap-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle>Leads</CardTitle>
+                      <CardDescription>
+                        {leads?.length || 0} leads - Users see leads matching their assigned tags.
+                      </CardDescription>
+                    </div>
+                    <Dialog open={leadDialogOpen} onOpenChange={setLeadDialogOpen}>
+                      <DialogTrigger asChild>
+                        <Button>
+                          <Plus className="h-4 w-4 mr-2" />
+                          Add Lead
+                        </Button>
+                      </DialogTrigger>
+                  </Dialog>
                   </div>
-                  <Dialog open={leadDialogOpen} onOpenChange={setLeadDialogOpen}>
-                    <DialogTrigger asChild>
-                      <Button>
-                        <Plus className="h-4 w-4 mr-2" />
-                        Add Lead
-                      </Button>
-                    </DialogTrigger>
+                  {/* Tag Stats */}
+                  {sortedTagCounts.length > 0 && (
+                    <div className="bg-muted/50 rounded-lg p-3">
+                      <div className="text-sm font-medium text-muted-foreground mb-2">Leads per Tag</div>
+                      <div className="flex flex-wrap gap-2">
+                        {sortedTagCounts.map(([tag, count]) => (
+                          <Badge key={tag} variant="secondary" className="gap-1.5">
+                            {tag}
+                            <span className="bg-background text-foreground px-1.5 py-0.5 rounded text-xs font-semibold">
+                              {count}
+                            </span>
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </CardHeader>
+              <Dialog open={leadDialogOpen} onOpenChange={setLeadDialogOpen}>
                     <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
                       <DialogHeader>
                         <DialogTitle>Add Lead</DialogTitle>
@@ -1067,9 +1102,7 @@ export default function DataManagement() {
                         </Button>
                       </DialogFooter>
                     </DialogContent>
-                  </Dialog>
-                </div>
-              </CardHeader>
+              </Dialog>
               <CardContent>
                 {leadsLoading ? (
                   <div className="flex justify-center py-8">
