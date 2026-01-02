@@ -50,40 +50,40 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
     <aside
       className={cn(
         'fixed left-0 top-0 z-40 h-screen bg-sidebar border-r border-sidebar-border transition-all duration-300',
-        collapsed ? 'w-16' : 'w-64'
+        collapsed ? 'w-14' : 'w-52'
       )}
     >
       <div className="flex h-full flex-col">
         {/* Logo */}
-        <div className="flex h-16 items-center justify-between border-b border-sidebar-border px-4">
+        <div className="flex h-12 items-center justify-between border-b border-sidebar-border px-3">
           {!collapsed && (
-            <Link to={isAdmin ? '/admin' : '/dashboard'} className="flex items-center gap-2">
-              <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
-                <span className="text-primary-foreground font-bold text-sm">AB</span>
+            <Link to={isAdmin ? '/admin' : '/dashboard'} className="flex items-center gap-1.5">
+              <div className="h-6 w-6 rounded-md bg-primary flex items-center justify-center">
+                <span className="text-primary-foreground font-bold text-[10px]">AB</span>
               </div>
-              <span className="font-semibold text-lg text-sidebar-foreground">AlllBrackets</span>
+              <span className="font-semibold text-sm text-sidebar-foreground">AlllBrackets</span>
             </Link>
           )}
           {collapsed && (
-            <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center mx-auto">
-              <span className="text-primary-foreground font-bold text-sm">AB</span>
+            <div className="h-6 w-6 rounded-md bg-primary flex items-center justify-center mx-auto">
+              <span className="text-primary-foreground font-bold text-[10px]">AB</span>
             </div>
           )}
           <Button
             variant="ghost"
             size="icon"
             onClick={() => setCollapsed(!collapsed)}
-            className={cn('text-sidebar-foreground hover:bg-sidebar-accent h-8 w-8', collapsed && 'hidden')}
+            className={cn('text-sidebar-foreground hover:bg-sidebar-accent h-6 w-6', collapsed && 'hidden')}
           >
-            <ChevronLeft className="h-4 w-4" />
+            <ChevronLeft className="h-3.5 w-3.5" />
           </Button>
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 space-y-1 p-3 overflow-y-auto">
+        <nav className="flex-1 space-y-0.5 p-2 overflow-y-auto">
           {isAdmin && !collapsed && (
-            <div className="mb-4 px-3">
-              <Badge variant="default" className="text-xs">Admin Dashboard</Badge>
+            <div className="mb-2 px-2">
+              <Badge variant="default" className="text-[10px] py-0.5 px-1.5">Admin Dashboard</Badge>
             </div>
           )}
           {navItems.map((item) => {
@@ -93,14 +93,14 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
                 key={item.path}
                 to={item.path}
                 className={cn(
-                  'flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors',
+                  'flex items-center gap-2 rounded-md px-2 py-1.5 text-xs font-medium transition-colors',
                   isActive
                     ? 'bg-primary text-primary-foreground'
                     : 'text-sidebar-foreground hover:bg-sidebar-accent',
-                  collapsed && 'justify-center px-2'
+                  collapsed && 'justify-center px-1.5'
                 )}
               >
-                <item.icon className="h-5 w-5 flex-shrink-0" />
+                <item.icon className="h-4 w-4 flex-shrink-0" />
                 {!collapsed && <span>{item.label}</span>}
               </Link>
             );
@@ -108,19 +108,19 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
         </nav>
 
         {/* Bottom section */}
-        <div className="border-t border-sidebar-border p-3 space-y-1">
+        <div className="border-t border-sidebar-border p-2 space-y-0.5">
           {!isAdmin && (
             <Link
               to="/case-studies"
               className={cn(
-                'flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors',
+                'flex items-center gap-2 rounded-md px-2 py-1.5 text-xs font-medium transition-colors',
                 location.pathname === '/case-studies'
                   ? 'bg-primary text-primary-foreground'
                   : 'text-sidebar-foreground hover:bg-sidebar-accent',
-                collapsed && 'justify-center px-2'
+                collapsed && 'justify-center px-1.5'
               )}
             >
-              <BookOpen className="h-5 w-5" />
+              <BookOpen className="h-4 w-4" />
               {!collapsed && <span>Case Studies</span>}
             </Link>
           )}
@@ -128,11 +128,11 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
             <Link
               to="/admin"
               className={cn(
-                'flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-sidebar-foreground hover:bg-sidebar-accent transition-colors',
-                collapsed && 'justify-center px-2'
+                'flex items-center gap-2 rounded-md px-2 py-1.5 text-xs font-medium text-sidebar-foreground hover:bg-sidebar-accent transition-colors',
+                collapsed && 'justify-center px-1.5'
               )}
             >
-              <Shield className="h-5 w-5" />
+              <Shield className="h-4 w-4" />
               {!collapsed && <span>Admin Panel</span>}
             </Link>
           )}
@@ -140,21 +140,21 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
             <Link
               to="/dashboard"
               className={cn(
-                'flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-sidebar-foreground hover:bg-sidebar-accent transition-colors',
-                collapsed && 'justify-center px-2'
+                'flex items-center gap-2 rounded-md px-2 py-1.5 text-xs font-medium text-sidebar-foreground hover:bg-sidebar-accent transition-colors',
+                collapsed && 'justify-center px-1.5'
               )}
             >
-              <LayoutDashboard className="h-5 w-5" />
+              <LayoutDashboard className="h-4 w-4" />
               {!collapsed && <span>User Dashboard</span>}
             </Link>
           )}
           <button
             className={cn(
-              'flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-sidebar-foreground hover:bg-sidebar-accent transition-colors w-full',
-              collapsed && 'justify-center px-2'
+              'flex items-center gap-2 rounded-md px-2 py-1.5 text-xs font-medium text-sidebar-foreground hover:bg-sidebar-accent transition-colors w-full',
+              collapsed && 'justify-center px-1.5'
             )}
           >
-            <LogOut className="h-5 w-5" />
+            <LogOut className="h-4 w-4" />
             {!collapsed && <span>Sign Out</span>}
           </button>
         </div>
@@ -165,9 +165,9 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
             variant="ghost"
             size="icon"
             onClick={() => setCollapsed(false)}
-            className="mx-auto mb-4 text-sidebar-foreground hover:bg-sidebar-accent h-8 w-8"
+            className="mx-auto mb-3 text-sidebar-foreground hover:bg-sidebar-accent h-6 w-6"
           >
-            <ChevronRight className="h-4 w-4" />
+            <ChevronRight className="h-3.5 w-3.5" />
           </Button>
         )}
       </div>
