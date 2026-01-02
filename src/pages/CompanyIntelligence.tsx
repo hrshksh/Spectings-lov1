@@ -20,7 +20,7 @@ export default function CompanyIntelligence() {
             <Card
               key={company.id}
               onClick={() => setSelectedCompany(company)}
-              className={`cursor-pointer hover:shadow-md transition-shadow ${selectedCompany?.id === company.id ? 'ring-1 ring-primary' : ''}`}
+              className={`cursor-pointer transition-all duration-200 ${selectedCompany?.id === company.id ? 'border-foreground/40 shadow-sm' : 'hover:border-foreground/20 hover:shadow-sm'}`}
             >
               <CardContent className="p-3">
                 <div className="flex items-start gap-2">

@@ -62,7 +62,7 @@ export default function PeopleIntelligence() {
                   </TableHeader>
                   <TableBody>
                     {filteredPeople.map((person) => (
-                      <TableRow key={person.id} className={`cursor-pointer ${selectedPerson?.id === person.id ? 'bg-primary/5' : ''}`} onClick={() => setSelectedPerson(person)}>
+                      <TableRow key={person.id} className={`cursor-pointer transition-all duration-150 ${selectedPerson?.id === person.id ? 'bg-muted/80 border-l-2 border-l-foreground' : 'hover:bg-muted/40'}`} onClick={() => setSelectedPerson(person)}>
                         <TableCell className="py-2">
                           <div className="flex items-center gap-2">
                             <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center">
@@ -97,7 +97,7 @@ export default function PeopleIntelligence() {
 
           {selectedPerson && (
             <div className="animate-fade-in">
-              <Card className="sticky top-20 ring-1 ring-primary">
+              <Card className="sticky top-20 border-foreground/30 shadow-sm">
                 <CardHeader className="py-2 px-3">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
