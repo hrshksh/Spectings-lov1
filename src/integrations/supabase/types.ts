@@ -23,6 +23,7 @@ export type Database = {
           founded: number | null
           id: string
           industry: string | null
+          is_tracked: boolean
           logo_url: string | null
           name: string
           size: string | null
@@ -36,6 +37,7 @@ export type Database = {
           founded?: number | null
           id?: string
           industry?: string | null
+          is_tracked?: boolean
           logo_url?: string | null
           name: string
           size?: string | null
@@ -49,6 +51,7 @@ export type Database = {
           founded?: number | null
           id?: string
           industry?: string | null
+          is_tracked?: boolean
           logo_url?: string | null
           name?: string
           size?: string | null
