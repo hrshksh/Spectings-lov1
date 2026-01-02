@@ -7,81 +7,124 @@ import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Search, Download, Mail, Phone, ExternalLink, ChevronRight, Loader2, Users } from 'lucide-react';
-import { useRealtimeTable } from '@/hooks/useRealtimeData';
 import type { Tables } from '@/integrations/supabase/types';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 
 type Person = Tables<'people'>;
+type Lead = Tables<'leads'>;
 
-// Fetch verified lead person IDs
-function useVerifiedLeadIds() {
+interface LeadWithPerson extends Lead {
+  person: Person | null;
+}
+
+// Fetch leads with person data (only people tagged as leads by admin)
+function useLeadsWithPeople() {
   return useQuery({
-    queryKey: ['verified-lead-ids'],
+    queryKey: ['leads-with-people'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('leads')
-        .select('person_id')
-        .eq('status', 'verified');
+        .select(`
+          *,
+          person:people(*)
+        `)
+        .order('created_at', { ascending: false });
       
       if (error) throw error;
-      return new Set(data?.map(l => l.person_id) || []);
+      return data as LeadWithPerson[];
     },
   });
 }
 
 export default function PeopleIntelligence() {
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedPerson, setSelectedPerson] = useState<Person | null>(null);
-  const [confidenceFilter, setConfidenceFilter] = useState<string>('all');
+  const [selectedLead, setSelectedLead] = useState<LeadWithPerson | null>(null);
+  const [tagFilter, setTagFilter] = useState<string>('all');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
   
-  const { data: people, loading: peopleLoading } = useRealtimeTable<Person>('people');
-  const { data: verifiedIds, isLoading: verifiedLoading } = useVerifiedLeadIds();
+  const { data: leads, isLoading } = useLeadsWithPeople();
 
-  const isLoading = peopleLoading || verifiedLoading;
+  // Extract unique tags from all leads
+  const allTags = useMemo(() => {
+    if (!leads) return [];
+    const tags = new Set<string>();
+    leads.forEach(lead => {
+      lead.person?.tags?.forEach(tag => tags.add(tag));
+    });
+    return Array.from(tags).sort();
+  }, [leads]);
 
-  // Filter people based on search and confidence
-  const filteredPeople = useMemo(() => {
-    return people.filter((person) => {
+  // Filter leads based on search, tag, and status
+  const filteredLeads = useMemo(() => {
+    if (!leads) return [];
+    
+    return leads.filter((lead) => {
+      if (!lead.person) return false;
+      
       // Search filter
       const matchesSearch = 
-        person.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (person.company?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false) ||
-        (person.role?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false) ||
-        (person.email?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false);
+        lead.person.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (lead.person.company?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false) ||
+        (lead.person.role?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false) ||
+        (lead.person.email?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false);
 
-      // Confidence filter
-      let matchesConfidence = true;
-      const confidence = person.confidence || 0;
-      if (confidenceFilter === 'high') {
-        matchesConfidence = confidence >= 90;
-      } else if (confidenceFilter === 'medium') {
-        matchesConfidence = confidence >= 70 && confidence < 90;
-      } else if (confidenceFilter === 'low') {
-        matchesConfidence = confidence < 70;
-      }
+      // Tag filter
+      const matchesTag = tagFilter === 'all' || 
+        (lead.person.tags?.includes(tagFilter) ?? false);
 
-      return matchesSearch && matchesConfidence;
+      // Status filter
+      const matchesStatus = statusFilter === 'all' || lead.status === statusFilter;
+
+      return matchesSearch && matchesTag && matchesStatus;
     });
-  }, [people, searchQuery, confidenceFilter]);
+  }, [leads, searchQuery, tagFilter, statusFilter]);
 
-  const isVerified = (personId: string) => verifiedIds?.has(personId) ?? false;
+  const stats = useMemo(() => ({
+    total: leads?.filter(l => l.person).length || 0,
+    verified: leads?.filter(l => l.status === 'verified').length || 0,
+    pending: leads?.filter(l => l.status === 'pending').length || 0,
+  }), [leads]);
 
   return (
-    <DashboardLayout title="People Database" subtitle="Search and manage contacts">
+    <DashboardLayout title="Leads" subtitle="People tagged by admin for your review">
       <div className="space-y-2 animate-fade-in">
-        {/* Stats Card */}
-        <Card>
-          <CardContent className="p-3 flex items-center gap-3">
-            <div className="h-10 w-10 rounded-lg flex items-center justify-center bg-primary/10 text-primary">
-              <Users className="h-5 w-5" />
-            </div>
-            <div>
-              <p className="text-xl font-bold">{people.length}</p>
-              <p className="text-xs text-muted-foreground">Total Contacts</p>
-            </div>
-          </CardContent>
-        </Card>
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+          <Card>
+            <CardContent className="p-3 flex items-center gap-3">
+              <div className="h-10 w-10 rounded-lg flex items-center justify-center bg-primary/10 text-primary">
+                <Users className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-xl font-bold">{stats.total}</p>
+                <p className="text-xs text-muted-foreground">Total Leads</p>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-3 flex items-center gap-3">
+              <div className="h-10 w-10 rounded-lg flex items-center justify-center bg-success/10 text-success">
+                <Users className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-xl font-bold">{stats.verified}</p>
+                <p className="text-xs text-muted-foreground">Verified</p>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-3 flex items-center gap-3">
+              <div className="h-10 w-10 rounded-lg flex items-center justify-center bg-warning/10 text-warning">
+                <Users className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-xl font-bold">{stats.pending}</p>
+                <p className="text-xs text-muted-foreground">Pending</p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
 
         {/* Search and Filters */}
         <Card>
@@ -96,15 +139,25 @@ export default function PeopleIntelligence() {
                   className="pl-8 h-8 text-sm" 
                 />
               </div>
-              <Select value={confidenceFilter} onValueChange={setConfidenceFilter}>
+              <Select value={tagFilter} onValueChange={setTagFilter}>
                 <SelectTrigger className="w-36 h-8 text-sm">
-                  <SelectValue placeholder="Confidence" />
+                  <SelectValue placeholder="Tag" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Confidence</SelectItem>
-                  <SelectItem value="high">High (90%+)</SelectItem>
-                  <SelectItem value="medium">Medium (70-89%)</SelectItem>
-                  <SelectItem value="low">Low (&lt;70%)</SelectItem>
+                  <SelectItem value="all">All Tags</SelectItem>
+                  {allTags.map(tag => (
+                    <SelectItem key={tag} value={tag}>{tag}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-32 h-8 text-sm">
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Status</SelectItem>
+                  <SelectItem value="verified">Verified</SelectItem>
+                  <SelectItem value="pending">Pending</SelectItem>
                 </SelectContent>
               </Select>
               <Button size="sm" className="h-8">
@@ -114,12 +167,12 @@ export default function PeopleIntelligence() {
           </CardContent>
         </Card>
 
-        <div className={`grid grid-cols-1 gap-2 transition-all duration-300 ${selectedPerson ? 'lg:grid-cols-3' : 'lg:grid-cols-1'}`}>
-          <div className={`transition-all duration-300 ${selectedPerson ? 'lg:col-span-2' : 'lg:col-span-1'}`}>
+        <div className={`grid grid-cols-1 gap-2 transition-all duration-300 ${selectedLead ? 'lg:grid-cols-3' : 'lg:grid-cols-1'}`}>
+          <div className={`transition-all duration-300 ${selectedLead ? 'lg:col-span-2' : 'lg:col-span-1'}`}>
             <Card>
               <CardHeader className="py-2 px-3">
                 <CardTitle className="text-sm font-medium">
-                  People ({filteredPeople.length})
+                  Leads ({filteredLeads.length})
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-0">
@@ -127,60 +180,60 @@ export default function PeopleIntelligence() {
                   <div className="flex justify-center py-12">
                     <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
                   </div>
-                ) : filteredPeople.length > 0 ? (
+                ) : filteredLeads.length > 0 ? (
                   <Table>
                     <TableHeader>
                       <TableRow>
                         <TableHead>Name</TableHead>
                         <TableHead>Role</TableHead>
                         <TableHead>Company</TableHead>
+                        <TableHead>Tags</TableHead>
                         <TableHead>Status</TableHead>
-                        <TableHead>Confidence</TableHead>
                         <TableHead className="text-right">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {filteredPeople.map((person) => (
+                      {filteredLeads.map((lead) => (
                         <TableRow 
-                          key={person.id} 
-                          className={`cursor-pointer transition-all duration-150 ${selectedPerson?.id === person.id ? 'bg-muted/80 border-l-2 border-l-foreground' : 'hover:bg-muted/40'}`} 
-                          onClick={() => setSelectedPerson(person)}
+                          key={lead.id} 
+                          className={`cursor-pointer transition-all duration-150 ${selectedLead?.id === lead.id ? 'bg-muted/80 border-l-2 border-l-foreground' : 'hover:bg-muted/40'}`} 
+                          onClick={() => setSelectedLead(lead)}
                         >
                           <TableCell className="py-2">
                             <div className="flex items-center gap-2">
                               <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center">
                                 <span className="text-primary-foreground text-xs font-medium">
-                                  {person.name.split(' ').map(n => n[0]).join('')}
+                                  {lead.person?.name.split(' ').map(n => n[0]).join('') || '?'}
                                 </span>
                               </div>
                               <div>
-                                <p className="font-medium text-sm">{person.name}</p>
-                                <p className="text-xs text-muted-foreground">{person.email || 'No email'}</p>
+                                <p className="font-medium text-sm">{lead.person?.name || 'Unknown'}</p>
+                                <p className="text-xs text-muted-foreground">{lead.person?.email || 'No email'}</p>
                               </div>
                             </div>
                           </TableCell>
-                          <TableCell className="py-2 text-sm">{person.role || '-'}</TableCell>
-                          <TableCell className="py-2 text-sm">{person.company || '-'}</TableCell>
+                          <TableCell className="py-2 text-sm">{lead.person?.role || '-'}</TableCell>
+                          <TableCell className="py-2 text-sm">{lead.person?.company || '-'}</TableCell>
                           <TableCell className="py-2">
-                            {isVerified(person.id) ? (
+                            <div className="flex flex-wrap gap-1">
+                              {lead.person?.tags?.slice(0, 2).map(tag => (
+                                <Badge key={tag} variant="secondary" className="text-[10px] px-1.5 py-0">{tag}</Badge>
+                              ))}
+                              {(lead.person?.tags?.length || 0) > 2 && (
+                                <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                                  +{(lead.person?.tags?.length || 0) - 2}
+                                </Badge>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell className="py-2">
+                            {lead.status === 'verified' ? (
                               <Badge variant="success" className="text-xs">Verified</Badge>
+                            ) : lead.status === 'pending' ? (
+                              <Badge variant="warning" className="text-xs">Pending</Badge>
                             ) : (
-                              <Badge variant="outline" className="text-xs">Contact</Badge>
+                              <Badge variant="destructive" className="text-xs">Rejected</Badge>
                             )}
-                          </TableCell>
-                          <TableCell className="py-2">
-                            <div className="flex items-center gap-1.5">
-                              <div className="h-1.5 w-12 bg-muted rounded-full overflow-hidden">
-                                <div 
-                                  className={`h-full rounded-full ${
-                                    (person.confidence || 0) >= 90 ? 'bg-success' : 
-                                    (person.confidence || 0) >= 70 ? 'bg-primary' : 'bg-warning'
-                                  }`} 
-                                  style={{ width: `${person.confidence || 0}%` }} 
-                                />
-                              </div>
-                              <span className="text-xs">{person.confidence || 0}%</span>
-                            </div>
                           </TableCell>
                           <TableCell className="py-2 text-right">
                             <Button variant="ghost" size="icon" className="h-7 w-7">
@@ -193,16 +246,16 @@ export default function PeopleIntelligence() {
                   </Table>
                 ) : (
                   <div className="text-center py-12 text-muted-foreground">
-                    {searchQuery || confidenceFilter !== 'all' 
-                      ? 'No people match your search' 
-                      : 'No people in database yet'}
+                    {searchQuery || tagFilter !== 'all' || statusFilter !== 'all'
+                      ? 'No leads match your filters' 
+                      : 'No leads available yet'}
                   </div>
                 )}
               </CardContent>
             </Card>
           </div>
 
-          {selectedPerson && (
+          {selectedLead?.person && (
             <div className="animate-fade-in">
               <Card className="sticky top-20 border-foreground/30 shadow-sm">
                 <CardHeader className="py-2 px-3">
@@ -210,25 +263,25 @@ export default function PeopleIntelligence() {
                     <div className="flex items-center gap-2">
                       <div className="h-9 w-9 rounded-md bg-primary flex items-center justify-center">
                         <span className="text-primary-foreground text-sm font-bold">
-                          {selectedPerson.name.split(' ').map(n => n[0]).join('')}
+                          {selectedLead.person.name.split(' ').map(n => n[0]).join('')}
                         </span>
                       </div>
                       <div>
                         <div className="flex items-center gap-1.5">
-                          <CardTitle className="text-sm">{selectedPerson.name}</CardTitle>
-                          {isVerified(selectedPerson.id) && (
+                          <CardTitle className="text-sm">{selectedLead.person.name}</CardTitle>
+                          {selectedLead.status === 'verified' && (
                             <Badge variant="success" className="text-[10px] px-1 py-0">Verified</Badge>
                           )}
                         </div>
-                        <p className="text-xs text-muted-foreground">{selectedPerson.role || 'No role'}</p>
-                        <p className="text-xs text-primary">{selectedPerson.company || 'No company'}</p>
+                        <p className="text-xs text-muted-foreground">{selectedLead.person.role || 'No role'}</p>
+                        <p className="text-xs text-primary">{selectedLead.person.company || 'No company'}</p>
                       </div>
                     </div>
                     <Button 
                       variant="ghost" 
                       size="icon" 
                       className="h-7 w-7" 
-                      onClick={(e) => { e.stopPropagation(); setSelectedPerson(null); }}
+                      onClick={(e) => { e.stopPropagation(); setSelectedLead(null); }}
                     >
                       <ExternalLink className="h-3.5 w-3.5 rotate-45" />
                     </Button>
@@ -236,46 +289,55 @@ export default function PeopleIntelligence() {
                 </CardHeader>
                 <CardContent className="space-y-2 pt-0 px-3 pb-3">
                   <div className="space-y-0.5">
-                    {selectedPerson.email && (
-                      <a href={`mailto:${selectedPerson.email}`} className="flex items-center gap-1.5 p-1 rounded hover:bg-secondary text-xs">
-                        <Mail className="h-3.5 w-3.5 text-primary" />{selectedPerson.email}
+                    {selectedLead.person.email && (
+                      <a href={`mailto:${selectedLead.person.email}`} className="flex items-center gap-1.5 p-1 rounded hover:bg-secondary text-xs">
+                        <Mail className="h-3.5 w-3.5 text-primary" />{selectedLead.person.email}
                       </a>
                     )}
-                    {selectedPerson.phone && (
-                      <a href={`tel:${selectedPerson.phone}`} className="flex items-center gap-1.5 p-1 rounded hover:bg-secondary text-xs">
-                        <Phone className="h-3.5 w-3.5 text-primary" />{selectedPerson.phone}
+                    {selectedLead.person.phone && (
+                      <a href={`tel:${selectedLead.person.phone}`} className="flex items-center gap-1.5 p-1 rounded hover:bg-secondary text-xs">
+                        <Phone className="h-3.5 w-3.5 text-primary" />{selectedLead.person.phone}
                       </a>
                     )}
-                    {selectedPerson.linkedin && (
-                      <a href={selectedPerson.linkedin} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 p-1 rounded hover:bg-secondary text-xs">
+                    {selectedLead.person.linkedin && (
+                      <a href={selectedLead.person.linkedin} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 p-1 rounded hover:bg-secondary text-xs">
                         <ExternalLink className="h-3.5 w-3.5 text-primary" />LinkedIn
                       </a>
                     )}
                   </div>
-                  {selectedPerson.tags && selectedPerson.tags.length > 0 && (
-                    <div className="flex flex-wrap gap-1">
-                      {selectedPerson.tags.map((tag) => (
-                        <Badge key={tag} variant="secondary" className="text-[10px] px-1.5 py-0">{tag}</Badge>
-                      ))}
+                  {selectedLead.person.tags && selectedLead.person.tags.length > 0 && (
+                    <div>
+                      <p className="text-xs text-muted-foreground mb-1">Tags</p>
+                      <div className="flex flex-wrap gap-1">
+                        {selectedLead.person.tags.map((tag) => (
+                          <Badge key={tag} variant="secondary" className="text-[10px] px-1.5 py-0">{tag}</Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {selectedLead.notes && (
+                    <div className="pt-2 border-t">
+                      <p className="text-xs text-muted-foreground mb-1">Notes</p>
+                      <p className="text-xs">{selectedLead.notes}</p>
                     </div>
                   )}
                   <div className="pt-2 border-t">
                     <div className="flex items-center justify-between text-xs mb-1">
                       <span className="text-muted-foreground">Confidence Score</span>
-                      <span className="font-medium">{selectedPerson.confidence || 0}%</span>
+                      <span className="font-medium">{selectedLead.person.confidence || 0}%</span>
                     </div>
                     <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
                       <div 
                         className={`h-full rounded-full ${
-                          (selectedPerson.confidence || 0) >= 90 ? 'bg-success' : 
-                          (selectedPerson.confidence || 0) >= 70 ? 'bg-primary' : 'bg-warning'
+                          (selectedLead.person.confidence || 0) >= 90 ? 'bg-success' : 
+                          (selectedLead.person.confidence || 0) >= 70 ? 'bg-primary' : 'bg-warning'
                         }`} 
-                        style={{ width: `${selectedPerson.confidence || 0}%` }} 
+                        style={{ width: `${selectedLead.person.confidence || 0}%` }} 
                       />
                     </div>
                   </div>
                   <div className="flex gap-1.5 pt-2 border-t">
-                    <Button size="sm" className="flex-1 h-7 text-xs" disabled={!selectedPerson.email}>
+                    <Button size="sm" className="flex-1 h-7 text-xs" disabled={!selectedLead.person.email}>
                       <Mail className="h-3 w-3 mr-1" />Contact
                     </Button>
                     <Button variant="outline" size="sm" className="flex-1 h-7 text-xs">
