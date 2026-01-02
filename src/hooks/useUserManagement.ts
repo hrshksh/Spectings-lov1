@@ -4,6 +4,7 @@ import { useToast } from '@/hooks/use-toast';
 import type { Database } from '@/integrations/supabase/types';
 
 type AppRole = Database['public']['Enums']['app_role'];
+type SubscriptionPlan = Database['public']['Enums']['subscription_plan'];
 
 interface UserWithRoles {
   id: string;
@@ -12,11 +13,14 @@ interface UserWithRoles {
   avatar_url: string | null;
   created_at: string;
   roles: AppRole[];
+  subscription_plan: SubscriptionPlan;
+  is_active: boolean;
+  subscription_ends_at: string | null;
 }
 
 export function useUsers() {
   return useQuery({
-    queryKey: ['admin-users'],
+    queryKey: ['users'],
     queryFn: async () => {
       // Fetch all profiles
       const { data: profiles, error: profilesError } = await supabase
@@ -40,6 +44,9 @@ export function useUsers() {
         full_name: profile.full_name,
         avatar_url: profile.avatar_url,
         created_at: profile.created_at,
+        subscription_plan: profile.subscription_plan,
+        is_active: profile.is_active,
+        subscription_ends_at: profile.subscription_ends_at,
         roles: (userRoles || [])
           .filter(r => r.user_id === profile.id)
           .map(r => r.role),
