@@ -81,23 +81,27 @@ export default function CompanyIntelligence() {
       <div className="space-y-3 animate-fade-in">
         {/* Search and Actions */}
         <Card>
-          <CardContent className="p-2">
-            <div className="flex flex-wrap items-center gap-2">
-              <div className="relative flex-1 min-w-64">
+          <CardContent className="p-2 sm:p-3">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+              <div className="relative flex-1">
                 <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input 
                   placeholder="Search competitors..." 
                   value={searchQuery} 
                   onChange={(e) => setSearchQuery(e.target.value)} 
-                  className="pl-8 h-8 text-sm" 
+                  className="pl-8 h-9 text-sm w-full" 
                 />
               </div>
-              <Button size="sm" className="h-8">
-                <Download className="h-3.5 w-3.5 mr-1.5" />Export
-              </Button>
-              <Button size="sm" className="h-8">
-                <Building2 className="h-3.5 w-3.5 mr-1.5" />Add Competitor
-              </Button>
+              <div className="flex gap-2">
+                <Button size="sm" variant="outline" className="h-9 flex-1 sm:flex-none">
+                  <Download className="h-3.5 w-3.5 sm:mr-1.5" />
+                  <span className="hidden sm:inline">Export</span>
+                </Button>
+                <Button size="sm" className="h-9 flex-1 sm:flex-none">
+                  <Building2 className="h-3.5 w-3.5 sm:mr-1.5" />
+                  <span className="hidden sm:inline">Add Competitor</span>
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -126,39 +130,41 @@ export default function CompanyIntelligence() {
                 onClick={() => setSelectedCompetitor(isSelected ? null : company.id)}
               >
                 {/* Competitor Header */}
-                <div className="p-4 flex items-center gap-4">
+                <div className="p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
                   {/* Logo/Icon */}
-                  <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center flex-shrink-0 border border-primary/10">
-                    <Building2 className="h-6 w-6 text-primary" />
+                  <div className="flex items-center gap-3 sm:gap-4">
+                    <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center flex-shrink-0 border border-primary/10">
+                      <Building2 className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
+                    </div>
+                    
+                    {/* Company Info */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-wrap items-center gap-2 mb-1">
+                        <h3 className="text-sm sm:text-base font-semibold">{company.name}</h3>
+                        <a 
+                          href={`https://${company.domain}`} 
+                          target="_blank" 
+                          rel="noopener noreferrer" 
+                          className="text-xs text-primary hover:underline flex items-center gap-1"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <Globe className="h-3 w-3" />
+                          <span className="hidden xs:inline">{company.domain}</span>
+                        </a>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                        <Badge variant="secondary" className="text-[10px] sm:text-xs">{company.industry}</Badge>
+                        <Badge variant="outline" className="text-[10px] sm:text-xs">{company.size}</Badge>
+                        {company.founded && (
+                          <span className="text-[10px] sm:text-xs text-muted-foreground hidden sm:inline">Est. {company.founded}</span>
+                        )}
+                      </div>
+                    </div>
                   </div>
                   
-                  {/* Company Info */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-3 mb-1">
-                      <h3 className="text-base font-semibold">{company.name}</h3>
-                      <a 
-                        href={`https://${company.domain}`} 
-                        target="_blank" 
-                        rel="noopener noreferrer" 
-                        className="text-xs text-primary hover:underline flex items-center gap-1"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <Globe className="h-3 w-3" />
-                        {company.domain}
-                      </a>
-                    </div>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <Badge variant="secondary" className="text-xs">{company.industry}</Badge>
-                      <Badge variant="outline" className="text-xs">{company.size}</Badge>
-                      {company.founded && (
-                        <span className="text-xs text-muted-foreground">Est. {company.founded}</span>
-                      )}
-                    </div>
-                  </div>
-                  
-                  {/* Quick Stats - visible when collapsed */}
+                  {/* Quick Stats - visible when collapsed on large screens */}
                   {!isSelected && (
-                    <div className="hidden lg:flex items-center gap-4">
+                    <div className="hidden xl:flex items-center gap-4">
                       {Object.entries(eventStats).slice(0, 4).map(([type, count]) => (
                         <div key={type} className="text-center">
                           <div className={cn(
@@ -174,40 +180,42 @@ export default function CompanyIntelligence() {
                   )}
                   
                   {/* Actions */}
-                  <div className="flex items-center gap-2">
-                    <Badge variant="outline" className="text-xs">
+                  <div className="flex items-center justify-between sm:justify-end gap-2 mt-2 sm:mt-0">
+                    <Badge variant="outline" className="text-[10px] sm:text-xs">
                       <Activity className="h-3 w-3 mr-1" />
                       {events.length} events
                     </Badge>
-                    <ChevronDown className={cn(
-                      "h-5 w-5 text-muted-foreground transition-transform duration-300",
-                      isSelected && "rotate-180"
-                    )} />
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-48">
-                        <DropdownMenuItem className="text-xs">
-                          <Eye className="h-3.5 w-3.5 mr-2" />View Full Profile
-                        </DropdownMenuItem>
-                        <DropdownMenuItem className="text-xs">
-                          <Globe className="h-3.5 w-3.5 mr-2" />Visit Website
-                        </DropdownMenuItem>
-                        <DropdownMenuItem className="text-xs">
-                          <FileText className="h-3.5 w-3.5 mr-2" />Generate Report
-                        </DropdownMenuItem>
-                        <DropdownMenuItem className="text-xs">
-                          <Bell className="h-3.5 w-3.5 mr-2" />Set Alerts
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem className="text-xs text-destructive">
-                          <Trash2 className="h-3.5 w-3.5 mr-2" />Stop Tracking
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                    <div className="flex items-center gap-1">
+                      <ChevronDown className={cn(
+                        "h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground transition-transform duration-300",
+                        isSelected && "rotate-180"
+                      )} />
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                          <Button variant="ghost" size="icon" className="h-8 w-8">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-48">
+                          <DropdownMenuItem className="text-xs">
+                            <Eye className="h-3.5 w-3.5 mr-2" />View Full Profile
+                          </DropdownMenuItem>
+                          <DropdownMenuItem className="text-xs">
+                            <Globe className="h-3.5 w-3.5 mr-2" />Visit Website
+                          </DropdownMenuItem>
+                          <DropdownMenuItem className="text-xs">
+                            <FileText className="h-3.5 w-3.5 mr-2" />Generate Report
+                          </DropdownMenuItem>
+                          <DropdownMenuItem className="text-xs">
+                            <Bell className="h-3.5 w-3.5 mr-2" />Set Alerts
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem className="text-xs text-destructive">
+                            <Trash2 className="h-3.5 w-3.5 mr-2" />Stop Tracking
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
                   </div>
                 </div>
 
@@ -215,26 +223,26 @@ export default function CompanyIntelligence() {
                 {isSelected && (
                   <div className="border-t bg-muted/30" onClick={(e) => e.stopPropagation()}>
                     {/* Stats Row */}
-                    <div className="p-4 border-b bg-background/50">
-                      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                    <div className="p-3 sm:p-4 border-b bg-background/50">
+                      <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-2 sm:gap-3">
                         {[
-                          { type: 'pricing_change', label: 'Pricing Changes', icon: DollarSign },
-                          { type: 'product_launch', label: 'Product Launches', icon: Zap },
-                          { type: 'hiring', label: 'Hiring Activity', icon: Users },
+                          { type: 'pricing_change', label: 'Pricing', icon: DollarSign },
+                          { type: 'product_launch', label: 'Products', icon: Zap },
+                          { type: 'hiring', label: 'Hiring', icon: Users },
                           { type: 'funding', label: 'Funding', icon: TrendingUp },
                           { type: 'campaign', label: 'Campaigns', icon: Megaphone },
-                          { type: 'news', label: 'News Mentions', icon: Newspaper },
+                          { type: 'news', label: 'News', icon: Newspaper },
                         ].map(({ type, label, icon: Icon }) => (
                           <div key={type} className="flex items-center gap-2 p-2 rounded-lg bg-background border">
                             <div className={cn(
-                              "h-8 w-8 rounded-md flex items-center justify-center flex-shrink-0",
+                              "h-7 w-7 sm:h-8 sm:w-8 rounded-md flex items-center justify-center flex-shrink-0",
                               getEventBadgeVariant(type)
                             )}>
-                              <Icon className="h-4 w-4" />
+                              <Icon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                             </div>
-                            <div>
-                              <p className="text-lg font-semibold leading-none">{eventStats[type] || 0}</p>
-                              <p className="text-[10px] text-muted-foreground">{label}</p>
+                            <div className="min-w-0">
+                              <p className="text-base sm:text-lg font-semibold leading-none">{eventStats[type] || 0}</p>
+                              <p className="text-[9px] sm:text-[10px] text-muted-foreground truncate">{label}</p>
                             </div>
                           </div>
                         ))}
@@ -242,9 +250,9 @@ export default function CompanyIntelligence() {
                     </div>
                     
                     {/* Timeline Section */}
-                    <div className="p-4">
-                      <div className="flex items-center justify-between mb-4">
-                        <h4 className="text-sm font-semibold flex items-center gap-2">
+                    <div className="p-3 sm:p-4">
+                      <div className="flex items-center justify-between mb-3 sm:mb-4">
+                        <h4 className="text-xs sm:text-sm font-semibold flex items-center gap-2">
                           <Calendar className="h-4 w-4 text-primary" />
                           Activity Timeline
                         </h4>
@@ -255,7 +263,7 @@ export default function CompanyIntelligence() {
                           onClick={() => setSelectedCompetitor(null)}
                         >
                           <X className="h-3 w-3 mr-1" />
-                          Collapse
+                          <span className="hidden sm:inline">Collapse</span>
                         </Button>
                       </div>
                       
@@ -268,45 +276,48 @@ export default function CompanyIntelligence() {
                             {events.map((event) => (
                               <div 
                                 key={event.id} 
-                                className="relative pl-8 py-3 border-b last:border-b-0 hover:bg-muted/50 transition-colors"
+                                className="relative pl-8 py-2 sm:py-3 border-b last:border-b-0 hover:bg-muted/50 transition-colors"
                               >
                                 {/* Timeline dot */}
                                 <div className={cn(
-                                  "absolute left-1.5 top-4 h-4 w-4 rounded-full ring-4 ring-background flex items-center justify-center",
+                                  "absolute left-1.5 top-3 sm:top-4 h-3.5 w-3.5 sm:h-4 sm:w-4 rounded-full ring-2 sm:ring-4 ring-background flex items-center justify-center",
                                   getEventColor(event.eventType)
                                 )}>
-                                  <div className="h-1.5 w-1.5 rounded-full bg-white" />
+                                  <div className="h-1 w-1 sm:h-1.5 sm:w-1.5 rounded-full bg-white" />
                                 </div>
                                 
-                                {/* Event Content */}
-                                <div className="flex items-start gap-4">
-                                  {/* Date Column */}
-                                  <div className="w-20 flex-shrink-0">
-                                    <p className="text-xs font-medium">
-                                      {new Date(event.publishedAt).toLocaleDateString('en-US', { 
-                                        month: 'short', 
-                                        day: 'numeric'
-                                      })}
-                                    </p>
-                                    <p className="text-[10px] text-muted-foreground">
-                                      {new Date(event.publishedAt).getFullYear()}
-                                    </p>
-                                  </div>
-                                  
-                                  {/* Event Type */}
-                                  <div className="w-32 flex-shrink-0">
-                                    <span className={cn(
-                                      "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium",
-                                      getEventBadgeVariant(event.eventType)
-                                    )}>
-                                      {getEventIcon(event.eventType)}
-                                      {formatEventType(event.eventType)}
-                                    </span>
+                                {/* Event Content - Stacked on mobile, inline on larger screens */}
+                                <div className="flex flex-col sm:flex-row sm:items-start gap-1 sm:gap-4">
+                                  {/* Date & Event Type Row */}
+                                  <div className="flex items-center gap-2 sm:gap-4">
+                                    {/* Date Column */}
+                                    <div className="w-16 sm:w-20 flex-shrink-0">
+                                      <p className="text-[11px] sm:text-xs font-medium">
+                                        {new Date(event.publishedAt).toLocaleDateString('en-US', { 
+                                          month: 'short', 
+                                          day: 'numeric'
+                                        })}
+                                      </p>
+                                      <p className="text-[9px] sm:text-[10px] text-muted-foreground">
+                                        {new Date(event.publishedAt).getFullYear()}
+                                      </p>
+                                    </div>
+                                    
+                                    {/* Event Type */}
+                                    <div className="flex-shrink-0">
+                                      <span className={cn(
+                                        "inline-flex items-center gap-1 sm:gap-1.5 px-2 py-0.5 sm:py-1 rounded-md text-[10px] sm:text-xs font-medium",
+                                        getEventBadgeVariant(event.eventType)
+                                      )}>
+                                        {getEventIcon(event.eventType)}
+                                        <span className="hidden xs:inline">{formatEventType(event.eventType)}</span>
+                                      </span>
+                                    </div>
                                   </div>
                                   
                                   {/* Summary */}
-                                  <div className="flex-1 min-w-0">
-                                    <p className="text-sm text-foreground leading-relaxed">
+                                  <div className="flex-1 min-w-0 mt-1 sm:mt-0">
+                                    <p className="text-xs sm:text-sm text-foreground leading-relaxed">
                                       {event.summary}
                                     </p>
                                   </div>
@@ -316,7 +327,7 @@ export default function CompanyIntelligence() {
                           </div>
                         </div>
                       ) : (
-                        <div className="text-center py-8 text-sm text-muted-foreground bg-muted/30 rounded-lg">
+                        <div className="text-center py-6 sm:py-8 text-xs sm:text-sm text-muted-foreground bg-muted/30 rounded-lg">
                           No activities tracked yet for this competitor
                         </div>
                       )}
