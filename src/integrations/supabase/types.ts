@@ -246,6 +246,9 @@ export type Database = {
           email: string
           full_name: string | null
           id: string
+          is_active: boolean
+          subscription_ends_at: string | null
+          subscription_plan: Database["public"]["Enums"]["subscription_plan"]
           updated_at: string
         }
         Insert: {
@@ -254,6 +257,9 @@ export type Database = {
           email: string
           full_name?: string | null
           id: string
+          is_active?: boolean
+          subscription_ends_at?: string | null
+          subscription_plan?: Database["public"]["Enums"]["subscription_plan"]
           updated_at?: string
         }
         Update: {
@@ -262,6 +268,9 @@ export type Database = {
           email?: string
           full_name?: string | null
           id?: string
+          is_active?: boolean
+          subscription_ends_at?: string | null
+          subscription_plan?: Database["public"]["Enums"]["subscription_plan"]
           updated_at?: string
         }
         Relationships: []
@@ -420,6 +429,12 @@ export type Database = {
       evidence_source_type: "website" | "social" | "news" | "review" | "api"
       evidence_status: "pending" | "parsed" | "published" | "rejected"
       lead_status: "pending" | "verified" | "rejected"
+      subscription_plan:
+        | "free"
+        | "essential"
+        | "growth"
+        | "agency"
+        | "enterprise"
       task_priority: "low" | "medium" | "high"
       task_status: "pending" | "in_progress" | "completed" | "rejected"
       task_type: "evidence" | "lead" | "company" | "trend"
@@ -571,6 +586,13 @@ export const Constants = {
       evidence_source_type: ["website", "social", "news", "review", "api"],
       evidence_status: ["pending", "parsed", "published", "rejected"],
       lead_status: ["pending", "verified", "rejected"],
+      subscription_plan: [
+        "free",
+        "essential",
+        "growth",
+        "agency",
+        "enterprise",
+      ],
       task_priority: ["low", "medium", "high"],
       task_status: ["pending", "in_progress", "completed", "rejected"],
       task_type: ["evidence", "lead", "company", "trend"],
