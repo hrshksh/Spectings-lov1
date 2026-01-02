@@ -26,7 +26,6 @@ export default function CompanyIntelligence() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCompetitor, setSelectedCompetitor] = useState<string | null>(null);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
-  const [isSearchingAll, setIsSearchingAll] = useState(false);
 
   // Fetch only tracked companies from database
   const { data: trackedCompanies = [], isLoading: companiesLoading, error: companiesError } = useQuery({
@@ -42,11 +41,10 @@ export default function CompanyIntelligence() {
     }
   });
 
-  // Fetch ALL companies when searching
-  const { data: allCompanies = [], isLoading: allCompaniesLoading } = useQuery({
-    queryKey: ['companies', 'all', searchQuery],
+  // Search ALL companies when there's a search query
+  const { data: searchResults = [], isLoading: searchLoading } = useQuery({
+    queryKey: ['companies', 'search', searchQuery],
     queryFn: async () => {
-      if (!searchQuery.trim()) return [];
       const { data, error } = await supabase
         .from('companies')
         .select('*')
@@ -55,7 +53,7 @@ export default function CompanyIntelligence() {
       if (error) throw error;
       return data as Company[];
     },
-    enabled: searchQuery.trim().length > 0 && isSearchingAll
+    enabled: searchQuery.trim().length > 0
   });
 
   // Fetch company events from database
@@ -72,16 +70,10 @@ export default function CompanyIntelligence() {
   });
 
   const isLoading = companiesLoading || eventsLoading;
+  const isSearching = searchQuery.trim().length > 0;
 
-  // Filter tracked companies based on search (when not searching all)
-  const filteredTrackedCompanies = trackedCompanies.filter((company) => {
-    const matchesSearch = company.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (company.domain?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false);
-    return matchesSearch;
-  });
-
-  // Use appropriate company list based on search mode
-  const displayCompanies = isSearchingAll && searchQuery.trim() ? allCompanies : filteredTrackedCompanies;
+  // Display search results when searching, otherwise show tracked companies
+  const displayCompanies = isSearching ? searchResults : trackedCompanies;
 
   const queryClient = useQueryClient();
 
@@ -185,22 +177,23 @@ export default function CompanyIntelligence() {
                 <div className="relative flex-1">
                   <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input 
-                    placeholder={isSearchingAll ? "Search all companies database..." : "Search tracked competitors..."} 
+                    placeholder="Search all companies..." 
                     value={searchQuery} 
                     onChange={(e) => setSearchQuery(e.target.value)} 
                     className="pl-8 h-9 text-sm w-full" 
                   />
+                  {searchQuery && (
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7"
+                      onClick={() => setSearchQuery('')}
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </Button>
+                  )}
                 </div>
                 <div className="flex gap-2">
-                  <Button 
-                    size="sm" 
-                    variant={isSearchingAll ? "default" : "outline"} 
-                    className="h-9 flex-1 sm:flex-none"
-                    onClick={() => setIsSearchingAll(!isSearchingAll)}
-                  >
-                    <Globe className="h-3.5 w-3.5 sm:mr-1.5" />
-                    <span className="hidden sm:inline">{isSearchingAll ? "Searching All" : "Search All"}</span>
-                  </Button>
                   <Button size="sm" variant="outline" className="h-9 flex-1 sm:flex-none">
                     <Download className="h-3.5 w-3.5 sm:mr-1.5" />
                     <span className="hidden sm:inline">Export</span>
@@ -211,10 +204,10 @@ export default function CompanyIntelligence() {
                   </Button>
                 </div>
               </div>
-              {isSearchingAll && (
+              {isSearching && (
                 <p className="text-xs text-muted-foreground flex items-center gap-1.5">
                   <Globe className="h-3 w-3" />
-                  Searching all {allCompaniesLoading ? "..." : allCompanies.length} companies in database. Click on a company to start tracking.
+                  {searchLoading ? "Searching..." : `Found ${searchResults.length} companies. Click on untracked companies to start tracking.`}
                 </p>
               )}
             </div>
@@ -277,10 +270,10 @@ export default function CompanyIntelligence() {
                     isSelected 
                       ? "ring-2 ring-primary shadow-lg" 
                       : "hover:shadow-md hover:border-primary/50",
-                    isSearchingAll && !isTracked && "border-dashed border-primary/30"
+                    isSearching && !isTracked && "border-dashed border-primary/30"
                   )}
                   onClick={() => {
-                    if (isSearchingAll && !isTracked) {
+                    if (isSearching && !isTracked) {
                       trackCompanyMutation.mutate(company.id);
                     } else {
                       setSelectedCompetitor(isSelected ? null : company.id);
@@ -345,7 +338,7 @@ export default function CompanyIntelligence() {
                     
                     {/* Actions */}
                     <div className="flex items-center justify-between sm:justify-end gap-2 mt-2 sm:mt-0">
-                      {isSearchingAll && !isTracked ? (
+                      {isSearching && !isTracked ? (
                         <Badge variant="outline" className="text-[10px] sm:text-xs border-primary text-primary">
                           Click to track
                         </Badge>
@@ -519,11 +512,9 @@ export default function CompanyIntelligence() {
             {displayCompanies.length === 0 && !isLoading && (
               <Card>
                 <CardContent className="py-12 text-center text-sm text-muted-foreground">
-                  {isSearchingAll 
-                    ? (searchQuery.trim() ? "No companies found matching your search" : "Start typing to search all companies")
-                    : (trackedCompanies.length === 0 
-                        ? "No competitors being tracked yet. Add a competitor to get started."
-                        : "No competitors found matching your search")
+                  {isSearching 
+                    ? "No companies found matching your search"
+                    : "No competitors being tracked yet. Search for companies to start tracking."
                   }
                 </CardContent>
               </Card>
