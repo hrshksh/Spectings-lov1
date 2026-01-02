@@ -37,8 +37,8 @@
     --warning: 0 0% 40%;
     --warning-foreground: 0 0% 100%;
 
-    --border: 0 0% 90%;
-    --input: 0 0% 90%;
+    --border: 0 0% 82%;
+    --input: 0 0% 82%;
     --ring: 0 0% 10%;
 
     --radius: 0.5rem;
@@ -50,7 +50,7 @@
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 0 0% 92%;
     --sidebar-accent-foreground: 0 0% 10%;
-    --sidebar-border: 0 0% 90%;
+    --sidebar-border: 0 0% 82%;
     --sidebar-ring: 0 0% 10%;
 
     /* Chart colors - grayscale */
