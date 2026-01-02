@@ -16,6 +16,7 @@ import {
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import type { Tables } from '@/integrations/supabase/types';
+import { AddCompetitorDialog } from '@/components/competitors/AddCompetitorDialog';
 
 type Company = Tables<'companies'>;
 type CompanyEvent = Tables<'company_events'>;
@@ -23,6 +24,7 @@ type CompanyEvent = Tables<'company_events'>;
 export default function CompanyIntelligence() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCompetitor, setSelectedCompetitor] = useState<string | null>(null);
+  const [addDialogOpen, setAddDialogOpen] = useState(false);
 
   // Fetch companies from database
   const { data: companies = [], isLoading: companiesLoading, error: companiesError } = useQuery({
@@ -132,7 +134,7 @@ export default function CompanyIntelligence() {
                   <Download className="h-3.5 w-3.5 sm:mr-1.5" />
                   <span className="hidden sm:inline">Export</span>
                 </Button>
-                <Button size="sm" className="h-9 flex-1 sm:flex-none">
+                <Button size="sm" className="h-9 flex-1 sm:flex-none" onClick={() => setAddDialogOpen(true)}>
                   <Building2 className="h-3.5 w-3.5 sm:mr-1.5" />
                   <span className="hidden sm:inline">Add Competitor</span>
                 </Button>
@@ -140,6 +142,9 @@ export default function CompanyIntelligence() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Add Competitor Dialog */}
+        <AddCompetitorDialog open={addDialogOpen} onOpenChange={setAddDialogOpen} />
 
         {/* Error State */}
         {companiesError && (
