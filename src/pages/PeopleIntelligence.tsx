@@ -38,7 +38,7 @@ function useLeadsWithPeople() {
 export default function PeopleIntelligence() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedPerson, setSelectedPerson] = useState<Person | null>(null);
-  const [viewMode, setViewMode] = useState<'all' | 'verified' | 'pending'>('all');
+  const [viewMode, setViewMode] = useState<'all' | 'verified' | 'pending'>('verified');
   const [confidenceFilter, setConfidenceFilter] = useState<string>('all');
   
   const { data: people, loading: peopleLoading } = useRealtimeTable<Person>('people');
