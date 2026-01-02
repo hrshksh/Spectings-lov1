@@ -93,14 +93,17 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
                 key={item.path}
                 to={item.path}
                 className={cn(
-                  'flex items-center gap-2 rounded-md px-2 py-1.5 text-xs font-medium transition-colors',
+                  'group flex items-center gap-2 rounded-md px-2 py-1.5 text-xs font-medium transition-all duration-200',
                   isActive
-                    ? 'bg-primary text-primary-foreground'
-                    : 'text-sidebar-foreground hover:bg-sidebar-accent',
-                  collapsed && 'justify-center px-1.5'
+                    ? 'bg-primary text-primary-foreground shadow-sm'
+                    : 'text-sidebar-foreground hover:bg-sidebar-accent hover:translate-x-0.5',
+                  collapsed && 'justify-center px-1.5 hover:translate-x-0'
                 )}
               >
-                <item.icon className="h-4 w-4 flex-shrink-0" />
+                <item.icon className={cn(
+                  'h-4 w-4 flex-shrink-0 transition-transform duration-200',
+                  !isActive && 'group-hover:scale-110'
+                )} />
                 {!collapsed && <span>{item.label}</span>}
               </Link>
             );
@@ -113,14 +116,17 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
             <Link
               to="/case-studies"
               className={cn(
-                'flex items-center gap-2 rounded-md px-2 py-1.5 text-xs font-medium transition-colors',
+                'group flex items-center gap-2 rounded-md px-2 py-1.5 text-xs font-medium transition-all duration-200',
                 location.pathname === '/case-studies'
-                  ? 'bg-primary text-primary-foreground'
-                  : 'text-sidebar-foreground hover:bg-sidebar-accent',
-                collapsed && 'justify-center px-1.5'
+                  ? 'bg-primary text-primary-foreground shadow-sm'
+                  : 'text-sidebar-foreground hover:bg-sidebar-accent hover:translate-x-0.5',
+                collapsed && 'justify-center px-1.5 hover:translate-x-0'
               )}
             >
-              <BookOpen className="h-4 w-4" />
+              <BookOpen className={cn(
+                'h-4 w-4 transition-transform duration-200',
+                location.pathname !== '/case-studies' && 'group-hover:scale-110'
+              )} />
               {!collapsed && <span>Case Studies</span>}
             </Link>
           )}
@@ -128,11 +134,11 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
             <Link
               to="/admin"
               className={cn(
-                'flex items-center gap-2 rounded-md px-2 py-1.5 text-xs font-medium text-sidebar-foreground hover:bg-sidebar-accent transition-colors',
-                collapsed && 'justify-center px-1.5'
+                'group flex items-center gap-2 rounded-md px-2 py-1.5 text-xs font-medium text-sidebar-foreground hover:bg-sidebar-accent transition-all duration-200 hover:translate-x-0.5',
+                collapsed && 'justify-center px-1.5 hover:translate-x-0'
               )}
             >
-              <Shield className="h-4 w-4" />
+              <Shield className="h-4 w-4 transition-transform duration-200 group-hover:scale-110" />
               {!collapsed && <span>Admin Panel</span>}
             </Link>
           )}
@@ -140,21 +146,21 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
             <Link
               to="/dashboard"
               className={cn(
-                'flex items-center gap-2 rounded-md px-2 py-1.5 text-xs font-medium text-sidebar-foreground hover:bg-sidebar-accent transition-colors',
-                collapsed && 'justify-center px-1.5'
+                'group flex items-center gap-2 rounded-md px-2 py-1.5 text-xs font-medium text-sidebar-foreground hover:bg-sidebar-accent transition-all duration-200 hover:translate-x-0.5',
+                collapsed && 'justify-center px-1.5 hover:translate-x-0'
               )}
             >
-              <LayoutDashboard className="h-4 w-4" />
+              <LayoutDashboard className="h-4 w-4 transition-transform duration-200 group-hover:scale-110" />
               {!collapsed && <span>User Dashboard</span>}
             </Link>
           )}
           <button
             className={cn(
-              'flex items-center gap-2 rounded-md px-2 py-1.5 text-xs font-medium text-sidebar-foreground hover:bg-sidebar-accent transition-colors w-full',
-              collapsed && 'justify-center px-1.5'
+              'group flex items-center gap-2 rounded-md px-2 py-1.5 text-xs font-medium text-sidebar-foreground hover:bg-sidebar-accent transition-all duration-200 w-full hover:translate-x-0.5',
+              collapsed && 'justify-center px-1.5 hover:translate-x-0'
             )}
           >
-            <LogOut className="h-4 w-4" />
+            <LogOut className="h-4 w-4 transition-transform duration-200 group-hover:scale-110" />
             {!collapsed && <span>Sign Out</span>}
           </button>
         </div>
