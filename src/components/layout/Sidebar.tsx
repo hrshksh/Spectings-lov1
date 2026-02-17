@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -39,6 +40,8 @@ const adminNavItems = [
 export function Sidebar({ isAdmin = false }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(true);
   const location = useLocation();
+  const navigate = useNavigate();
+  const { signOut } = useAuth();
   const navItems = isAdmin ? adminNavItems : userNavItems;
 
   const NavItem = ({ icon: Icon, label, path }: { icon: React.ElementType; label: string; path: string }) => {
@@ -121,6 +124,10 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
         {!isAdmin && <NavItem icon={Shield} label="Admin Panel" path="/admin" />}
         {isAdmin && <NavItem icon={LayoutDashboard} label="User Dashboard" path="/dashboard" />}
         <button
+          onClick={async () => {
+            await signOut();
+            navigate('/auth');
+          }}
           className={cn(
             'group flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm font-medium text-sidebar-foreground hover:bg-sidebar-accent transition-all duration-200 w-full',
             collapsed && 'justify-center px-2'
