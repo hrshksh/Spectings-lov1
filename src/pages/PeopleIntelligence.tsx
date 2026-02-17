@@ -3,10 +3,9 @@ import { DashboardLayout } from '@/components/layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Search, Download, Mail, Phone, ExternalLink, ChevronRight, Loader2, Users } from 'lucide-react';
+import { Download, Mail, Phone, ExternalLink, ChevronRight, Loader2, Users } from 'lucide-react';
 import type { Tables } from '@/integrations/supabase/types';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
@@ -66,7 +65,7 @@ function useLeadsForUser(userTags: string[]) {
 
 export default function PeopleIntelligence() {
   const { user } = useAuth();
-  const [searchQuery, setSearchQuery] = useState('');
+  
   const [selectedLead, setSelectedLead] = useState<LeadWithPerson | null>(null);
   const [tagFilter, setTagFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -92,13 +91,6 @@ export default function PeopleIntelligence() {
     return leads.filter((lead) => {
       if (!lead.person) return false;
       
-      // Search filter
-      const matchesSearch = 
-        lead.person.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (lead.person.company?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false) ||
-        (lead.person.role?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false) ||
-        (lead.person.email?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false);
-
       // Tag filter
       const matchesTag = tagFilter === 'all' || 
         (lead.person.tags?.includes(tagFilter) ?? false);
@@ -106,9 +98,9 @@ export default function PeopleIntelligence() {
       // Status filter
       const matchesStatus = statusFilter === 'all' || lead.status === statusFilter;
 
-      return matchesSearch && matchesTag && matchesStatus;
+      return matchesTag && matchesStatus;
     });
-  }, [leads, searchQuery, tagFilter, statusFilter]);
+  }, [leads, tagFilter, statusFilter]);
 
   const stats = useMemo(() => ({
     total: leads?.filter(l => l.person).length || 0,
@@ -156,19 +148,10 @@ export default function PeopleIntelligence() {
           </Card>
         </div>
 
-        {/* Search and Filters */}
+        {/* Filters */}
         <Card>
           <CardContent className="p-2">
             <div className="flex flex-wrap items-center gap-2">
-              <div className="relative flex-1 min-w-64">
-                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input 
-                  placeholder="Search by name, company, role, or email..." 
-                  value={searchQuery} 
-                  onChange={(e) => setSearchQuery(e.target.value)} 
-                  className="pl-8 h-8 text-sm" 
-                />
-              </div>
               <Select value={tagFilter} onValueChange={setTagFilter}>
                 <SelectTrigger className="w-36 h-8 text-sm">
                   <SelectValue placeholder="Tag" />
@@ -217,7 +200,7 @@ export default function PeopleIntelligence() {
                   </div>
                 ) : filteredLeads.length === 0 ? (
                   <div className="text-center py-12 text-muted-foreground">
-                    {searchQuery || tagFilter !== 'all' || statusFilter !== 'all'
+                    {tagFilter !== 'all' || statusFilter !== 'all'
                       ? 'No leads match your filters' 
                       : 'No leads match your assigned tags'}
                   </div>
