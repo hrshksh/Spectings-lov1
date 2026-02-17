@@ -1,7 +1,5 @@
-import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,7 +8,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Bell, Search, User, Settings, LogOut, HelpCircle } from 'lucide-react';
+import { Bell, User, Settings, LogOut, HelpCircle } from 'lucide-react';
 import { mockAlerts } from '@/data/mockData';
 import { ThemeToggle } from '@/components/ThemeToggle';
 
@@ -20,7 +18,6 @@ interface HeaderProps {
 }
 
 export function Header({ title, subtitle }: HeaderProps) {
-  const [searchOpen, setSearchOpen] = useState(false);
   const unreadAlerts = mockAlerts.filter((a) => !a.read).length;
 
   return (
@@ -31,22 +28,6 @@ export function Header({ title, subtitle }: HeaderProps) {
       </div>
 
       <div className="flex items-center gap-1">
-        {/* Search */}
-        <div className="relative">
-          {searchOpen ? (
-            <Input
-              placeholder="Search people, companies, trends..."
-              className="w-56 h-7 text-sm bg-secondary border-border"
-              autoFocus
-              onBlur={() => setSearchOpen(false)}
-            />
-          ) : (
-            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setSearchOpen(true)}>
-              <Search className="h-4 w-4 text-muted-foreground" />
-            </Button>
-          )}
-        </div>
-
         {/* Theme Toggle */}
         <ThemeToggle />
 
