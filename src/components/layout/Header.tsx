@@ -1,3 +1,4 @@
+import { ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -12,12 +13,13 @@ import { ThemeToggle } from '@/components/ThemeToggle';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
-interface HeaderProps {
+export interface HeaderProps {
   title: string;
   subtitle?: string;
+  mobileMenuTrigger?: ReactNode;
 }
 
-export function Header({ title, subtitle }: HeaderProps) {
+export function Header({ title, subtitle, mobileMenuTrigger }: HeaderProps) {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
 
@@ -36,9 +38,12 @@ export function Header({ title, subtitle }: HeaderProps) {
 
   return (
     <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-border bg-background/95 backdrop-blur-sm px-4 lg:px-6">
-      <div>
-        <h1 className="text-lg font-semibold text-foreground leading-tight">{title}</h1>
-        {subtitle && <p className="text-xs text-muted-foreground">{subtitle}</p>}
+      <div className="flex items-center gap-2">
+        {mobileMenuTrigger}
+        <div>
+          <h1 className="text-lg font-semibold text-foreground leading-tight">{title}</h1>
+          {subtitle && <p className="text-xs text-muted-foreground">{subtitle}</p>}
+        </div>
       </div>
 
       <div className="flex items-center gap-1.5">
