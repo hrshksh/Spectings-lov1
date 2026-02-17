@@ -9,7 +9,7 @@ import Index from "./pages/Index";
 import Dashboard from "./pages/Dashboard";
 import PeopleIntelligence from "./pages/PeopleIntelligence";
 import CompanyIntelligence from "./pages/CompanyIntelligence";
-import Analytics from "./pages/Analytics";
+
 import CaseStudies from "./pages/CaseStudies";
 import Reports from "./pages/Reports";
 import Settings from "./pages/Settings";
@@ -44,11 +44,6 @@ const App = () => (
             <Route path="/companies" element={
               <ProtectedRoute>
                 <CompanyIntelligence />
-              </ProtectedRoute>
-            } />
-            <Route path="/analytics" element={
-              <ProtectedRoute>
-                <Analytics />
               </ProtectedRoute>
             } />
             <Route path="/case-studies" element={
