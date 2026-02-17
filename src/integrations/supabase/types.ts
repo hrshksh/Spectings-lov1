@@ -206,24 +206,33 @@ export type Database = {
       }
       organizations: {
         Row: {
+          country: string | null
           created_at: string
           id: string
           industry: string | null
           name: string
+          size: string | null
+          slug: string | null
           updated_at: string
         }
         Insert: {
+          country?: string | null
           created_at?: string
           id?: string
           industry?: string | null
           name: string
+          size?: string | null
+          slug?: string | null
           updated_at?: string
         }
         Update: {
+          country?: string | null
           created_at?: string
           id?: string
           industry?: string | null
           name?: string
+          size?: string | null
+          slug?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -289,6 +298,7 @@ export type Database = {
           full_name: string | null
           id: string
           is_active: boolean
+          phone: string | null
           subscription_ends_at: string | null
           subscription_plan: Database["public"]["Enums"]["subscription_plan"]
           updated_at: string
@@ -300,6 +310,7 @@ export type Database = {
           full_name?: string | null
           id: string
           is_active?: boolean
+          phone?: string | null
           subscription_ends_at?: string | null
           subscription_plan?: Database["public"]["Enums"]["subscription_plan"]
           updated_at?: string
@@ -311,6 +322,7 @@ export type Database = {
           full_name?: string | null
           id?: string
           is_active?: boolean
+          phone?: string | null
           subscription_ends_at?: string | null
           subscription_plan?: Database["public"]["Enums"]["subscription_plan"]
           updated_at?: string
