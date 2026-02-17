@@ -13,8 +13,8 @@ import {
   Loader2,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { chartData } from '@/data/mockData';
+
+
 import { useRealtimeStats } from '@/hooks/useRealtimeData';
 import type { Tables } from '@/integrations/supabase/types';
 
@@ -111,45 +111,6 @@ export default function Dashboard() {
           <StatCard title="Pending Tasks" value={stats.pendingTasks} subtitle={`${stats.inProgressTasks} in progress`} icon={AlertTriangle} />
         </div>
 
-        {/* Chart */}
-        <Card>
-          <CardHeader className="pb-2 px-4 pt-4">
-            <CardTitle className="text-sm font-semibold">Weekly Sentiment Trend</CardTitle>
-            <CardDescription className="text-xs">Positive vs Negative sentiment across all tracked topics</CardDescription>
-          </CardHeader>
-          <CardContent className="px-4 pb-4">
-            <div className="h-52">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={chartData.sentimentTrend}>
-                  <defs>
-                    <linearGradient id="colorPositive" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="hsl(var(--foreground))" stopOpacity={0.15} />
-                      <stop offset="95%" stopColor="hsl(var(--foreground))" stopOpacity={0} />
-                    </linearGradient>
-                    <linearGradient id="colorNegative" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="hsl(var(--destructive))" stopOpacity={0.15} />
-                      <stop offset="95%" stopColor="hsl(var(--destructive))" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                  <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} />
-                  <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: 'hsl(var(--background))',
-                      border: '1px solid hsl(var(--border))',
-                      borderRadius: '8px',
-                      fontSize: '12px',
-                      boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-                    }}
-                  />
-                  <Area type="monotone" dataKey="positive" stroke="hsl(var(--foreground))" fillOpacity={1} fill="url(#colorPositive)" strokeWidth={1.5} />
-                  <Area type="monotone" dataKey="negative" stroke="hsl(var(--destructive))" fillOpacity={1} fill="url(#colorNegative)" strokeWidth={1.5} />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
 
         {/* Two column summary */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
