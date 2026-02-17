@@ -5,7 +5,6 @@ import { DashboardLayout } from '@/components/layout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-
 import { Skeleton } from '@/components/ui/skeleton';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { 
@@ -26,7 +25,6 @@ export default function CompanyIntelligence() {
   const [selectedCompetitor, setSelectedCompetitor] = useState<string | null>(null);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
 
-  // Fetch only tracked companies from database
   const { data: trackedCompanies = [], isLoading: companiesLoading, error: companiesError } = useQuery({
     queryKey: ['companies', 'tracked'],
     queryFn: async () => {
@@ -40,8 +38,6 @@ export default function CompanyIntelligence() {
     }
   });
 
-
-  // Fetch company events from database
   const { data: companyEvents = [], isLoading: eventsLoading } = useQuery({
     queryKey: ['company_events'],
     queryFn: async () => {
@@ -55,28 +51,8 @@ export default function CompanyIntelligence() {
   });
 
   const isLoading = companiesLoading || eventsLoading;
-
   const queryClient = useQueryClient();
 
-  // Track company mutation
-  const trackCompanyMutation = useMutation({
-    mutationFn: async (companyId: string) => {
-      const { error } = await supabase
-        .from('companies')
-        .update({ is_tracked: true })
-        .eq('id', companyId);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['companies'] });
-      toast.success('Company added to tracking list');
-    },
-    onError: () => {
-      toast.error('Failed to track company');
-    }
-  });
-
-  // Untrack company mutation
   const untrackCompanyMutation = useMutation({
     mutationFn: async (companyId: string) => {
       const { error } = await supabase
@@ -142,30 +118,90 @@ export default function CompanyIntelligence() {
     return type.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
   };
 
-  // Calculate stats
   const totalEvents = companyEvents.length;
   const pricingChanges = companyEvents.filter(e => e.event_type === 'pricing_change').length;
   const productLaunches = companyEvents.filter(e => e.event_type === 'product_launch').length;
 
   return (
     <DashboardLayout title="Competitor Tracking" subtitle="Monitor and analyze your competitors">
-      <div className="space-y-3 animate-fade-in">
-        {/* Search and Actions */}
-        <div className="flex gap-2">
-          <Button size="sm" variant="outline" className="h-9">
-            <Download className="h-3.5 w-3.5 sm:mr-1.5" />
-            <span className="hidden sm:inline">Export</span>
-          </Button>
-          <Button size="sm" className="h-9" onClick={() => setAddDialogOpen(true)}>
-            <Building2 className="h-3.5 w-3.5 sm:mr-1.5" />
-            <span className="hidden sm:inline">Add Competitor</span>
-          </Button>
+      <div className="space-y-4 animate-fade-in">
+        {/* Stats Row */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <Building2 className="h-4 w-4 text-primary" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold tracking-tight">{isLoading ? '—' : trackedCompanies.length}</p>
+                  <p className="text-xs text-muted-foreground">Tracked</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <Activity className="h-4 w-4 text-primary" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold tracking-tight">{isLoading ? '—' : totalEvents}</p>
+                  <p className="text-xs text-muted-foreground">Total Events</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <DollarSign className="h-4 w-4 text-primary" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold tracking-tight">{isLoading ? '—' : pricingChanges}</p>
+                  <p className="text-xs text-muted-foreground">Pricing Changes</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <Zap className="h-4 w-4 text-primary" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold tracking-tight">{isLoading ? '—' : productLaunches}</p>
+                  <p className="text-xs text-muted-foreground">Product Launches</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
-        {/* Add Competitor Dialog */}
+        {/* Action bar */}
+        <div className="flex items-center justify-between">
+          <h2 className="text-sm font-semibold text-foreground">
+            Competitors
+            <span className="ml-1.5 text-muted-foreground font-normal">({trackedCompanies.length})</span>
+          </h2>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" className="h-8 text-xs">
+              <Download className="h-3.5 w-3.5 mr-1.5" />
+              Export
+            </Button>
+            <Button size="sm" className="h-8 text-xs" onClick={() => setAddDialogOpen(true)}>
+              <Building2 className="h-3.5 w-3.5 mr-1.5" />
+              Add Competitor
+            </Button>
+          </div>
+        </div>
+
         <AddCompetitorDialog open={addDialogOpen} onOpenChange={setAddDialogOpen} />
 
-        {/* Error State */}
+        {/* Error */}
         {companiesError && (
           <Card className="border-destructive">
             <CardContent className="p-4 flex items-center gap-3 text-destructive">
@@ -175,7 +211,7 @@ export default function CompanyIntelligence() {
           </Card>
         )}
 
-        {/* Loading State */}
+        {/* Loading */}
         {isLoading && (
           <div className="space-y-3">
             {[1, 2, 3].map((i) => (
@@ -195,79 +231,71 @@ export default function CompanyIntelligence() {
           </div>
         )}
 
-        {/* Competitors List - Row wise */}
+        {/* Competitors List */}
         {!isLoading && !companiesError && (
           <div className="space-y-3">
             {trackedCompanies.map((company) => {
               const events = getCompanyEvents(company.id);
               const isSelected = selectedCompetitor === company.id;
               
-              // Group events by type for stats
               const eventStats = events.reduce((acc, event) => {
                 acc[event.event_type] = (acc[event.event_type] || 0) + 1;
                 return acc;
               }, {} as Record<string, number>);
               
-              const isTracked = company.is_tracked;
-              
               return (
                 <Card 
                   key={company.id}
                   className={cn(
-                    "cursor-pointer transition-all duration-300 ease-in-out overflow-hidden",
+                    "cursor-pointer transition-all duration-200 overflow-hidden",
                     isSelected 
-                      ? "ring-2 ring-primary shadow-lg" 
-                      : "hover:shadow-md hover:border-primary/50",
-                    
+                      ? "ring-1 ring-primary" 
+                      : "hover:border-primary/30"
                   )}
                   onClick={() => setSelectedCompetitor(isSelected ? null : company.id)}
                 >
-                  {/* Competitor Header */}
-                  <div className="p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
-                    {/* Logo/Icon */}
-                    <div className="flex items-center gap-3 sm:gap-4">
-                      <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center flex-shrink-0 border border-primary/10">
-                        <Building2 className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
+                  {/* Header */}
+                  <div className="p-4 flex items-center gap-4">
+                    <div className="h-11 w-11 rounded-xl bg-muted flex items-center justify-center flex-shrink-0">
+                      <Building2 className="h-5 w-5 text-muted-foreground" />
+                    </div>
+                    
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-0.5">
+                        <h3 className="text-sm font-semibold truncate">{company.name}</h3>
+                        {company.domain && (
+                          <a 
+                            href={`https://${company.domain}`} 
+                            target="_blank" 
+                            rel="noopener noreferrer" 
+                            className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 flex-shrink-0"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <Globe className="h-3 w-3" />
+                            <span className="hidden sm:inline">{company.domain}</span>
+                          </a>
+                        )}
                       </div>
-                      
-                      {/* Company Info */}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex flex-wrap items-center gap-2 mb-1">
-                          <h3 className="text-sm sm:text-base font-semibold">{company.name}</h3>
-                          {company.domain && (
-                            <a 
-                              href={`https://${company.domain}`} 
-                              target="_blank" 
-                              rel="noopener noreferrer" 
-                              className="text-xs text-primary hover:underline flex items-center gap-1"
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              <Globe className="h-3 w-3" />
-                              <span className="hidden xs:inline">{company.domain}</span>
-                            </a>
-                          )}
-                        </div>
-                        <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
-                          {company.industry && (
-                            <Badge variant="secondary" className="text-[10px] sm:text-xs">{company.industry}</Badge>
-                          )}
-                          {company.size && (
-                            <Badge variant="outline" className="text-[10px] sm:text-xs">{company.size}</Badge>
-                          )}
-                          {company.founded && (
-                            <span className="text-[10px] sm:text-xs text-muted-foreground hidden sm:inline">Est. {company.founded}</span>
-                          )}
-                        </div>
+                      <div className="flex items-center gap-1.5">
+                        {company.industry && (
+                          <Badge variant="secondary" className="text-[10px]">{company.industry}</Badge>
+                        )}
+                        {company.size && (
+                          <Badge variant="outline" className="text-[10px]">{company.size}</Badge>
+                        )}
+                        {company.founded && (
+                          <span className="text-[10px] text-muted-foreground hidden sm:inline">Est. {company.founded}</span>
+                        )}
                       </div>
                     </div>
                     
-                    {/* Quick Stats - visible when collapsed on large screens */}
+                    {/* Quick stats when collapsed */}
                     {!isSelected && Object.keys(eventStats).length > 0 && (
-                      <div className="hidden xl:flex items-center gap-4">
-                        {Object.entries(eventStats).slice(0, 4).map(([type, count]) => (
+                      <div className="hidden xl:flex items-center gap-3">
+                        {Object.entries(eventStats).slice(0, 3).map(([type, count]) => (
                           <div key={type} className="text-center">
                             <div className={cn(
-                              "inline-flex items-center justify-center h-8 w-8 rounded-lg mb-1",
+                              "inline-flex items-center justify-center h-7 w-7 rounded-md mb-0.5",
                               getEventBadgeVariant(type)
                             )}>
                               {getEventIcon(type)}
@@ -278,58 +306,54 @@ export default function CompanyIntelligence() {
                       </div>
                     )}
                     
-                    {/* Actions */}
-                    <div className="flex items-center justify-between sm:justify-end gap-2 mt-2 sm:mt-0">
-                      <Badge variant="outline" className="text-[10px] sm:text-xs">
-                        <Activity className="h-3 w-3 mr-1" />
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <Badge variant="outline" className="text-[10px]">
                         {events.length} events
                       </Badge>
-                          <div className="flex items-center gap-1">
-                            <ChevronDown className={cn(
-                              "h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground transition-transform duration-300",
-                              isSelected && "rotate-180"
-                            )} />
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                                <Button variant="ghost" size="icon" className="h-8 w-8">
-                                  <MoreHorizontal className="h-4 w-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end" className="w-48">
-                                <DropdownMenuItem className="text-xs">
-                                  <Eye className="h-3.5 w-3.5 mr-2" />View Full Profile
-                                </DropdownMenuItem>
-                                <DropdownMenuItem className="text-xs">
-                                  <Globe className="h-3.5 w-3.5 mr-2" />Visit Website
-                                </DropdownMenuItem>
-                                <DropdownMenuItem className="text-xs">
-                                  <FileText className="h-3.5 w-3.5 mr-2" />Generate Report
-                                </DropdownMenuItem>
-                                <DropdownMenuItem className="text-xs">
-                                  <Bell className="h-3.5 w-3.5 mr-2" />Set Alerts
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem 
-                                  className="text-xs text-destructive"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    untrackCompanyMutation.mutate(company.id);
-                                  }}
-                                >
-                                  <Trash2 className="h-3.5 w-3.5 mr-2" />Stop Tracking
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </div>
+                      <ChevronDown className={cn(
+                        "h-4 w-4 text-muted-foreground transition-transform duration-200",
+                        isSelected && "rotate-180"
+                      )} />
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                          <Button variant="ghost" size="icon" className="h-7 w-7">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-44">
+                          <DropdownMenuItem className="text-xs">
+                            <Eye className="h-3.5 w-3.5 mr-2" />View Profile
+                          </DropdownMenuItem>
+                          <DropdownMenuItem className="text-xs">
+                            <Globe className="h-3.5 w-3.5 mr-2" />Visit Website
+                          </DropdownMenuItem>
+                          <DropdownMenuItem className="text-xs">
+                            <FileText className="h-3.5 w-3.5 mr-2" />Generate Report
+                          </DropdownMenuItem>
+                          <DropdownMenuItem className="text-xs">
+                            <Bell className="h-3.5 w-3.5 mr-2" />Set Alerts
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem 
+                            className="text-xs text-destructive"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              untrackCompanyMutation.mutate(company.id);
+                            }}
+                          >
+                            <Trash2 className="h-3.5 w-3.5 mr-2" />Stop Tracking
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
                   </div>
 
                   {/* Expanded Content */}
                   {isSelected && (
-                    <div className="border-t bg-muted/30" onClick={(e) => e.stopPropagation()}>
-                      {/* Stats Row */}
-                      <div className="p-3 sm:p-4 border-b bg-background/50">
-                        <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-2 sm:gap-3">
+                    <div className="border-t" onClick={(e) => e.stopPropagation()}>
+                      {/* Event type stats */}
+                      <div className="p-4 border-b bg-muted/20">
+                        <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
                           {[
                             { type: 'pricing_change', label: 'Pricing', icon: DollarSign },
                             { type: 'product_launch', label: 'Products', icon: Zap },
@@ -340,25 +364,25 @@ export default function CompanyIntelligence() {
                           ].map(({ type, label, icon: Icon }) => (
                             <div key={type} className="flex items-center gap-2 p-2 rounded-lg bg-background border">
                               <div className={cn(
-                                "h-7 w-7 sm:h-8 sm:w-8 rounded-md flex items-center justify-center flex-shrink-0",
+                                "h-7 w-7 rounded-md flex items-center justify-center flex-shrink-0",
                                 getEventBadgeVariant(type)
                               )}>
-                                <Icon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                                <Icon className="h-3.5 w-3.5" />
                               </div>
                               <div className="min-w-0">
-                                <p className="text-base sm:text-lg font-semibold leading-none">{eventStats[type] || 0}</p>
-                                <p className="text-[9px] sm:text-[10px] text-muted-foreground truncate">{label}</p>
+                                <p className="text-lg font-semibold leading-none">{eventStats[type] || 0}</p>
+                                <p className="text-[9px] text-muted-foreground truncate">{label}</p>
                               </div>
                             </div>
                           ))}
                         </div>
                       </div>
                       
-                      {/* Timeline Section */}
-                      <div className="p-3 sm:p-4">
-                        <div className="flex items-center justify-between mb-3 sm:mb-4">
-                          <h4 className="text-xs sm:text-sm font-semibold flex items-center gap-2">
-                            <Calendar className="h-4 w-4 text-primary" />
+                      {/* Timeline */}
+                      <div className="p-4">
+                        <div className="flex items-center justify-between mb-4">
+                          <h4 className="text-xs font-semibold flex items-center gap-2">
+                            <Calendar className="h-4 w-4 text-muted-foreground" />
                             Activity Timeline
                           </h4>
                           <Button 
@@ -368,71 +392,57 @@ export default function CompanyIntelligence() {
                             onClick={() => setSelectedCompetitor(null)}
                           >
                             <X className="h-3 w-3 mr-1" />
-                            <span className="hidden sm:inline">Collapse</span>
+                            Collapse
                           </Button>
                         </div>
                         
                         {events.length > 0 ? (
                           <div className="relative">
-                            {/* Timeline line */}
                             <div className="absolute left-3 top-0 bottom-0 w-px bg-border" />
-                            
                             <div className="space-y-0">
                               {events.map((event) => (
                                 <div 
                                   key={event.id} 
-                                  className="relative pl-8 py-2 sm:py-3 border-b last:border-b-0 hover:bg-muted/50 transition-colors"
+                                  className="relative pl-8 py-3 border-b last:border-b-0 hover:bg-muted/30 transition-colors"
                                 >
-                                  {/* Timeline dot */}
                                   <div className={cn(
-                                    "absolute left-1.5 top-3 sm:top-4 h-3.5 w-3.5 sm:h-4 sm:w-4 rounded-full ring-2 sm:ring-4 ring-background flex items-center justify-center",
+                                    "absolute left-1.5 top-4 h-3.5 w-3.5 rounded-full ring-4 ring-background flex items-center justify-center",
                                     getEventColor(event.event_type)
                                   )}>
-                                    <div className="h-1 w-1 sm:h-1.5 sm:w-1.5 rounded-full bg-white" />
+                                    <div className="h-1 w-1 rounded-full bg-white" />
                                   </div>
                                   
-                                  {/* Event Content - Stacked on mobile, inline on larger screens */}
                                   <div className="flex flex-col sm:flex-row sm:items-start gap-1 sm:gap-4">
-                                    {/* Date & Event Type Row */}
-                                    <div className="flex items-center gap-2 sm:gap-4">
-                                      {/* Date Column */}
-                                      <div className="w-16 sm:w-20 flex-shrink-0">
-                                        <p className="text-[11px] sm:text-xs font-medium">
+                                    <div className="flex items-center gap-3">
+                                      <div className="w-16 flex-shrink-0">
+                                        <p className="text-xs font-medium">
                                           {event.published_at ? new Date(event.published_at).toLocaleDateString('en-US', { 
                                             month: 'short', 
                                             day: 'numeric'
                                           }) : 'N/A'}
                                         </p>
-                                        <p className="text-[9px] sm:text-[10px] text-muted-foreground">
+                                        <p className="text-[10px] text-muted-foreground">
                                           {event.published_at ? new Date(event.published_at).getFullYear() : ''}
                                         </p>
                                       </div>
-                                      
-                                      {/* Event Type */}
-                                      <div className="flex-shrink-0">
-                                        <span className={cn(
-                                          "inline-flex items-center gap-1 sm:gap-1.5 px-2 py-0.5 sm:py-1 rounded-md text-[10px] sm:text-xs font-medium",
-                                          getEventBadgeVariant(event.event_type)
-                                        )}>
-                                          {getEventIcon(event.event_type)}
-                                          <span className="hidden xs:inline">{formatEventType(event.event_type)}</span>
-                                        </span>
-                                      </div>
+                                      <span className={cn(
+                                        "inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-medium",
+                                        getEventBadgeVariant(event.event_type)
+                                      )}>
+                                        {getEventIcon(event.event_type)}
+                                        <span className="hidden xs:inline">{formatEventType(event.event_type)}</span>
+                                      </span>
                                     </div>
-                                    
-                                    {/* Summary */}
-                                    <div className="flex-1 min-w-0 mt-1 sm:mt-0">
-                                      <p className="text-xs sm:text-sm text-foreground leading-relaxed">
-                                        {event.summary || 'No summary available'}
-                                      </p>
-                                    </div>
+                                    <p className="flex-1 text-sm text-foreground leading-relaxed">
+                                      {event.summary || 'No summary available'}
+                                    </p>
                                   </div>
                                 </div>
                               ))}
                             </div>
                           </div>
                         ) : (
-                          <div className="text-center py-6 sm:py-8 text-xs sm:text-sm text-muted-foreground bg-muted/30 rounded-lg">
+                          <div className="text-center py-8 text-sm text-muted-foreground bg-muted/20 rounded-lg">
                             No activities tracked yet for this competitor
                           </div>
                         )}
@@ -443,71 +453,17 @@ export default function CompanyIntelligence() {
               );
             })}
             
-            {trackedCompanies.length === 0 && !isLoading && (
+            {trackedCompanies.length === 0 && (
               <Card>
-                <CardContent className="py-12 text-center text-sm text-muted-foreground">
-                  No competitors being tracked yet. Add companies to start tracking.
+                <CardContent className="py-16 text-center">
+                  <Building2 className="h-8 w-8 mx-auto mb-2 text-muted-foreground opacity-40" />
+                  <p className="text-sm font-medium text-muted-foreground">No competitors tracked</p>
+                  <p className="text-xs text-muted-foreground mt-1">Add companies to start monitoring.</p>
                 </CardContent>
               </Card>
             )}
           </div>
         )}
-
-        {/* Summary Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-          <Card>
-            <CardContent className="p-3">
-              <div className="flex items-center gap-2">
-                <div className="h-8 w-8 rounded-md bg-primary/10 flex items-center justify-center">
-                  <Building2 className="h-4 w-4 text-primary" />
-                </div>
-                <div>
-                  <p className="text-[10px] text-muted-foreground">Total Tracked</p>
-                  <p className="text-lg font-semibold">{isLoading ? '-' : trackedCompanies.length}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-3">
-              <div className="flex items-center gap-2">
-                <div className="h-8 w-8 rounded-md bg-amber-100 dark:bg-amber-950 flex items-center justify-center">
-                  <DollarSign className="h-4 w-4 text-amber-600" />
-                </div>
-                <div>
-                  <p className="text-[10px] text-muted-foreground">Pricing Changes</p>
-                  <p className="text-lg font-semibold">{isLoading ? '-' : pricingChanges}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-3">
-              <div className="flex items-center gap-2">
-                <div className="h-8 w-8 rounded-md bg-blue-100 dark:bg-blue-950 flex items-center justify-center">
-                  <Zap className="h-4 w-4 text-blue-600" />
-                </div>
-                <div>
-                  <p className="text-[10px] text-muted-foreground">Product Launches</p>
-                  <p className="text-lg font-semibold">{isLoading ? '-' : productLaunches}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-3">
-              <div className="flex items-center gap-2">
-                <div className="h-8 w-8 rounded-md bg-green-100 dark:bg-green-950 flex items-center justify-center">
-                  <Activity className="h-4 w-4 text-green-600" />
-                </div>
-                <div>
-                  <p className="text-[10px] text-muted-foreground">Total Events</p>
-                  <p className="text-lg font-semibold">{isLoading ? '-' : totalEvents}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
       </div>
     </DashboardLayout>
   );

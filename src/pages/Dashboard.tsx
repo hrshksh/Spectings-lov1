@@ -8,8 +8,6 @@ import {
   Building2,
   TrendingUp,
   AlertTriangle,
-  ArrowUpRight,
-  ArrowDownRight,
   FileText,
   ExternalLink,
   Loader2,
@@ -22,7 +20,6 @@ import type { Tables } from '@/integrations/supabase/types';
 
 type CompanyEvent = Tables<'company_events'>;
 
-// Column definitions for company events
 const eventColumns: Column<CompanyEvent>[] = [
   {
     key: 'summary',
@@ -30,7 +27,7 @@ const eventColumns: Column<CompanyEvent>[] = [
     sortable: true,
     searchable: true,
     render: (event) => (
-      <div className="font-medium text-sm max-w-[300px]">{event.summary || 'No summary'}</div>
+      <div className="font-medium text-sm max-w-[300px] truncate">{event.summary || 'No summary'}</div>
     ),
     mobileRender: (event) => (
       <div className="font-medium text-sm text-right">{event.summary || 'No summary'}</div>
@@ -82,7 +79,6 @@ const eventColumns: Column<CompanyEvent>[] = [
   {
     key: 'actions',
     header: '',
-    hidden: false,
     render: () => (
       <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
         <ExternalLink className="h-3.5 w-3.5" />
@@ -96,165 +92,126 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <DashboardLayout title="Weekly Intelligence Summary" subtitle="Loading...">
+      <DashboardLayout title="Dashboard" subtitle="Weekly Intelligence Summary">
         <div className="flex items-center justify-center h-64">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
         </div>
       </DashboardLayout>
     );
   }
 
   return (
-    <DashboardLayout title="Weekly Intelligence Summary" subtitle="Live Data">
-      <div className="space-y-3 animate-fade-in">
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2">
-          <StatCard
-            title="New Leads"
-            value={stats.newLeads}
-            subtitle={`${stats.verifiedLeads} verified`}
-            icon={Users}
-            color="primary"
-          />
-          <StatCard
-            title="Tracked Companies"
-            value={stats.trackedCompanies}
-            subtitle={`${stats.totalCompanies} total`}
-            icon={Building2}
-            color="accent"
-          />
-          <StatCard
-            title="Company Events"
-            value={stats.recentEvents}
-            subtitle="This period"
-            icon={TrendingUp}
-            color="success"
-          />
-          <StatCard
-            title="Pending Tasks"
-            value={stats.pendingTasks}
-            subtitle={`${stats.inProgressTasks} in progress`}
-            icon={AlertTriangle}
-            color="warning"
-          />
+    <DashboardLayout title="Dashboard" subtitle="Weekly Intelligence Summary">
+      <div className="space-y-5 animate-fade-in">
+        {/* Stats */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          <StatCard title="New Leads" value={stats.newLeads} subtitle={`${stats.verifiedLeads} verified`} icon={Users} />
+          <StatCard title="Tracked Companies" value={stats.trackedCompanies} subtitle={`${stats.totalCompanies} total`} icon={Building2} />
+          <StatCard title="Company Events" value={stats.recentEvents} subtitle="This period" icon={TrendingUp} />
+          <StatCard title="Pending Tasks" value={stats.pendingTasks} subtitle={`${stats.inProgressTasks} in progress`} icon={AlertTriangle} />
         </div>
 
-        {/* Sentiment Chart */}
+        {/* Chart */}
         <Card>
-          <CardHeader className="py-2 px-3">
-            <CardTitle className="text-sm font-medium">Weekly Sentiment Trend</CardTitle>
+          <CardHeader className="pb-2 px-4 pt-4">
+            <CardTitle className="text-sm font-semibold">Weekly Sentiment Trend</CardTitle>
             <CardDescription className="text-xs">Positive vs Negative sentiment across all tracked topics</CardDescription>
           </CardHeader>
-          <CardContent className="p-2">
-            <div className="h-48">
+          <CardContent className="px-4 pb-4">
+            <div className="h-52">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={chartData.sentimentTrend}>
                   <defs>
                     <linearGradient id="colorPositive" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="hsl(var(--foreground))" stopOpacity={0.2} />
+                      <stop offset="5%" stopColor="hsl(var(--foreground))" stopOpacity={0.15} />
                       <stop offset="95%" stopColor="hsl(var(--foreground))" stopOpacity={0} />
                     </linearGradient>
                     <linearGradient id="colorNegative" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="hsl(var(--destructive))" stopOpacity={0.2} />
+                      <stop offset="5%" stopColor="hsl(var(--destructive))" stopOpacity={0.15} />
                       <stop offset="95%" stopColor="hsl(var(--destructive))" stopOpacity={0} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                  <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" fontSize={10} />
-                  <YAxis stroke="hsl(var(--muted-foreground))" fontSize={10} />
+                  <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} />
+                  <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} />
                   <Tooltip
                     contentStyle={{
                       backgroundColor: 'hsl(var(--background))',
                       border: '1px solid hsl(var(--border))',
-                      borderRadius: '4px',
-                      fontSize: '11px',
+                      borderRadius: '8px',
+                      fontSize: '12px',
+                      boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
                     }}
                   />
-                  <Area
-                    type="monotone"
-                    dataKey="positive"
-                    stroke="hsl(var(--foreground))"
-                    fillOpacity={1}
-                    fill="url(#colorPositive)"
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="negative"
-                    stroke="hsl(var(--destructive))"
-                    fillOpacity={1}
-                    fill="url(#colorNegative)"
-                  />
+                  <Area type="monotone" dataKey="positive" stroke="hsl(var(--foreground))" fillOpacity={1} fill="url(#colorPositive)" strokeWidth={1.5} />
+                  <Area type="monotone" dataKey="negative" stroke="hsl(var(--destructive))" fillOpacity={1} fill="url(#colorNegative)" strokeWidth={1.5} />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
           </CardContent>
         </Card>
 
-        {/* Live Stats Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-          {/* People Stats */}
+        {/* Two column summary */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <Card>
-            <CardHeader className="py-2 px-3 flex flex-row items-center justify-between">
+            <CardHeader className="px-4 pt-4 pb-3 flex flex-row items-center justify-between">
               <div>
-                <CardTitle className="text-sm font-medium">People Intelligence</CardTitle>
+                <CardTitle className="text-sm font-semibold">People Intelligence</CardTitle>
                 <CardDescription className="text-xs">Real-time contact database</CardDescription>
               </div>
               <Button variant="outline" size="sm" className="h-7 text-xs" asChild>
                 <Link to="/people">View all</Link>
               </Button>
             </CardHeader>
-            <CardContent className="p-3">
+            <CardContent className="px-4 pb-4">
               <div className="grid grid-cols-2 gap-3">
-                <div className="p-3 bg-muted/50 rounded-lg">
-                  <p className="text-2xl font-bold">{stats.totalPeople}</p>
-                  <p className="text-xs text-muted-foreground">Total Contacts</p>
+                <div className="p-4 bg-muted/40 rounded-lg">
+                  <p className="text-2xl font-bold tracking-tight">{stats.totalPeople}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">Total Contacts</p>
                 </div>
-                <div className="p-3 bg-muted/50 rounded-lg">
-                  <p className="text-2xl font-bold">{stats.verifiedLeads}</p>
-                  <p className="text-xs text-muted-foreground">Verified Leads</p>
+                <div className="p-4 bg-muted/40 rounded-lg">
+                  <p className="text-2xl font-bold tracking-tight">{stats.verifiedLeads}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">Verified Leads</p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          {/* Evidence Stats */}
           <Card>
-            <CardHeader className="py-2 px-3 flex flex-row items-center justify-between">
+            <CardHeader className="px-4 pt-4 pb-3 flex flex-row items-center justify-between">
               <div>
-                <CardTitle className="text-sm font-medium">Evidence Pipeline</CardTitle>
+                <CardTitle className="text-sm font-semibold">Evidence Pipeline</CardTitle>
                 <CardDescription className="text-xs">Real-time evidence tracking</CardDescription>
               </div>
-              <Badge variant="outline" className="text-xs">
-                {stats.pendingEvidence} pending
-              </Badge>
+              <Badge variant="outline" className="text-xs">{stats.pendingEvidence} pending</Badge>
             </CardHeader>
-            <CardContent className="p-3">
+            <CardContent className="px-4 pb-4">
               <div className="grid grid-cols-2 gap-3">
-                <div className="p-3 bg-muted/50 rounded-lg">
-                  <p className="text-2xl font-bold">{stats.pendingEvidence}</p>
-                  <p className="text-xs text-muted-foreground">Pending Review</p>
+                <div className="p-4 bg-muted/40 rounded-lg">
+                  <p className="text-2xl font-bold tracking-tight">{stats.pendingEvidence}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">Pending Review</p>
                 </div>
-                <div className="p-3 bg-muted/50 rounded-lg">
-                  <p className="text-2xl font-bold">{stats.publishedEvidence}</p>
-                  <p className="text-xs text-muted-foreground">Published</p>
+                <div className="p-4 bg-muted/40 rounded-lg">
+                  <p className="text-2xl font-bold tracking-tight">{stats.publishedEvidence}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">Published</p>
                 </div>
               </div>
             </CardContent>
           </Card>
         </div>
 
-        {/* Competitor Events Table */}
+        {/* Events Table */}
         <Card>
-          <CardHeader className="py-2 px-3 flex flex-row items-center justify-between">
+          <CardHeader className="px-4 pt-4 pb-3 flex flex-row items-center justify-between">
             <div>
-              <CardTitle className="text-sm font-medium">Competitor Updates</CardTitle>
+              <CardTitle className="text-sm font-semibold">Competitor Updates</CardTitle>
               <CardDescription className="text-xs">Real-time company events</CardDescription>
             </div>
             <Button variant="outline" size="sm" className="h-7 text-xs" asChild>
               <Link to="/companies">View all</Link>
             </Button>
           </CardHeader>
-          <CardContent className="p-2">
+          <CardContent className="px-4 pb-4">
             {companyEvents.length > 0 ? (
               <DataTable 
                 data={companyEvents} 
@@ -264,7 +221,7 @@ export default function Dashboard() {
                 searchPlaceholder="Search events..."
               />
             ) : (
-              <div className="text-center py-8 text-muted-foreground text-sm">
+              <div className="text-center py-12 text-muted-foreground text-sm">
                 No company events yet. Events will appear here in real-time.
               </div>
             )}
@@ -273,29 +230,26 @@ export default function Dashboard() {
 
         {/* Quick Actions */}
         <Card>
-          <CardContent className="p-3">
-            <div className="flex items-center justify-between flex-wrap gap-2">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between flex-wrap gap-3">
               <div>
                 <h3 className="text-sm font-semibold">Quick Actions</h3>
                 <p className="text-xs text-muted-foreground">Jump to common tasks</p>
               </div>
-              <div className="flex gap-2 flex-wrap">
-                <Button size="sm" className="h-8" asChild>
+              <div className="flex gap-2">
+                <Button size="sm" className="h-8 text-xs" asChild>
                   <Link to="/people">
-                    <Users className="h-3.5 w-3.5 mr-1.5" />
-                    Browse Leads
+                    <Users className="h-3.5 w-3.5 mr-1.5" />Browse Leads
                   </Link>
                 </Button>
-                <Button variant="outline" size="sm" className="h-8" asChild>
+                <Button variant="outline" size="sm" className="h-8 text-xs" asChild>
                   <Link to="/companies">
-                    <Building2 className="h-3.5 w-3.5 mr-1.5" />
-                    Track Competitors
+                    <Building2 className="h-3.5 w-3.5 mr-1.5" />Track Competitors
                   </Link>
                 </Button>
-                <Button variant="outline" size="sm" className="h-8" asChild>
+                <Button variant="outline" size="sm" className="h-8 text-xs" asChild>
                   <Link to="/reports">
-                    <FileText className="h-3.5 w-3.5 mr-1.5" />
-                    Download Report
+                    <FileText className="h-3.5 w-3.5 mr-1.5" />Reports
                   </Link>
                 </Button>
               </div>
@@ -312,31 +266,21 @@ interface StatCardProps {
   value: number;
   subtitle: string;
   icon: React.ElementType;
-  color: 'primary' | 'accent' | 'success' | 'warning';
 }
 
-function StatCard({ title, value, subtitle, icon: Icon, color }: StatCardProps) {
-  const colorClasses = {
-    primary: 'bg-foreground/5 text-foreground',
-    accent: 'bg-foreground/5 text-foreground',
-    success: 'bg-success/10 text-success',
-    warning: 'bg-warning/10 text-warning',
-  };
-
+function StatCard({ title, value, subtitle, icon: Icon }: StatCardProps) {
   return (
     <Card>
-      <CardContent className="p-3">
-        <div className="flex items-start justify-between">
-          <div className={`h-8 w-8 rounded-md ${colorClasses[color]} flex items-center justify-center`}>
-            <Icon className="h-4 w-4" />
+      <CardContent className="p-4">
+        <div className="flex items-start justify-between mb-3">
+          <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center">
+            <Icon className="h-4 w-4 text-primary" />
           </div>
-          <Badge variant="outline" className="text-xs">Live</Badge>
+          <Badge variant="outline" className="text-[10px]">Live</Badge>
         </div>
-        <div className="mt-2">
-          <p className="text-xl font-semibold">{value}</p>
-          <p className="text-xs text-muted-foreground">{title}</p>
-          <p className="text-xs text-muted-foreground/70">{subtitle}</p>
-        </div>
+        <p className="text-2xl font-bold tracking-tight">{value}</p>
+        <p className="text-xs text-muted-foreground mt-0.5">{title}</p>
+        <p className="text-[10px] text-muted-foreground">{subtitle}</p>
       </CardContent>
     </Card>
   );

@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,7 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Bell, Search, User, Settings, LogOut, HelpCircle } from 'lucide-react';
+import { Bell, User, Settings, LogOut, HelpCircle } from 'lucide-react';
 import { mockAlerts } from '@/data/mockData';
 import { ThemeToggle } from '@/components/ThemeToggle';
 
@@ -20,40 +19,22 @@ interface HeaderProps {
 }
 
 export function Header({ title, subtitle }: HeaderProps) {
-  const [searchOpen, setSearchOpen] = useState(false);
   const unreadAlerts = mockAlerts.filter((a) => !a.read).length;
 
   return (
-    <header className="sticky top-0 z-30 flex h-12 items-center justify-between border-b border-border bg-background/95 backdrop-blur-sm px-4">
-      <div className="flex flex-col">
-        <h1 className="text-base font-semibold text-foreground">{title}</h1>
+    <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-border bg-background/95 backdrop-blur-sm px-4 lg:px-6">
+      <div>
+        <h1 className="text-lg font-semibold text-foreground leading-tight">{title}</h1>
         {subtitle && <p className="text-xs text-muted-foreground">{subtitle}</p>}
       </div>
 
-      <div className="flex items-center gap-1">
-        {/* Search */}
-        <div className="relative">
-          {searchOpen ? (
-            <Input
-              placeholder="Search people, companies, trends..."
-              className="w-56 h-7 text-sm bg-secondary border-border"
-              autoFocus
-              onBlur={() => setSearchOpen(false)}
-            />
-          ) : (
-            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setSearchOpen(true)}>
-              <Search className="h-4 w-4 text-muted-foreground" />
-            </Button>
-          )}
-        </div>
-
-        {/* Theme Toggle */}
+      <div className="flex items-center gap-1.5">
         <ThemeToggle />
 
         {/* Notifications */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="relative h-7 w-7">
+            <Button variant="ghost" size="icon" className="relative h-8 w-8">
               <Bell className="h-4 w-4 text-muted-foreground" />
               {unreadAlerts > 0 && (
                 <Badge
@@ -87,9 +68,9 @@ export function Header({ title, subtitle }: HeaderProps) {
         {/* User Menu */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="relative h-7 w-7">
-              <div className="h-6 w-6 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center">
-                <span className="text-primary-foreground text-[10px] font-medium">JD</span>
+            <Button variant="ghost" size="icon" className="relative h-8 w-8">
+              <div className="h-7 w-7 rounded-full bg-primary flex items-center justify-center">
+                <span className="text-primary-foreground text-[11px] font-medium">JD</span>
               </div>
             </Button>
           </DropdownMenuTrigger>
