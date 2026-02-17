@@ -47,7 +47,8 @@ function useLeadsForUser(userTags: string[]) {
           *,
           person:people(*)
         `)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(200);
       
       if (error) throw error;
       
