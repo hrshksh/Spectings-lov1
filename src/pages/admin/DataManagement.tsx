@@ -380,13 +380,14 @@ export default function DataManagement() {
   );
 
   // Group user tags by user_id for display
-  const userTagsMap = userTags?.reduce((acc, tag) => {
+  const userTagsArray = Array.isArray(userTags) ? userTags : [];
+  const userTagsMap = userTagsArray.reduce((acc, tag) => {
     if (!acc[tag.user_id]) {
       acc[tag.user_id] = [];
     }
     acc[tag.user_id].push(tag);
     return acc;
-  }, {} as Record<string, typeof userTags>) || {};
+  }, {} as Record<string, typeof userTagsArray>) || {};
 
   const filteredProfiles = profiles?.filter(
     (p) =>
