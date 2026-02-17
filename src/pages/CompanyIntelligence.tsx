@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useState, useMemo } from 'react';
+import { useInfiniteQuery, useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { DashboardLayout } from '@/components/layout';
 import { Card, CardContent } from '@/components/ui/card';
@@ -11,7 +11,7 @@ import {
   Building2, TrendingUp, Zap, FileText, 
   DollarSign, Download, Users,
   Activity, ChevronDown, MoreHorizontal, Eye, Bell, Trash2, Globe, Calendar,
-  X, Megaphone, Newspaper, Star, AlertCircle
+  X, Megaphone, Newspaper, Star, AlertCircle, Loader2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
@@ -21,23 +21,43 @@ import { AddCompetitorDialog } from '@/components/competitors/AddCompetitorDialo
 type Company = Tables<'companies'>;
 type CompanyEvent = Tables<'company_events'>;
 
+const COMPANIES_PAGE_SIZE = 50;
+
 export default function CompanyIntelligence() {
   const [selectedCompetitor, setSelectedCompetitor] = useState<string | null>(null);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
 
-  const { data: trackedCompanies = [], isLoading: companiesLoading, error: companiesError } = useQuery({
+  const { data: companiesData, isLoading: companiesLoading, error: companiesError, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
     queryKey: ['companies', 'tracked'],
-    queryFn: async () => {
-      const { data, error } = await supabase
+    queryFn: async ({ pageParam }: { pageParam: string | null }) => {
+      let query = supabase
         .from('companies')
         .select('*')
         .eq('is_tracked', true)
         .order('name')
-        .limit(200);
+        .limit(COMPANIES_PAGE_SIZE);
+
+      if (pageParam) {
+        query = query.gt('name', pageParam);
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
-      return data as Company[];
-    }
+
+      const nextCursor = data.length === COMPANIES_PAGE_SIZE
+        ? data[data.length - 1].name
+        : null;
+
+      return { companies: data as Company[], nextCursor };
+    },
+    initialPageParam: null as string | null,
+    getNextPageParam: (lastPage) => lastPage.nextCursor,
   });
+
+  const trackedCompanies = useMemo(() => {
+    if (!companiesData) return [];
+    return companiesData.pages.flatMap(page => page.companies);
+  }, [companiesData]);
 
   const { data: companyEvents = [], isLoading: eventsLoading } = useQuery({
     queryKey: ['company_events'],
@@ -454,6 +474,25 @@ export default function CompanyIntelligence() {
                 </Card>
               );
             })}
+
+            {/* Load More */}
+            {hasNextPage && (
+              <div className="flex justify-center py-4">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => fetchNextPage()}
+                  disabled={isFetchingNextPage}
+                  className="text-xs"
+                >
+                  {isFetchingNextPage ? (
+                    <><Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />Loading...</>
+                  ) : (
+                    'Load More'
+                  )}
+                </Button>
+              </div>
+            )}
             
             {trackedCompanies.length === 0 && (
               <Card>
