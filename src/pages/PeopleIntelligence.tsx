@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Download, Mail, Phone, ExternalLink, ChevronRight, Loader2, Users, CheckCircle2, Clock, X } from 'lucide-react';
 import type { Tables } from '@/integrations/supabase/types';
 import { supabase } from '@/integrations/supabase/client';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useInfiniteQuery } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
 
 type Person = Tables<'people'>;
@@ -17,6 +17,8 @@ type Lead = Tables<'leads'>;
 interface LeadWithPerson extends Lead {
   person: Person | null;
 }
+
+const LEADS_PAGE_SIZE = 50;
 
 // Fetch user's assigned tags
 function useUserTags(userId: string | undefined) {
@@ -36,29 +38,36 @@ function useUserTags(userId: string | undefined) {
   });
 }
 
-// Fetch leads with person data filtered by user's tags
+// Cursor-based infinite leads fetch
 function useLeadsForUser(userTags: string[]) {
-  return useQuery({
+  return useInfiniteQuery({
     queryKey: ['leads-for-user', userTags],
-    queryFn: async () => {
-      const { data, error } = await supabase
+    queryFn: async ({ pageParam }: { pageParam: string | null }) => {
+      let query = supabase
         .from('leads')
-        .select(`
-          *,
-          person:people(*)
-        `)
+        .select(`*, person:people(*)`)
         .order('created_at', { ascending: false })
-        .limit(200);
+        .limit(LEADS_PAGE_SIZE);
       
+      if (pageParam) {
+        query = query.lt('created_at', pageParam);
+      }
+      
+      const { data, error } = await query;
       if (error) throw error;
       
-      const leads = data as LeadWithPerson[];
-      if (userTags.length === 0) return [];
-      
-      return leads.filter(lead => 
+      const leads = (data as LeadWithPerson[]).filter(lead =>
         lead.person?.tags?.some(tag => userTags.includes(tag))
       );
+      
+      const nextCursor = data.length === LEADS_PAGE_SIZE
+        ? data[data.length - 1].created_at
+        : null;
+      
+      return { leads, nextCursor };
     },
+    initialPageParam: null as string | null,
+    getNextPageParam: (lastPage) => lastPage.nextCursor,
     enabled: userTags.length > 0,
   });
 }
@@ -71,11 +80,15 @@ export default function PeopleIntelligence() {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   
   const { data: userTags = [], isLoading: tagsLoading } = useUserTags(user?.id);
-  const { data: leads, isLoading: leadsLoading } = useLeadsForUser(userTags);
+  const { data: leadsData, isLoading: leadsLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useLeadsForUser(userTags);
   const isLoading = tagsLoading || leadsLoading;
 
+  const leads = useMemo(() => {
+    if (!leadsData) return [];
+    return leadsData.pages.flatMap(page => page.leads);
+  }, [leadsData]);
+
   const allTags = useMemo(() => {
-    if (!leads) return [];
     const tags = new Set<string>();
     leads.forEach(lead => {
       lead.person?.tags?.forEach(tag => tags.add(tag));
@@ -84,8 +97,6 @@ export default function PeopleIntelligence() {
   }, [leads]);
 
   const filteredLeads = useMemo(() => {
-    if (!leads) return [];
-    
     return leads.filter((lead) => {
       if (!lead.person) return false;
       
@@ -98,9 +109,9 @@ export default function PeopleIntelligence() {
   }, [leads, tagFilter, statusFilter]);
 
   const stats = useMemo(() => ({
-    total: leads?.filter(l => l.person).length || 0,
-    verified: leads?.filter(l => l.status === 'verified').length || 0,
-    pending: leads?.filter(l => l.status === 'pending').length || 0,
+    total: leads.filter(l => l.person).length,
+    verified: leads.filter(l => l.status === 'verified').length,
+    pending: leads.filter(l => l.status === 'pending').length,
   }), [leads]);
 
   return (
@@ -310,6 +321,24 @@ export default function PeopleIntelligence() {
                         </div>
                       ))}
                     </div>
+                    {/* Load More */}
+                    {hasNextPage && (
+                      <div className="flex justify-center py-4 border-t border-border">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => fetchNextPage()}
+                          disabled={isFetchingNextPage}
+                          className="text-xs"
+                        >
+                          {isFetchingNextPage ? (
+                            <><Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />Loading...</>
+                          ) : (
+                            'Load More'
+                          )}
+                        </Button>
+                      </div>
+                    )}
                   </>
                 )}
               </div>
