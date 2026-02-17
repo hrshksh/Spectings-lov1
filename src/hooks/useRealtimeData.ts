@@ -5,9 +5,12 @@ import { RealtimePostgresChangesPayload } from '@supabase/supabase-js';
 
 type TableName = 'companies' | 'company_events' | 'leads' | 'people' | 'tasks' | 'raw_evidence';
 
+const DEFAULT_PAGE_SIZE = 100;
+
 export function useRealtimeTable<T extends Tables<TableName>>(
   tableName: TableName,
-  initialFetch: boolean = true
+  initialFetch: boolean = true,
+  pageSize: number = DEFAULT_PAGE_SIZE
 ) {
   const [data, setData] = useState<T[]>([]);
   const [loading, setLoading] = useState(true);
@@ -19,7 +22,8 @@ export function useRealtimeTable<T extends Tables<TableName>>(
       const { data: fetchedData, error: fetchError } = await supabase
         .from(tableName)
         .select('*')
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(pageSize);
 
       if (fetchError) throw fetchError;
       setData((fetchedData as T[]) || []);
@@ -28,7 +32,7 @@ export function useRealtimeTable<T extends Tables<TableName>>(
     } finally {
       setLoading(false);
     }
-  }, [tableName]);
+  }, [tableName, pageSize]);
 
   useEffect(() => {
     if (initialFetch) {
@@ -46,7 +50,7 @@ export function useRealtimeTable<T extends Tables<TableName>>(
         },
         (payload: RealtimePostgresChangesPayload<T>) => {
           if (payload.eventType === 'INSERT') {
-            setData((prev) => [payload.new as T, ...prev]);
+            setData((prev) => [payload.new as T, ...prev].slice(0, pageSize));
           } else if (payload.eventType === 'UPDATE') {
             setData((prev) =>
               prev.map((item) =>
@@ -70,12 +74,12 @@ export function useRealtimeTable<T extends Tables<TableName>>(
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [tableName, initialFetch, fetchData]);
+  }, [tableName, initialFetch, fetchData, pageSize]);
 
   return { data, loading, error, refetch: fetchData };
 }
 
-// Hook for dashboard stats that updates in realtime
+// Hook for dashboard stats — RLS handles org scoping automatically
 export function useRealtimeStats() {
   const { data: leads, loading: leadsLoading } = useRealtimeTable<Tables<'leads'>>('leads');
   const { data: companies, loading: companiesLoading } = useRealtimeTable<Tables<'companies'>>('companies');
@@ -86,7 +90,6 @@ export function useRealtimeStats() {
 
   const loading = leadsLoading || companiesLoading || eventsLoading || peopleLoading || tasksLoading || evidenceLoading;
 
-  // Calculate stats
   const stats = {
     newLeads: leads.filter(l => l.status === 'pending').length,
     verifiedLeads: leads.filter(l => l.status === 'verified').length,

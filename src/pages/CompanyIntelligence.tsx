@@ -32,7 +32,8 @@ export default function CompanyIntelligence() {
         .from('companies')
         .select('*')
         .eq('is_tracked', true)
-        .order('name');
+        .order('name')
+        .limit(200);
       if (error) throw error;
       return data as Company[];
     }
@@ -44,7 +45,8 @@ export default function CompanyIntelligence() {
       const { data, error } = await supabase
         .from('company_events')
         .select('*')
-        .order('published_at', { ascending: false });
+        .order('published_at', { ascending: false })
+        .limit(500);
       if (error) throw error;
       return data as CompanyEvent[];
     }

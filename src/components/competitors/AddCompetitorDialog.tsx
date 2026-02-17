@@ -111,6 +111,7 @@ export function AddCompetitorDialog({ open, onOpenChange }: AddCompetitorDialogP
   // Mutation to create a new company
   const createMutation = useMutation({
     mutationFn: async (data: typeof formData) => {
+      // organization_id is set automatically by RLS context
       const { error } = await supabase.from('companies').insert({
         name: data.name.trim(),
         domain: data.domain.trim() || null,
@@ -118,7 +119,7 @@ export function AddCompetitorDialog({ open, onOpenChange }: AddCompetitorDialogP
         size: data.size || null,
         founded: data.founded ? parseInt(data.founded) : null,
         description: data.description.trim() || null,
-        is_tracked: true
+        is_tracked: true,
       });
       if (error) throw error;
     },

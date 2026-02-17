@@ -44,7 +44,8 @@ export function useTasks() {
       const { data: tasksData, error } = await supabase
         .from('tasks')
         .select('*')
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(200);
       
       if (error) throw error;
       
@@ -80,7 +81,8 @@ export function useEvidence() {
       const { data, error } = await supabase
         .from('raw_evidence')
         .select('*')
-        .order('ingested_at', { ascending: false });
+        .order('ingested_at', { ascending: false })
+        .limit(200);
       
       if (error) throw error;
       return data;
@@ -100,7 +102,8 @@ export function useLeads() {
           *,
           person:people(*)
         `)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(200);
       
       if (error) throw error;
       return data;
@@ -117,7 +120,8 @@ export function useCompanies() {
       const { data, error } = await supabase
         .from('companies')
         .select('*')
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(200);
       
       if (error) throw error;
       return data;
@@ -137,7 +141,8 @@ export function useCompanyEvents() {
           *,
           company:companies(name)
         `)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(200);
       
       if (error) throw error;
       return data;
@@ -154,7 +159,8 @@ export function usePeople() {
       const { data, error } = await supabase
         .from('people')
         .select('*')
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(200);
       
       if (error) throw error;
       return data;
