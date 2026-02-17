@@ -23,12 +23,14 @@ import {
 // Context to share sidebar state with layout
 interface SidebarContextType {
   collapsed: boolean;
+  setCollapsed: (collapsed: boolean) => void;
   mobileOpen: boolean;
   setMobileOpen: (open: boolean) => void;
 }
 
 const SidebarContext = createContext<SidebarContextType>({
-  collapsed: true,
+  collapsed: false,
+  setCollapsed: () => {},
   mobileOpen: false,
   setMobileOpen: () => {},
 });
@@ -55,11 +57,11 @@ const adminNavItems = [
 ];
 
 export function SidebarProvider({ children }: { children: React.ReactNode }) {
-  const [collapsed, setCollapsed] = useState(true);
+  const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <SidebarContext.Provider value={{ collapsed, mobileOpen, setMobileOpen }}>
+    <SidebarContext.Provider value={{ collapsed, setCollapsed, mobileOpen, setMobileOpen }}>
       {children}
     </SidebarContext.Provider>
   );
@@ -80,8 +82,7 @@ export function MobileMenuTrigger() {
 }
 
 export function Sidebar({ isAdmin = false }: SidebarProps) {
-  const [collapsed, setCollapsed] = useState(true);
-  const { mobileOpen, setMobileOpen } = useSidebarState();
+  const { collapsed, setCollapsed, mobileOpen, setMobileOpen } = useSidebarState();
   const location = useLocation();
   const navigate = useNavigate();
   const { signOut } = useAuth();
