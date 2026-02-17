@@ -7,6 +7,8 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
 import Dashboard from "./pages/Dashboard";
+import PeopleIntelligence from "./pages/PeopleIntelligence";
+import CompanyIntelligence from "./pages/CompanyIntelligence";
 import Analytics from "./pages/Analytics";
 import CaseStudies from "./pages/CaseStudies";
 import Reports from "./pages/Reports";
@@ -32,6 +34,16 @@ const App = () => (
             <Route path="/dashboard" element={
               <ProtectedRoute>
                 <Dashboard />
+              </ProtectedRoute>
+            } />
+            <Route path="/people" element={
+              <ProtectedRoute>
+                <PeopleIntelligence />
+              </ProtectedRoute>
+            } />
+            <Route path="/companies" element={
+              <ProtectedRoute>
+                <CompanyIntelligence />
               </ProtectedRoute>
             } />
             <Route path="/analytics" element={
