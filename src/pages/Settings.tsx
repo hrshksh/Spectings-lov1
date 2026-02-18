@@ -12,6 +12,7 @@ import { Building2, Bell, Users, Globe, Plus, Trash2, Check, Loader2 } from 'luc
 import { useOrganization } from '@/hooks/useOrganization';
 import { useAuth } from '@/contexts/AuthContext';
 import {
+  useCreateOrganization,
   useUpdateOrganization,
   useTrackedCompetitors,
   useToggleCompetitorTracking,
@@ -40,6 +41,7 @@ const PLANS = [
 export default function Settings() {
   const { user } = useAuth();
   const { organizationId, organization } = useOrganization();
+  const createOrg = useCreateOrganization();
   const updateOrg = useUpdateOrganization();
   const { data: competitors = [], isLoading: compLoading } = useTrackedCompetitors(organizationId);
   const toggleTracking = useToggleCompetitorTracking();
@@ -66,8 +68,12 @@ export default function Settings() {
   const [newCompName, setNewCompName] = useState('');
 
   const handleSaveOrg = () => {
-    if (!organizationId) return;
-    updateOrg.mutate({ orgId: organizationId, name: orgName, industry: orgIndustry });
+    if (!orgName.trim()) return;
+    if (organizationId) {
+      updateOrg.mutate({ orgId: organizationId, name: orgName, industry: orgIndustry });
+    } else {
+      createOrg.mutate({ name: orgName, industry: orgIndustry });
+    }
   };
 
   const handleAddCompetitor = () => {
