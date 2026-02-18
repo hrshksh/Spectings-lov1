@@ -179,15 +179,18 @@ export default function PeopleIntelligence() {
                         <TableHeader>
                           <TableRow className="hover:bg-transparent">
                             <TableHead className="pl-4">Name</TableHead>
-                            <TableHead>Role</TableHead>
+                            <TableHead>Contact</TableHead>
                             <TableHead>Company</TableHead>
                             <TableHead>Tags</TableHead>
+                            <TableHead>Quality</TableHead>
                             <TableHead>Status</TableHead>
-                            <TableHead className="text-right pr-4">Actions</TableHead>
+                            <TableHead className="text-right pr-4">Details</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {filteredLeads.map((lead) => (
+                          {filteredLeads.map((lead) => {
+                            const qualityScore = (lead as any).quality_score;
+                            return (
                             <TableRow 
                               key={lead.id} 
                               className={`cursor-pointer transition-colors ${
@@ -206,11 +209,18 @@ export default function PeopleIntelligence() {
                                   </div>
                                   <div className="min-w-0">
                                     <p className="font-medium text-sm truncate">{lead.person?.name || 'Unknown'}</p>
-                                    <p className="text-xs text-muted-foreground truncate">{lead.person?.email || 'No email'}</p>
+                                    <p className="text-xs text-muted-foreground truncate">{lead.person?.role || 'No role'}</p>
                                   </div>
                                 </div>
                               </TableCell>
-                              <TableCell className="py-3 text-sm text-muted-foreground">{lead.person?.role || '—'}</TableCell>
+                              <TableCell className="py-3">
+                                <div className="space-y-0.5">
+                                  <p className="text-sm truncate">{lead.person?.email || '-'}</p>
+                                  {lead.person?.phone && (
+                                    <p className="text-xs text-muted-foreground">{lead.person.phone}</p>
+                                  )}
+                                </div>
+                              </TableCell>
                               <TableCell className="py-3 text-sm">{lead.person?.company || '—'}</TableCell>
                               <TableCell className="py-3">
                                 <div className="flex flex-wrap gap-1">
@@ -223,6 +233,24 @@ export default function PeopleIntelligence() {
                                     </Badge>
                                   )}
                                 </div>
+                              </TableCell>
+                              <TableCell className="py-3">
+                                {qualityScore != null ? (
+                                  <div className="flex items-center gap-1.5">
+                                    <div className="h-1.5 w-12 bg-muted rounded-full overflow-hidden">
+                                      <div
+                                        className={`h-full rounded-full ${
+                                          qualityScore >= 80 ? 'bg-success' :
+                                          qualityScore >= 50 ? 'bg-primary' : 'bg-warning'
+                                        }`}
+                                        style={{ width: `${qualityScore}%` }}
+                                      />
+                                    </div>
+                                    <span className="text-xs font-medium">{qualityScore}%</span>
+                                  </div>
+                                ) : (
+                                  <span className="text-xs text-muted-foreground">-</span>
+                                )}
                               </TableCell>
                               <TableCell className="py-3">
                                 {lead.status === 'verified' ? (
@@ -239,7 +267,7 @@ export default function PeopleIntelligence() {
                                 </Button>
                               </TableCell>
                             </TableRow>
-                          ))}
+                          )})}
                         </TableBody>
                       </Table>
                     </div>
@@ -373,6 +401,25 @@ export default function PeopleIntelligence() {
                     <div>
                       <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">Notes</p>
                       <p className="text-sm leading-relaxed">{selectedLead.notes}</p>
+                    </div>
+                  )}
+
+                  {/* Quality Score */}
+                  {(selectedLead as any).quality_score != null && (
+                    <div>
+                      <div className="flex items-center justify-between text-xs mb-1.5">
+                        <span className="font-medium text-muted-foreground uppercase tracking-wider">Quality Score</span>
+                        <span className="font-semibold">{(selectedLead as any).quality_score}%</span>
+                      </div>
+                      <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
+                        <div 
+                          className={`h-full rounded-full transition-all ${
+                            (selectedLead as any).quality_score >= 80 ? 'bg-success' : 
+                            (selectedLead as any).quality_score >= 50 ? 'bg-primary' : 'bg-warning'
+                          }`} 
+                          style={{ width: `${(selectedLead as any).quality_score}%` }} 
+                        />
+                      </div>
                     </div>
                   )}
 

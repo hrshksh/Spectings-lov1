@@ -188,6 +188,7 @@ export type Database = {
           notes: string | null
           organization_id: string | null
           person_id: string | null
+          quality_score: number | null
           source: string | null
           status: Database["public"]["Enums"]["lead_status"]
           updated_at: string
@@ -200,6 +201,7 @@ export type Database = {
           notes?: string | null
           organization_id?: string | null
           person_id?: string | null
+          quality_score?: number | null
           source?: string | null
           status?: Database["public"]["Enums"]["lead_status"]
           updated_at?: string
@@ -212,6 +214,7 @@ export type Database = {
           notes?: string | null
           organization_id?: string | null
           person_id?: string | null
+          quality_score?: number | null
           source?: string | null
           status?: Database["public"]["Enums"]["lead_status"]
           updated_at?: string

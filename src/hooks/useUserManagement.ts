@@ -344,6 +344,7 @@ export function useCreateLead() {
       source?: string;
       status?: Database['public']['Enums']['lead_status'];
       organization_id?: string;
+      quality_score?: number;
     }) => {
       const { error } = await supabase.from('leads').insert(lead);
       if (error) throw error;
