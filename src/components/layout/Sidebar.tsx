@@ -46,7 +46,7 @@ interface SidebarProps {
 
 const userNavItems = [
   { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
-  { icon: Users, label: 'People', path: '/people' },
+  { icon: Users, label: 'Leads', path: '/people' },
   { icon: Building2, label: 'Companies', path: '/companies' },
   { icon: FileText, label: 'Reports', path: '/reports' },
 ];
