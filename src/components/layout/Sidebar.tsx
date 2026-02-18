@@ -20,6 +20,7 @@ import {
   Menu,
   ImagePlus,
   Megaphone,
+  Briefcase,
 } from 'lucide-react';
 
 // Context to share sidebar state with layout
@@ -214,6 +215,7 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
 
         {/* Bottom nav links */}
         <div className="border-t border-sidebar-border p-2 space-y-1">
+          {!isAdmin && <NavItem icon={Briefcase} label="Services" path="/services" />}
           {!isAdmin && <NavItem icon={BookOpen} label="Case Studies" path="/case-studies" />}
           {!isAdmin && hasAdminAccess && <NavItem icon={Shield} label="Admin Panel" path="/admin" />}
           {isAdmin && <NavItem icon={LayoutDashboard} label="User Dashboard" path="/dashboard" />}
@@ -287,6 +289,7 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
 
         {/* Bottom */}
         <div className="border-t border-sidebar-border p-2 space-y-1">
+          {!isAdmin && <NavItem icon={Briefcase} label="Services" path="/services" />}
           {!isAdmin && <NavItem icon={BookOpen} label="Case Studies" path="/case-studies" />}
           {!isAdmin && hasAdminAccess && <NavItem icon={Shield} label="Admin Panel" path="/admin" />}
           {isAdmin && <NavItem icon={LayoutDashboard} label="User Dashboard" path="/dashboard" />}
