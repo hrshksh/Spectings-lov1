@@ -4,7 +4,36 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useOrganization } from '@/hooks/useOrganization';
 import { toast } from 'sonner';
 
-// --- Organization ---
+// --- Create Organization (when user has none) ---
+export function useCreateOrganization() {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ name, industry }: { name: string; industry: string }) => {
+      if (!user?.id) throw new Error('Not authenticated');
+      // Create org
+      const { data: org, error: orgErr } = await supabase
+        .from('organizations')
+        .insert({ name, industry })
+        .select('id')
+        .single();
+      if (orgErr) throw orgErr;
+      // Add user as member
+      const { error: memErr } = await supabase
+        .from('organization_members')
+        .insert({ organization_id: org.id, user_id: user.id });
+      if (memErr) throw memErr;
+      return org;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['user-organization'] });
+      toast.success('Organization created');
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+}
+
+// --- Update Organization ---
 export function useUpdateOrganization() {
   const queryClient = useQueryClient();
   return useMutation({
