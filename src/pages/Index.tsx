@@ -11,9 +11,9 @@ export default function Index() {
         <div className="container mx-auto px-6 h-16 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2">
             <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-sm">AB</span>
+              <span className="text-primary-foreground font-bold text-sm">BK</span>
             </div>
-            <span className="font-semibold text-lg">AlllBrackets</span>
+            <span className="font-semibold text-lg">Brackats</span>
           </Link>
           <div className="flex items-center gap-4">
             <Button variant="ghost" asChild><Link to="/dashboard">Login</Link></Button>
@@ -96,11 +96,11 @@ export default function Index() {
         <div className="container mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             <div className="h-6 w-6 rounded bg-primary flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-xs">AB</span>
+              <span className="text-primary-foreground font-bold text-xs">BK</span>
             </div>
-            <span className="font-semibold">AlllBrackets</span>
+            <span className="font-semibold">Brackats</span>
           </div>
-          <p className="text-sm text-muted-foreground">© 2025 AlllBrackets. All rights reserved.</p>
+          <p className="text-sm text-muted-foreground">© 2025 Brackats. All rights reserved.</p>
         </div>
       </footer>
     </div>

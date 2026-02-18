@@ -83,7 +83,7 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
   const { collapsed, setCollapsed, mobileOpen, setMobileOpen } = useSidebarState();
   const location = useLocation();
   const navigate = useNavigate();
-  const { signOut } = useAuth();
+  const { signOut, isAdmin: hasAdminAccess } = useAuth();
   const navItems = isAdmin ? adminNavItems : userNavItems;
 
   const handleNavClick = () => {
@@ -147,14 +147,14 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
           {!collapsed && (
             <Link to={isAdmin ? '/admin' : '/dashboard'} className="flex items-center gap-2">
               <div className="h-7 w-7 rounded-lg bg-primary flex items-center justify-center">
-                <span className="text-primary-foreground font-bold text-xs">AB</span>
+                <span className="text-primary-foreground font-bold text-xs">BK</span>
               </div>
-              <span className="font-semibold text-sm text-sidebar-foreground">AlllBrackets</span>
+              <span className="font-semibold text-sm text-sidebar-foreground">Brackats</span>
             </Link>
           )}
           {collapsed && (
             <div className="h-7 w-7 rounded-lg bg-primary flex items-center justify-center mx-auto">
-              <span className="text-primary-foreground font-bold text-xs">AB</span>
+              <span className="text-primary-foreground font-bold text-xs">BK</span>
             </div>
           )}
           <Button
@@ -182,7 +182,7 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
         {/* Bottom */}
         <div className="border-t border-sidebar-border p-2 space-y-1">
           {!isAdmin && <NavItem icon={BookOpen} label="Case Studies" path="/case-studies" />}
-          {!isAdmin && <NavItem icon={Shield} label="Admin Panel" path="/admin" />}
+          {!isAdmin && hasAdminAccess && <NavItem icon={Shield} label="Admin Panel" path="/admin" />}
           {isAdmin && <NavItem icon={LayoutDashboard} label="User Dashboard" path="/dashboard" />}
           <NavItem icon={Settings} label="Settings" path="/settings" />
           <button
@@ -226,9 +226,9 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
         <div className="flex h-14 items-center justify-between border-b border-sidebar-border px-3">
           <Link to={isAdmin ? '/admin' : '/dashboard'} className="flex items-center gap-2" onClick={handleNavClick}>
             <div className="h-7 w-7 rounded-lg bg-primary flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-xs">AB</span>
+              <span className="text-primary-foreground font-bold text-xs">BK</span>
             </div>
-            <span className="font-semibold text-sm text-sidebar-foreground">AlllBrackets</span>
+            <span className="font-semibold text-sm text-sidebar-foreground">Brackats</span>
           </Link>
           <Button
             variant="ghost"
@@ -255,7 +255,7 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
         {/* Bottom */}
         <div className="border-t border-sidebar-border p-2 space-y-1">
           {!isAdmin && <NavItem icon={BookOpen} label="Case Studies" path="/case-studies" />}
-          {!isAdmin && <NavItem icon={Shield} label="Admin Panel" path="/admin" />}
+          {!isAdmin && hasAdminAccess && <NavItem icon={Shield} label="Admin Panel" path="/admin" />}
           {isAdmin && <NavItem icon={LayoutDashboard} label="User Dashboard" path="/dashboard" />}
           <NavItem icon={Settings} label="Settings" path="/settings" />
           <button
