@@ -343,6 +343,7 @@ export function useCreateLead() {
       notes?: string;
       source?: string;
       status?: Database['public']['Enums']['lead_status'];
+      organization_id?: string;
     }) => {
       const { error } = await supabase.from('leads').insert(lead);
       if (error) throw error;
