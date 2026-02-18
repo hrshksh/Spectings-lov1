@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      ad_banners: {
+        Row: {
+          created_at: string
+          id: string
+          image_url: string | null
+          is_active: boolean
+          link_url: string | null
+          position: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          link_url?: string | null
+          position?: string
+          title?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          link_url?: string | null
+          position?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       alert_preferences: {
         Row: {
           alert_type: string

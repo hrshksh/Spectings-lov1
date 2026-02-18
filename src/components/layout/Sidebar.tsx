@@ -1,6 +1,8 @@
 import { useState, createContext, useContext } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -17,6 +19,7 @@ import {
   X,
   Menu,
   ImagePlus,
+  Megaphone,
 } from 'lucide-react';
 
 // Context to share sidebar state with layout
@@ -51,6 +54,7 @@ const adminNavItems = [
   { icon: LayoutDashboard, label: 'Task Queue', path: '/admin' },
   { icon: Users, label: 'Users & Roles', path: '/admin/users' },
   { icon: FileText, label: 'Data Management', path: '/admin/data' },
+  { icon: Megaphone, label: 'Ad Management', path: '/admin/ads' },
 ];
 
 export function SidebarProvider({ children }: { children: React.ReactNode }) {
@@ -83,6 +87,23 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
   const location = useLocation();
   const { isAdmin: hasAdminAccess } = useAuth();
   const navItems = isAdmin ? adminNavItems : userNavItems;
+
+  // Fetch active ad banner for user sidebar
+  const { data: activeBanner } = useQuery({
+    queryKey: ['active-ad-banner'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('ad_banners')
+        .select('*')
+        .eq('is_active', true)
+        .eq('position', 'sidebar')
+        .limit(1)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !isAdmin,
+  });
 
   const handleNavClick = () => {
     // Close mobile sidebar on navigation
@@ -177,13 +198,24 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
           ))}
         </nav>
 
-        {/* Ad Banner Slot */}
-        {!collapsed && (
+        {/* Ad Banner Slot - user sidebar only */}
+        {!isAdmin && !collapsed && (
           <div className="p-2">
-            <div className="rounded-lg border border-dashed border-sidebar-border bg-sidebar-accent/30 flex flex-col items-center justify-center min-h-[100px] p-3 gap-1.5">
-              <ImagePlus className="h-5 w-5 text-muted-foreground" />
-              <span className="text-[10px] text-muted-foreground text-center leading-tight">Ad Space</span>
-            </div>
+            {activeBanner?.image_url ? (
+              <a
+                href={activeBanner.link_url || '#'}
+                target={activeBanner.link_url ? '_blank' : undefined}
+                rel="noopener noreferrer"
+                className="block rounded-lg overflow-hidden hover:opacity-90 transition-opacity"
+              >
+                <img src={activeBanner.image_url} alt={activeBanner.title} className="w-full h-auto rounded-lg" />
+              </a>
+            ) : (
+              <div className="rounded-lg border border-dashed border-sidebar-border bg-sidebar-accent/30 flex flex-col items-center justify-center min-h-[100px] p-3 gap-1.5">
+                <ImagePlus className="h-5 w-5 text-muted-foreground" />
+                <span className="text-[10px] text-muted-foreground text-center leading-tight">Ad Space</span>
+              </div>
+            )}
           </div>
         )}
 
@@ -246,13 +278,26 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
           ))}
         </nav>
 
-        {/* Ad Banner Slot */}
-        <div className="p-2">
-          <div className="rounded-lg border border-dashed border-sidebar-border bg-sidebar-accent/30 flex flex-col items-center justify-center min-h-[100px] p-3 gap-1.5">
-            <ImagePlus className="h-5 w-5 text-muted-foreground" />
-            <span className="text-[10px] text-muted-foreground text-center leading-tight">Ad Space</span>
+        {/* Ad Banner Slot - user sidebar only */}
+        {!isAdmin && (
+          <div className="p-2">
+            {activeBanner?.image_url ? (
+              <a
+                href={activeBanner.link_url || '#'}
+                target={activeBanner.link_url ? '_blank' : undefined}
+                rel="noopener noreferrer"
+                className="block rounded-lg overflow-hidden hover:opacity-90 transition-opacity"
+              >
+                <img src={activeBanner.image_url} alt={activeBanner.title} className="w-full h-auto rounded-lg" />
+              </a>
+            ) : (
+              <div className="rounded-lg border border-dashed border-sidebar-border bg-sidebar-accent/30 flex flex-col items-center justify-center min-h-[100px] p-3 gap-1.5">
+                <ImagePlus className="h-5 w-5 text-muted-foreground" />
+                <span className="text-[10px] text-muted-foreground text-center leading-tight">Ad Space</span>
+              </div>
+            )}
           </div>
-        </div>
+        )}
 
         {/* Bottom */}
         <div className="border-t border-sidebar-border p-2 space-y-1">
