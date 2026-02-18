@@ -170,7 +170,7 @@ export default function DataManagement() {
   const updateLeadStatus = useUpdateLeadStatus();
   const { data: people } = usePeople();
   const [leadDialogOpen, setLeadDialogOpen] = useState(false);
-  const [newLead, setNewLead] = useState({ notes: '', source: '', tags: [] as string[] });
+  const [newLead, setNewLead] = useState({ notes: '', source: '', tags: [] as string[], quality_score: 50 });
   const [newTagInput, setNewTagInput] = useState('');
   const [newLeadPerson, setNewLeadPerson] = useState({ name: '', email: '', phone: '', company: '', role: '', linkedin: '' });
   const [editTagsDialogOpen, setEditTagsDialogOpen] = useState(false);
@@ -284,12 +284,13 @@ export default function DataManagement() {
         notes: newLead.notes || undefined,
         source: newLead.source || undefined,
         organization_id: orgId || undefined,
+        quality_score: newLead.quality_score,
       },
       {
         onSuccess: () => {
           queryClient.invalidateQueries({ queryKey: ['admin-people'] });
           setLeadDialogOpen(false);
-          setNewLead({ notes: '', source: '', tags: [] });
+          setNewLead({ notes: '', source: '', tags: [], quality_score: 50 });
           setNewTagInput('');
           setNewLeadPerson({ name: '', email: '', phone: '', company: '', role: '', linkedin: '' });
         },
@@ -820,6 +821,17 @@ export default function DataManagement() {
                           </div>
                         </div>
                         <div className="grid gap-2">
+                          <Label htmlFor="lead-quality">Quality Score ({newLead.quality_score}%)</Label>
+                          <Input
+                            id="lead-quality"
+                            type="range"
+                            min="0"
+                            max="100"
+                            value={newLead.quality_score}
+                            onChange={(e) => setNewLead({ ...newLead, quality_score: Number(e.target.value) })}
+                          />
+                        </div>
+                        <div className="grid gap-2">
                           <Label htmlFor="lead-source">Source</Label>
                           <Input
                             id="lead-source"
@@ -866,8 +878,10 @@ export default function DataManagement() {
                     <TableHeader>
                       <TableRow>
                         <TableHead>Person</TableHead>
+                        <TableHead>Contact</TableHead>
                         <TableHead>Company</TableHead>
                         <TableHead>Tags</TableHead>
+                        <TableHead>Quality</TableHead>
                         <TableHead>Source</TableHead>
                         <TableHead>Status</TableHead>
                         <TableHead className="text-right">Actions</TableHead>
@@ -876,15 +890,28 @@ export default function DataManagement() {
                     <TableBody>
                       {filteredLeads.map((lead) => {
                         const person = lead.person as any;
+                        const qualityScore = (lead as any).quality_score;
                         return (
                           <TableRow key={lead.id}>
                             <TableCell>
-                              <div>
-                                <div className="font-medium">{person?.name || 'Unknown'}</div>
-                                <div className="text-sm text-muted-foreground">{person?.email || '-'}</div>
+                              <div className="font-medium">{person?.name || 'Unknown'}</div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="space-y-0.5">
+                                <div className="text-sm">{person?.email || '-'}</div>
+                                {person?.phone && (
+                                  <div className="text-xs text-muted-foreground">{person.phone}</div>
+                                )}
                               </div>
                             </TableCell>
-                            <TableCell>{person?.company || '-'}</TableCell>
+                            <TableCell>
+                              <div className="space-y-0.5">
+                                <div className="text-sm">{person?.company || '-'}</div>
+                                {person?.role && (
+                                  <div className="text-xs text-muted-foreground">{person.role}</div>
+                                )}
+                              </div>
+                            </TableCell>
                             <TableCell>
                               <div className="flex flex-wrap gap-1">
                                 {person?.tags?.length > 0 ? (
@@ -897,6 +924,24 @@ export default function DataManagement() {
                                   <span className="text-sm text-muted-foreground">No tags</span>
                                 )}
                               </div>
+                            </TableCell>
+                            <TableCell>
+                              {qualityScore != null ? (
+                                <div className="flex items-center gap-2">
+                                  <div className="h-1.5 w-16 bg-muted rounded-full overflow-hidden">
+                                    <div
+                                      className={`h-full rounded-full ${
+                                        qualityScore >= 80 ? 'bg-success' :
+                                        qualityScore >= 50 ? 'bg-primary' : 'bg-warning'
+                                      }`}
+                                      style={{ width: `${qualityScore}%` }}
+                                    />
+                                  </div>
+                                  <span className="text-xs font-medium">{qualityScore}%</span>
+                                </div>
+                              ) : (
+                                <span className="text-sm text-muted-foreground">-</span>
+                              )}
                             </TableCell>
                             <TableCell>{lead.source || '-'}</TableCell>
                             <TableCell>
