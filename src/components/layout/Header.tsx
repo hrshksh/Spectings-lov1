@@ -70,7 +70,7 @@ export function Header({ title, subtitle, mobileMenuTrigger }: HeaderProps) {
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="text-xs py-1.5">
+            <DropdownMenuItem className="text-xs py-1.5" onClick={() => navigate('/profile')}>
               <User className="mr-2 h-3.5 w-3.5" />
               Profile
             </DropdownMenuItem>

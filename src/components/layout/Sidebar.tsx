@@ -18,7 +18,6 @@ import {
   Shield,
   X,
   Menu,
-  UserCircle,
 } from 'lucide-react';
 
 // Context to share sidebar state with layout
@@ -186,7 +185,6 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
           {!isAdmin && hasAdminAccess && <NavItem icon={Shield} label="Admin Panel" path="/admin" />}
           {isAdmin && <NavItem icon={LayoutDashboard} label="User Dashboard" path="/dashboard" />}
           <NavItem icon={Settings} label="Settings" path="/settings" />
-          <NavItem icon={UserCircle} label="Profile" path="/profile" />
           <button
             onClick={async () => {
               await signOut();
@@ -260,7 +258,6 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
           {!isAdmin && hasAdminAccess && <NavItem icon={Shield} label="Admin Panel" path="/admin" />}
           {isAdmin && <NavItem icon={LayoutDashboard} label="User Dashboard" path="/dashboard" />}
           <NavItem icon={Settings} label="Settings" path="/settings" />
-          <NavItem icon={UserCircle} label="Profile" path="/profile" />
           <button
             onClick={async () => {
               setMobileOpen(false);
