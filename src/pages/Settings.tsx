@@ -124,9 +124,9 @@ export default function Settings() {
                     </Select>
                   </div>
                 </div>
-                <Button size="sm" className="h-8" onClick={handleSaveOrg} disabled={updateOrg.isPending}>
-                  {updateOrg.isPending ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : null}
-                  Save Changes
+                <Button size="sm" className="h-8" onClick={handleSaveOrg} disabled={updateOrg.isPending || createOrg.isPending || !orgName.trim()}>
+                  {(updateOrg.isPending || createOrg.isPending) ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : null}
+                  {organizationId ? 'Save Changes' : 'Create Organization'}
                 </Button>
               </CardContent>
             </Card>
