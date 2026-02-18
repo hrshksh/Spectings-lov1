@@ -9,12 +9,12 @@ export function useCreateOrganization() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ name, industry }: { name: string; industry: string }) => {
+    mutationFn: async ({ name, industry, slug, size, country }: { name: string; industry: string; slug?: string; size?: string; country?: string }) => {
       if (!user?.id) throw new Error('Not authenticated');
       // Create org
       const { data: org, error: orgErr } = await supabase
         .from('organizations')
-        .insert({ name, industry })
+        .insert({ name, industry, slug, size, country })
         .select('id')
         .single();
       if (orgErr) throw orgErr;
@@ -37,10 +37,10 @@ export function useCreateOrganization() {
 export function useUpdateOrganization() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ orgId, name, industry }: { orgId: string; name: string; industry: string }) => {
+    mutationFn: async ({ orgId, name, industry, slug, size, country }: { orgId: string; name: string; industry: string; slug?: string; size?: string; country?: string }) => {
       const { error } = await supabase
         .from('organizations')
-        .update({ name, industry })
+        .update({ name, industry, slug, size, country })
         .eq('id', orgId);
       if (error) throw error;
     },

@@ -55,11 +55,17 @@ export default function Settings() {
   // General tab state
   const [orgName, setOrgName] = useState('');
   const [orgIndustry, setOrgIndustry] = useState('');
+  const [orgSlug, setOrgSlug] = useState('');
+  const [orgSize, setOrgSize] = useState('');
+  const [orgCountry, setOrgCountry] = useState('');
   const [generalInitialized, setGeneralInitialized] = useState(false);
 
   if (organization && !generalInitialized) {
     setOrgName(organization.name || '');
     setOrgIndustry(organization.industry || '');
+    setOrgSlug(organization.slug || '');
+    setOrgSize(organization.size || '');
+    setOrgCountry(organization.country || '');
     setGeneralInitialized(true);
   }
 
@@ -69,10 +75,11 @@ export default function Settings() {
 
   const handleSaveOrg = () => {
     if (!orgName.trim()) return;
+    const orgData = { name: orgName, industry: orgIndustry, slug: orgSlug, size: orgSize, country: orgCountry };
     if (organizationId) {
-      updateOrg.mutate({ orgId: organizationId, name: orgName, industry: orgIndustry });
+      updateOrg.mutate({ orgId: organizationId, ...orgData });
     } else {
-      createOrg.mutate({ name: orgName, industry: orgIndustry });
+      createOrg.mutate(orgData);
     }
   };
 
@@ -110,6 +117,10 @@ export default function Settings() {
                     <Input value={orgName} onChange={e => setOrgName(e.target.value)} className="h-8 text-sm" />
                   </div>
                   <div className="space-y-1">
+                    <Label className="text-xs">Slug</Label>
+                    <Input value={orgSlug} onChange={e => setOrgSlug(e.target.value)} placeholder="e.g. my-company" className="h-8 text-sm" />
+                  </div>
+                  <div className="space-y-1">
                     <Label className="text-xs">Industry</Label>
                     <Select value={orgIndustry} onValueChange={setOrgIndustry}>
                       <SelectTrigger className="h-8 text-sm"><SelectValue placeholder="Select industry" /></SelectTrigger>
@@ -122,6 +133,23 @@ export default function Settings() {
                         <SelectItem value="other">Other</SelectItem>
                       </SelectContent>
                     </Select>
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">Company Size</Label>
+                    <Select value={orgSize} onValueChange={setOrgSize}>
+                      <SelectTrigger className="h-8 text-sm"><SelectValue placeholder="Select size" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="1-10">1–10</SelectItem>
+                        <SelectItem value="11-50">11–50</SelectItem>
+                        <SelectItem value="51-200">51–200</SelectItem>
+                        <SelectItem value="201-500">201–500</SelectItem>
+                        <SelectItem value="501+">501+</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">Country</Label>
+                    <Input value={orgCountry} onChange={e => setOrgCountry(e.target.value)} placeholder="e.g. India" className="h-8 text-sm" />
                   </div>
                 </div>
                 <Button size="sm" className="h-8" onClick={handleSaveOrg} disabled={updateOrg.isPending || createOrg.isPending || !orgName.trim()}>
