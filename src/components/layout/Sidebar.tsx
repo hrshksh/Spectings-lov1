@@ -55,6 +55,7 @@ const adminNavItems = [
   { icon: LayoutDashboard, label: 'Task Queue', path: '/admin' },
   { icon: Users, label: 'Users & Roles', path: '/admin/users' },
   { icon: FileText, label: 'Data Management', path: '/admin/data' },
+  { icon: Briefcase, label: 'Services', path: '/admin/services' },
   { icon: Megaphone, label: 'Ad Management', path: '/admin/ads' },
 ];
 

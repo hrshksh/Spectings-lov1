@@ -439,6 +439,42 @@ export type Database = {
           },
         ]
       }
+      services: {
+        Row: {
+          created_at: string
+          description: string | null
+          features: string[] | null
+          icon: string | null
+          id: string
+          is_active: boolean
+          sort_order: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          features?: string[] | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean
+          sort_order?: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          features?: string[] | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean
+          sort_order?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       tasks: {
         Row: {
           assigned_to: string | null
