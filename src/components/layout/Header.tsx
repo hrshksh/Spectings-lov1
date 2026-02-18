@@ -11,6 +11,7 @@ import {
 import { User, Settings, LogOut, HelpCircle } from 'lucide-react';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { useAuth } from '@/contexts/AuthContext';
+import { useOrganization } from '@/hooks/useOrganization';
 import { useNavigate } from 'react-router-dom';
 
 export interface HeaderProps {
@@ -21,8 +22,11 @@ export interface HeaderProps {
 
 export function Header({ title, subtitle, mobileMenuTrigger }: HeaderProps) {
   const { user, signOut } = useAuth();
+  const { organization } = useOrganization();
   const navigate = useNavigate();
 
+  const orgName = organization?.name || 'My Organization';
+  const emailDomain = user?.email?.split('@')[1] || '';
   const displayName = user?.user_metadata?.full_name || user?.email || 'User';
   const initials = displayName
     .split(' ')
@@ -41,8 +45,8 @@ export function Header({ title, subtitle, mobileMenuTrigger }: HeaderProps) {
       <div className="flex items-center gap-2">
         {mobileMenuTrigger}
         <div>
-          <h1 className="text-lg font-semibold text-foreground leading-tight">{title}</h1>
-          {subtitle && <p className="text-xs text-muted-foreground">{subtitle}</p>}
+          <h1 className="text-sm font-semibold text-foreground leading-tight">{orgName}</h1>
+          {emailDomain && <p className="text-[11px] text-muted-foreground leading-tight">{emailDomain}</p>}
         </div>
       </div>
 
