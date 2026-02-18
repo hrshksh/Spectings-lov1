@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Download, Mail, Phone, ExternalLink, ChevronRight, Loader2, Users, CheckCircle2, Clock, X } from 'lucide-react';
+import { Download, Mail, Phone, ExternalLink, ChevronRight, Loader2, Users, X } from 'lucide-react';
 import type { Tables } from '@/integrations/supabase/types';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useInfiniteQuery } from '@tanstack/react-query';
@@ -108,52 +108,10 @@ export default function PeopleIntelligence() {
     });
   }, [leads, tagFilter, statusFilter]);
 
-  const stats = useMemo(() => ({
-    total: leads.filter(l => l.person).length,
-    verified: leads.filter(l => l.status === 'verified').length,
-    pending: leads.filter(l => l.status === 'pending').length,
-  }), [leads]);
 
   return (
     <DashboardLayout title="Leads" subtitle="People tagged by admin for your review">
       <div className="space-y-4 animate-fade-in">
-        {/* Stats Row */}
-        <div className="grid grid-cols-3 gap-3">
-          <Card>
-            <CardContent className="p-4 flex items-center gap-3">
-              <div className="h-10 w-10 rounded-lg flex items-center justify-center bg-primary/10">
-                <Users className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold tracking-tight">{stats.total}</p>
-                <p className="text-xs text-muted-foreground">Total Leads</p>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4 flex items-center gap-3">
-              <div className="h-10 w-10 rounded-lg flex items-center justify-center bg-success/10">
-                <CheckCircle2 className="h-5 w-5 text-success" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold tracking-tight">{stats.verified}</p>
-                <p className="text-xs text-muted-foreground">Verified</p>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4 flex items-center gap-3">
-              <div className="h-10 w-10 rounded-lg flex items-center justify-center bg-warning/10">
-                <Clock className="h-5 w-5 text-warning" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold tracking-tight">{stats.pending}</p>
-                <p className="text-xs text-muted-foreground">Pending</p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
         {/* Main content */}
         <div className={`grid grid-cols-1 gap-4 transition-all duration-300 ${selectedLead ? 'lg:grid-cols-3' : ''}`}>
           {/* Table Card */}
