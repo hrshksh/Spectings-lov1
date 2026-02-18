@@ -18,6 +18,7 @@ import Auth from "./pages/Auth";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import UsersManagement from "./pages/admin/UsersManagement";
 import DataManagement from "./pages/admin/DataManagement";
+import AdManagement from "./pages/admin/AdManagement";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -80,6 +81,11 @@ const App = () => (
             <Route path="/admin/data" element={
               <ProtectedRoute requireAdmin>
                 <DataManagement />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/ads" element={
+              <ProtectedRoute requireAdmin>
+                <AdManagement />
               </ProtectedRoute>
             } />
             <Route path="/admin/*" element={
