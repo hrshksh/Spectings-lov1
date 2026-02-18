@@ -16,6 +16,7 @@ import {
   Shield,
   X,
   Menu,
+  ImagePlus,
 } from 'lucide-react';
 
 // Context to share sidebar state with layout
@@ -183,6 +184,16 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
           {isAdmin && <NavItem icon={LayoutDashboard} label="User Dashboard" path="/dashboard" />}
         </div>
 
+        {/* Ad Banner Slot */}
+        {!collapsed && (
+          <div className="p-2">
+            <div className="rounded-lg border border-dashed border-sidebar-border bg-sidebar-accent/30 flex flex-col items-center justify-center min-h-[100px] p-3 gap-1.5">
+              <ImagePlus className="h-5 w-5 text-muted-foreground" />
+              <span className="text-[10px] text-muted-foreground text-center leading-tight">Ad Space</span>
+            </div>
+          </div>
+        )}
+
         {/* Expand button */}
         {collapsed && (
           <div className="p-2 border-t border-sidebar-border">
@@ -240,6 +251,14 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
           {!isAdmin && <NavItem icon={BookOpen} label="Case Studies" path="/case-studies" />}
           {!isAdmin && hasAdminAccess && <NavItem icon={Shield} label="Admin Panel" path="/admin" />}
           {isAdmin && <NavItem icon={LayoutDashboard} label="User Dashboard" path="/dashboard" />}
+        </div>
+
+        {/* Ad Banner Slot */}
+        <div className="p-2">
+          <div className="rounded-lg border border-dashed border-sidebar-border bg-sidebar-accent/30 flex flex-col items-center justify-center min-h-[100px] p-3 gap-1.5">
+            <ImagePlus className="h-5 w-5 text-muted-foreground" />
+            <span className="text-[10px] text-muted-foreground text-center leading-tight">Ad Space</span>
+          </div>
         </div>
       </aside>
     </>
