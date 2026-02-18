@@ -177,6 +177,16 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
           ))}
         </nav>
 
+        {/* Ad Banner Slot */}
+        {!collapsed && (
+          <div className="p-2">
+            <div className="rounded-lg border border-dashed border-sidebar-border bg-sidebar-accent/30 flex flex-col items-center justify-center min-h-[100px] p-3 gap-1.5">
+              <ImagePlus className="h-5 w-5 text-muted-foreground" />
+              <span className="text-[10px] text-muted-foreground text-center leading-tight">Ad Space</span>
+            </div>
+          </div>
+        )}
+
         {/* Bottom nav links */}
         <div className="border-t border-sidebar-border p-2 space-y-1">
           {!isAdmin && <NavItem icon={BookOpen} label="Case Studies" path="/case-studies" />}
@@ -195,16 +205,6 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
             >
               <ChevronRight className="h-3.5 w-3.5" />
             </Button>
-          </div>
-        )}
-
-        {/* Ad Banner Slot - pinned to very bottom */}
-        {!collapsed && (
-          <div className="mt-auto p-2">
-            <div className="rounded-lg border border-dashed border-sidebar-border bg-sidebar-accent/30 flex flex-col items-center justify-center min-h-[100px] p-3 gap-1.5">
-              <ImagePlus className="h-5 w-5 text-muted-foreground" />
-              <span className="text-[10px] text-muted-foreground text-center leading-tight">Ad Space</span>
-            </div>
           </div>
         )}
       </aside>
@@ -246,19 +246,19 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
           ))}
         </nav>
 
-        {/* Bottom */}
-        <div className="border-t border-sidebar-border p-2 space-y-1">
-          {!isAdmin && <NavItem icon={BookOpen} label="Case Studies" path="/case-studies" />}
-          {!isAdmin && hasAdminAccess && <NavItem icon={Shield} label="Admin Panel" path="/admin" />}
-          {isAdmin && <NavItem icon={LayoutDashboard} label="User Dashboard" path="/dashboard" />}
-        </div>
-
         {/* Ad Banner Slot */}
         <div className="p-2">
           <div className="rounded-lg border border-dashed border-sidebar-border bg-sidebar-accent/30 flex flex-col items-center justify-center min-h-[100px] p-3 gap-1.5">
             <ImagePlus className="h-5 w-5 text-muted-foreground" />
             <span className="text-[10px] text-muted-foreground text-center leading-tight">Ad Space</span>
           </div>
+        </div>
+
+        {/* Bottom */}
+        <div className="border-t border-sidebar-border p-2 space-y-1">
+          {!isAdmin && <NavItem icon={BookOpen} label="Case Studies" path="/case-studies" />}
+          {!isAdmin && hasAdminAccess && <NavItem icon={Shield} label="Admin Panel" path="/admin" />}
+          {isAdmin && <NavItem icon={LayoutDashboard} label="User Dashboard" path="/dashboard" />}
         </div>
       </aside>
     </>
