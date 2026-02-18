@@ -248,6 +248,14 @@ export default function DataManagement() {
   const handleCreateLead = async () => {
     if (!newLeadPerson.name.trim()) return;
     const tagsArray = newLead.tags;
+
+    // Get the current user's org_id for RLS
+    const { data: { user: currentUser } } = await supabase.auth.getUser();
+    if (!currentUser) {
+      toast({ title: 'Not authenticated', variant: 'destructive' });
+      return;
+    }
+    const { data: orgId } = await supabase.rpc('get_user_org_id', { _user_id: currentUser.id });
     
     const { data: personData, error: personError } = await supabase
       .from('people')
@@ -259,6 +267,7 @@ export default function DataManagement() {
         role: newLeadPerson.role || null,
         linkedin: newLeadPerson.linkedin || null,
         tags: tagsArray.length > 0 ? tagsArray : null,
+        organization_id: orgId || null,
       })
       .select()
       .single();
@@ -273,6 +282,7 @@ export default function DataManagement() {
         person_id: personData.id,
         notes: newLead.notes || undefined,
         source: newLead.source || undefined,
+        organization_id: orgId || undefined,
       },
       {
         onSuccess: () => {
