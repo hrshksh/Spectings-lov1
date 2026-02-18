@@ -7,7 +7,6 @@ import {
   Users,
   Building2,
   TrendingUp,
-  AlertTriangle,
   FileText,
   ExternalLink,
   Loader2,
@@ -104,61 +103,10 @@ export default function Dashboard() {
     <DashboardLayout title="Dashboard" subtitle="Weekly Intelligence Summary">
       <div className="space-y-5 animate-fade-in">
         {/* Stats */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
           <StatCard title="New Leads" value={stats.newLeads} subtitle={`${stats.verifiedLeads} verified`} icon={Users} />
           <StatCard title="Tracked Companies" value={stats.trackedCompanies} subtitle={`${stats.totalCompanies} total`} icon={Building2} />
           <StatCard title="Company Events" value={stats.recentEvents} subtitle="This period" icon={TrendingUp} />
-          <StatCard title="Pending Tasks" value={stats.pendingTasks} subtitle={`${stats.inProgressTasks} in progress`} icon={AlertTriangle} />
-        </div>
-
-
-        {/* Two column summary */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <Card>
-            <CardHeader className="px-4 pt-4 pb-3 flex flex-row items-center justify-between">
-              <div>
-                <CardTitle className="text-sm font-semibold">People Intelligence</CardTitle>
-                <CardDescription className="text-xs">Real-time contact database</CardDescription>
-              </div>
-              <Button variant="outline" size="sm" className="h-7 text-xs" asChild>
-                <Link to="/people">View all</Link>
-              </Button>
-            </CardHeader>
-            <CardContent className="px-4 pb-4">
-              <div className="grid grid-cols-2 gap-3">
-                <div className="p-4 bg-muted/40 rounded-lg">
-                  <p className="text-2xl font-bold tracking-tight">{stats.totalPeople}</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">Total Contacts</p>
-                </div>
-                <div className="p-4 bg-muted/40 rounded-lg">
-                  <p className="text-2xl font-bold tracking-tight">{stats.verifiedLeads}</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">Verified Leads</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="px-4 pt-4 pb-3 flex flex-row items-center justify-between">
-              <div>
-                <CardTitle className="text-sm font-semibold">Evidence Pipeline</CardTitle>
-                <CardDescription className="text-xs">Real-time evidence tracking</CardDescription>
-              </div>
-              <Badge variant="outline" className="text-xs">{stats.pendingEvidence} pending</Badge>
-            </CardHeader>
-            <CardContent className="px-4 pb-4">
-              <div className="grid grid-cols-2 gap-3">
-                <div className="p-4 bg-muted/40 rounded-lg">
-                  <p className="text-2xl font-bold tracking-tight">{stats.pendingEvidence}</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">Pending Review</p>
-                </div>
-                <div className="p-4 bg-muted/40 rounded-lg">
-                  <p className="text-2xl font-bold tracking-tight">{stats.publishedEvidence}</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">Published</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
         </div>
 
         {/* Events Table */}
