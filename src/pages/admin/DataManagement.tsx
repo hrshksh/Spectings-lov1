@@ -169,7 +169,8 @@ export default function DataManagement() {
   const updateLeadStatus = useUpdateLeadStatus();
   const { data: people } = usePeople();
   const [leadDialogOpen, setLeadDialogOpen] = useState(false);
-  const [newLead, setNewLead] = useState({ notes: '', source: '', tags: '' });
+  const [newLead, setNewLead] = useState({ notes: '', source: '', tags: [] as string[] });
+  const [newTagInput, setNewTagInput] = useState('');
   const [newLeadPerson, setNewLeadPerson] = useState({ name: '', email: '', phone: '', company: '', role: '', linkedin: '' });
   const [editTagsDialogOpen, setEditTagsDialogOpen] = useState(false);
   const [editingLead, setEditingLead] = useState<{ personId: string; personName: string; currentTags: string[] } | null>(null);
@@ -246,7 +247,7 @@ export default function DataManagement() {
 
   const handleCreateLead = async () => {
     if (!newLeadPerson.name.trim()) return;
-    const tagsArray = newLead.tags.split(',').map(t => t.trim()).filter(Boolean);
+    const tagsArray = newLead.tags;
     
     const { data: personData, error: personError } = await supabase
       .from('people')
@@ -277,7 +278,8 @@ export default function DataManagement() {
         onSuccess: () => {
           queryClient.invalidateQueries({ queryKey: ['admin-people'] });
           setLeadDialogOpen(false);
-          setNewLead({ notes: '', source: '', tags: '' });
+          setNewLead({ notes: '', source: '', tags: [] });
+          setNewTagInput('');
           setNewLeadPerson({ name: '', email: '', phone: '', company: '', role: '', linkedin: '' });
         },
       }
@@ -772,32 +774,75 @@ export default function DataManagement() {
                                />
                             </div>
                         <div className="grid gap-2">
-                          <Label htmlFor="lead-tags">Tags (comma-separated)</Label>
-                          <Input
-                            id="lead-tags"
-                            value={newLead.tags}
-                            onChange={(e) => setNewLead({ ...newLead, tags: e.target.value })}
-                            placeholder="e.g., enterprise, healthcare, usa"
-                          />
-                          {availableTags.length > 0 && (
-                            <div className="flex flex-wrap gap-1.5 mt-1">
-                              {availableTags.slice(0, 8).map(tag => (
+                          <Label>Tags</Label>
+                          {/* Selected tags */}
+                          {newLead.tags.length > 0 && (
+                            <div className="flex flex-wrap gap-1.5">
+                              {newLead.tags.map(tag => (
                                 <Badge 
                                   key={tag} 
-                                  variant="outline"
-                                  className="cursor-pointer hover:bg-primary hover:text-primary-foreground transition-colors"
-                                  onClick={() => {
-                                    const currentTags = newLead.tags.split(',').map(t => t.trim()).filter(Boolean);
-                                    if (!currentTags.includes(tag)) {
-                                      setNewLead({ ...newLead, tags: [...currentTags, tag].join(', ') });
-                                    }
-                                  }}
+                                  variant="default"
+                                  className="cursor-pointer gap-1"
+                                  onClick={() => setNewLead({ ...newLead, tags: newLead.tags.filter(t => t !== tag) })}
                                 >
                                   {tag}
+                                  <X className="h-3 w-3" />
                                 </Badge>
                               ))}
                             </div>
                           )}
+                          {/* Available tags to select */}
+                          {availableTags.length > 0 && (
+                            <div>
+                              <p className="text-xs text-muted-foreground mb-1.5">Select tags:</p>
+                              <div className="flex flex-wrap gap-1.5">
+                                {availableTags.filter(tag => !newLead.tags.includes(tag)).map(tag => (
+                                  <Badge 
+                                    key={tag} 
+                                    variant="outline"
+                                    className="cursor-pointer hover:bg-primary hover:text-primary-foreground transition-colors"
+                                    onClick={() => setNewLead({ ...newLead, tags: [...newLead.tags, tag] })}
+                                  >
+                                    {tag}
+                                  </Badge>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                          {/* Custom tag input */}
+                          <div className="flex gap-2">
+                            <Input
+                              value={newTagInput}
+                              onChange={(e) => setNewTagInput(e.target.value)}
+                              placeholder="Add custom tag..."
+                              className="flex-1"
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  e.preventDefault();
+                                  const tag = newTagInput.trim();
+                                  if (tag && !newLead.tags.includes(tag)) {
+                                    setNewLead({ ...newLead, tags: [...newLead.tags, tag] });
+                                    setNewTagInput('');
+                                  }
+                                }
+                              }}
+                            />
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                const tag = newTagInput.trim();
+                                if (tag && !newLead.tags.includes(tag)) {
+                                  setNewLead({ ...newLead, tags: [...newLead.tags, tag] });
+                                  setNewTagInput('');
+                                }
+                              }}
+                              disabled={!newTagInput.trim()}
+                            >
+                              Add
+                            </Button>
+                          </div>
                         </div>
                         <div className="grid gap-2">
                           <Label htmlFor="lead-source">Source</Label>
