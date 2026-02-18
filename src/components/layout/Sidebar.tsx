@@ -1,5 +1,5 @@
 import { useState, createContext, useContext } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -11,10 +11,8 @@ import {
   Building2,
   FileText,
   BookOpen,
-  Settings,
   ChevronLeft,
   ChevronRight,
-  LogOut,
   Shield,
   X,
   Menu,
@@ -82,8 +80,7 @@ export function MobileMenuTrigger() {
 export function Sidebar({ isAdmin = false }: SidebarProps) {
   const { collapsed, setCollapsed, mobileOpen, setMobileOpen } = useSidebarState();
   const location = useLocation();
-  const navigate = useNavigate();
-  const { signOut, isAdmin: hasAdminAccess } = useAuth();
+  const { isAdmin: hasAdminAccess } = useAuth();
   const navItems = isAdmin ? adminNavItems : userNavItems;
 
   const handleNavClick = () => {
@@ -184,20 +181,6 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
           {!isAdmin && <NavItem icon={BookOpen} label="Case Studies" path="/case-studies" />}
           {!isAdmin && hasAdminAccess && <NavItem icon={Shield} label="Admin Panel" path="/admin" />}
           {isAdmin && <NavItem icon={LayoutDashboard} label="User Dashboard" path="/dashboard" />}
-          <NavItem icon={Settings} label="Settings" path="/settings" />
-          <button
-            onClick={async () => {
-              await signOut();
-              navigate('/auth');
-            }}
-            className={cn(
-              'group flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm font-medium text-sidebar-foreground hover:bg-sidebar-accent transition-all duration-200 w-full',
-              collapsed && 'justify-center px-2'
-            )}
-          >
-            <LogOut className="h-4 w-4" />
-            {!collapsed && <span>Sign Out</span>}
-          </button>
         </div>
 
         {/* Expand button */}
@@ -257,18 +240,6 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
           {!isAdmin && <NavItem icon={BookOpen} label="Case Studies" path="/case-studies" />}
           {!isAdmin && hasAdminAccess && <NavItem icon={Shield} label="Admin Panel" path="/admin" />}
           {isAdmin && <NavItem icon={LayoutDashboard} label="User Dashboard" path="/dashboard" />}
-          <NavItem icon={Settings} label="Settings" path="/settings" />
-          <button
-            onClick={async () => {
-              setMobileOpen(false);
-              await signOut();
-              navigate('/auth');
-            }}
-            className="group flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm font-medium text-sidebar-foreground hover:bg-sidebar-accent transition-all duration-200 w-full"
-          >
-            <LogOut className="h-4 w-4" />
-            <span>Sign Out</span>
-          </button>
         </div>
       </aside>
     </>
