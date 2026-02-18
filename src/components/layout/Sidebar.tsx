@@ -46,14 +46,12 @@ const userNavItems = [
   { icon: Users, label: 'People', path: '/people' },
   { icon: Building2, label: 'Companies', path: '/companies' },
   { icon: FileText, label: 'Reports', path: '/reports' },
-  { icon: Settings, label: 'Settings', path: '/settings' },
 ];
 
 const adminNavItems = [
   { icon: LayoutDashboard, label: 'Task Queue', path: '/admin' },
   { icon: Users, label: 'Users & Roles', path: '/admin/users' },
   { icon: FileText, label: 'Data Management', path: '/admin/data' },
-  { icon: Settings, label: 'Settings', path: '/settings' },
 ];
 
 export function SidebarProvider({ children }: { children: React.ReactNode }) {
@@ -186,6 +184,7 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
           {!isAdmin && <NavItem icon={BookOpen} label="Case Studies" path="/case-studies" />}
           {!isAdmin && <NavItem icon={Shield} label="Admin Panel" path="/admin" />}
           {isAdmin && <NavItem icon={LayoutDashboard} label="User Dashboard" path="/dashboard" />}
+          <NavItem icon={Settings} label="Settings" path="/settings" />
           <button
             onClick={async () => {
               await signOut();
@@ -258,6 +257,7 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
           {!isAdmin && <NavItem icon={BookOpen} label="Case Studies" path="/case-studies" />}
           {!isAdmin && <NavItem icon={Shield} label="Admin Panel" path="/admin" />}
           {isAdmin && <NavItem icon={LayoutDashboard} label="User Dashboard" path="/dashboard" />}
+          <NavItem icon={Settings} label="Settings" path="/settings" />
           <button
             onClick={async () => {
               setMobileOpen(false);
