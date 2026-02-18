@@ -11,7 +11,7 @@ export function useOrganization() {
       if (!user?.id) return null;
       const { data, error } = await supabase
         .from('organization_members')
-        .select('organization_id, organizations(id, name, industry)')
+        .select('organization_id, organizations(id, name, industry, slug, size, country)')
         .eq('user_id', user.id)
         .limit(1)
         .maybeSingle();
