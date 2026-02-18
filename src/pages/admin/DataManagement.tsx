@@ -35,20 +35,15 @@ import {
   Search,
   Plus,
   Trash2,
-  Users,
   Building2,
   Calendar,
   Loader2,
-  ExternalLink,
   Tag,
   X,
 } from 'lucide-react';
 import {
-  usePeople,
   useOrganizations,
   useCompanyEvents,
-  useCreatePerson,
-  useDeletePerson,
   useCreateOrganization,
   useDeleteOrganization,
   useCreateCompanyEvent,
@@ -66,6 +61,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from '@/hooks/use-toast';
 import { UserPlus } from 'lucide-react';
+import { usePeople } from '@/hooks/useUserManagement';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 type CompanyEventType = Database['public']['Enums']['company_event_type'];
@@ -135,22 +131,8 @@ function useAvailableTags() {
 
 export default function DataManagement() {
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeTab, setActiveTab] = useState('people');
+  const [activeTab, setActiveTab] = useState('leads');
   const queryClient = useQueryClient();
-
-  // People state
-  const { data: people, isLoading: peopleLoading } = usePeople();
-  const createPerson = useCreatePerson();
-  const deletePerson = useDeletePerson();
-  const [personDialogOpen, setPersonDialogOpen] = useState(false);
-  const [newPerson, setNewPerson] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    company: '',
-    role: '',
-    linkedin: '',
-  });
 
   // Organizations state
   const { data: organizations, isLoading: orgsLoading } = useOrganizations();
@@ -185,9 +167,9 @@ export default function DataManagement() {
   const deleteLead = useDeleteLead();
   const updatePersonTags = useUpdatePersonTags();
   const updateLeadStatus = useUpdateLeadStatus();
+  const { data: people } = usePeople();
   const [leadDialogOpen, setLeadDialogOpen] = useState(false);
-  const [leadMode, setLeadMode] = useState<'existing' | 'new'>('existing');
-  const [newLead, setNewLead] = useState({ person_id: '', notes: '', source: '', tags: '' });
+  const [newLead, setNewLead] = useState({ notes: '', source: '', tags: '' });
   const [newLeadPerson, setNewLeadPerson] = useState({ name: '', email: '', phone: '', company: '', role: '', linkedin: '' });
   const [editTagsDialogOpen, setEditTagsDialogOpen] = useState(false);
   const [editingLead, setEditingLead] = useState<{ personId: string; personName: string; currentTags: string[] } | null>(null);
@@ -232,15 +214,6 @@ export default function DataManagement() {
     },
   });
 
-  const handleCreatePerson = () => {
-    if (!newPerson.name.trim()) return;
-    createPerson.mutate(newPerson, {
-      onSuccess: () => {
-        setPersonDialogOpen(false);
-        setNewPerson({ name: '', email: '', phone: '', company: '', role: '', linkedin: '' });
-      },
-    });
-  };
 
   const handleCreateOrg = () => {
     if (!newOrg.name.trim()) return;
@@ -272,73 +245,43 @@ export default function DataManagement() {
   };
 
   const handleCreateLead = async () => {
+    if (!newLeadPerson.name.trim()) return;
     const tagsArray = newLead.tags.split(',').map(t => t.trim()).filter(Boolean);
     
-    if (leadMode === 'new') {
-      // Create new person first, then create lead
-      if (!newLeadPerson.name.trim()) return;
-      
-      const { data: personData, error: personError } = await supabase
-        .from('people')
-        .insert({
-          name: newLeadPerson.name,
-          email: newLeadPerson.email || null,
-          phone: newLeadPerson.phone || null,
-          company: newLeadPerson.company || null,
-          role: newLeadPerson.role || null,
-          linkedin: newLeadPerson.linkedin || null,
-          tags: tagsArray.length > 0 ? tagsArray : null,
-        })
-        .select()
-        .single();
-      
-      if (personError) {
-        toast({ title: 'Error creating person', description: personError.message, variant: 'destructive' });
-        return;
-      }
-      
-      createLead.mutate(
-        {
-          person_id: personData.id,
-          notes: newLead.notes || undefined,
-          source: newLead.source || undefined,
-        },
-        {
-          onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['admin-people'] });
-            setLeadDialogOpen(false);
-            setLeadMode('existing');
-            setNewLead({ person_id: '', notes: '', source: '', tags: '' });
-            setNewLeadPerson({ name: '', email: '', phone: '', company: '', role: '', linkedin: '' });
-          },
-        }
-      );
-    } else {
-      // Use existing person
-      if (!newLead.person_id) return;
-      
-      const selectedPerson = people?.find(p => p.id === newLead.person_id);
-      
-      if (tagsArray.length > 0 && selectedPerson) {
-        const existingTags = selectedPerson.tags || [];
-        const newTags = [...new Set([...existingTags, ...tagsArray])];
-        updatePersonTags.mutate({ personId: newLead.person_id, tags: newTags });
-      }
-      
-      createLead.mutate(
-        {
-          person_id: newLead.person_id,
-          notes: newLead.notes || undefined,
-          source: newLead.source || undefined,
-        },
-        {
-          onSuccess: () => {
-            setLeadDialogOpen(false);
-            setNewLead({ person_id: '', notes: '', source: '', tags: '' });
-          },
-        }
-      );
+    const { data: personData, error: personError } = await supabase
+      .from('people')
+      .insert({
+        name: newLeadPerson.name,
+        email: newLeadPerson.email || null,
+        phone: newLeadPerson.phone || null,
+        company: newLeadPerson.company || null,
+        role: newLeadPerson.role || null,
+        linkedin: newLeadPerson.linkedin || null,
+        tags: tagsArray.length > 0 ? tagsArray : null,
+      })
+      .select()
+      .single();
+    
+    if (personError) {
+      toast({ title: 'Error creating lead', description: personError.message, variant: 'destructive' });
+      return;
     }
+    
+    createLead.mutate(
+      {
+        person_id: personData.id,
+        notes: newLead.notes || undefined,
+        source: newLead.source || undefined,
+      },
+      {
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: ['admin-people'] });
+          setLeadDialogOpen(false);
+          setNewLead({ notes: '', source: '', tags: '' });
+          setNewLeadPerson({ name: '', email: '', phone: '', company: '', role: '', linkedin: '' });
+        },
+      }
+    );
   };
 
   const handleEditTags = () => {
@@ -433,9 +376,9 @@ export default function DataManagement() {
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <TabsList>
-              <TabsTrigger value="people" className="gap-2">
-                <Users className="h-4 w-4" />
-                People
+              <TabsTrigger value="leads" className="gap-2">
+                <UserPlus className="h-4 w-4" />
+                Leads
               </TabsTrigger>
               <TabsTrigger value="organizations" className="gap-2">
                 <Building2 className="h-4 w-4" />
@@ -444,10 +387,6 @@ export default function DataManagement() {
               <TabsTrigger value="events" className="gap-2">
                 <Calendar className="h-4 w-4" />
                 Events
-              </TabsTrigger>
-              <TabsTrigger value="leads" className="gap-2">
-                <UserPlus className="h-4 w-4" />
-                Leads
               </TabsTrigger>
               <TabsTrigger value="user-tags" className="gap-2">
                 <Tag className="h-4 w-4" />
@@ -464,163 +403,6 @@ export default function DataManagement() {
               />
             </div>
           </div>
-
-          {/* People Tab */}
-          <TabsContent value="people">
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle>People</CardTitle>
-                    <CardDescription>{people?.length || 0} records</CardDescription>
-                  </div>
-                  <Dialog open={personDialogOpen} onOpenChange={setPersonDialogOpen}>
-                    <DialogTrigger asChild>
-                      <Button>
-                        <Plus className="h-4 w-4 mr-2" />
-                        Add Person
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                      <DialogHeader>
-                        <DialogTitle>Add New Person</DialogTitle>
-                        <DialogDescription>Enter the person's details below.</DialogDescription>
-                      </DialogHeader>
-                      <div className="grid gap-4 py-4">
-                        <div className="grid gap-2">
-                          <Label htmlFor="name">Name *</Label>
-                          <Input
-                            id="name"
-                            value={newPerson.name}
-                            onChange={(e) => setNewPerson({ ...newPerson, name: e.target.value })}
-                            placeholder="John Doe"
-                          />
-                        </div>
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="grid gap-2">
-                            <Label htmlFor="email">Email</Label>
-                            <Input
-                              id="email"
-                              type="email"
-                              value={newPerson.email}
-                              onChange={(e) => setNewPerson({ ...newPerson, email: e.target.value })}
-                              placeholder="john@example.com"
-                            />
-                          </div>
-                          <div className="grid gap-2">
-                            <Label htmlFor="phone">Phone</Label>
-                            <Input
-                              id="phone"
-                              value={newPerson.phone}
-                              onChange={(e) => setNewPerson({ ...newPerson, phone: e.target.value })}
-                              placeholder="+1 234 567 890"
-                            />
-                          </div>
-                        </div>
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="grid gap-2">
-                            <Label htmlFor="company">Company</Label>
-                            <Input
-                              id="company"
-                              value={newPerson.company}
-                              onChange={(e) => setNewPerson({ ...newPerson, company: e.target.value })}
-                              placeholder="Acme Corp"
-                            />
-                          </div>
-                          <div className="grid gap-2">
-                            <Label htmlFor="role">Role</Label>
-                            <Input
-                              id="role"
-                              value={newPerson.role}
-                              onChange={(e) => setNewPerson({ ...newPerson, role: e.target.value })}
-                              placeholder="CEO"
-                            />
-                          </div>
-                        </div>
-                        <div className="grid gap-2">
-                          <Label htmlFor="linkedin">LinkedIn</Label>
-                          <Input
-                            id="linkedin"
-                            value={newPerson.linkedin}
-                            onChange={(e) => setNewPerson({ ...newPerson, linkedin: e.target.value })}
-                            placeholder="https://linkedin.com/in/johndoe"
-                          />
-                        </div>
-                      </div>
-                      <DialogFooter>
-                        <Button variant="outline" onClick={() => setPersonDialogOpen(false)}>
-                          Cancel
-                        </Button>
-                        <Button onClick={handleCreatePerson} disabled={createPerson.isPending || !newPerson.name.trim()}>
-                          {createPerson.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                          Create
-                        </Button>
-                      </DialogFooter>
-                    </DialogContent>
-                  </Dialog>
-                </div>
-              </CardHeader>
-              <CardContent>
-                {peopleLoading ? (
-                  <div className="flex justify-center py-8">
-                    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-                  </div>
-                ) : filteredPeople && filteredPeople.length > 0 ? (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Name</TableHead>
-                        <TableHead>Email</TableHead>
-                        <TableHead>Company</TableHead>
-                        <TableHead>Role</TableHead>
-                        <TableHead>Confidence</TableHead>
-                        <TableHead className="text-right">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filteredPeople.map((person) => (
-                        <TableRow key={person.id}>
-                          <TableCell className="font-medium">{person.name}</TableCell>
-                          <TableCell>{person.email || '-'}</TableCell>
-                          <TableCell>{person.company || '-'}</TableCell>
-                          <TableCell>{person.role || '-'}</TableCell>
-                          <TableCell>
-                            <Badge variant={Number(person.confidence) >= 80 ? 'success' : 'warning'}>
-                              {Math.round(Number(person.confidence) * 100)}%
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <div className="flex justify-end gap-1">
-                              {person.linkedin && (
-                                <Button variant="ghost" size="sm" asChild>
-                                  <a href={person.linkedin} target="_blank" rel="noopener noreferrer">
-                                    <ExternalLink className="h-4 w-4" />
-                                  </a>
-                                </Button>
-                              )}
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="text-destructive hover:text-destructive"
-                                onClick={() => deletePerson.mutate(person.id)}
-                                disabled={deletePerson.isPending}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                ) : (
-                  <div className="text-center py-8 text-muted-foreground">
-                    {searchQuery ? 'No people found matching your search' : 'No people found'}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
 
           {/* Organizations Tab */}
           <TabsContent value="organizations">
@@ -925,57 +707,11 @@ export default function DataManagement() {
                     <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
                       <DialogHeader>
                         <DialogTitle>Add Lead</DialogTitle>
-                        <DialogDescription>
-                          {leadMode === 'existing' ? 'Select an existing person or create a new one.' : 'Create a new person as a lead.'}
+                       <DialogDescription>
+                          Enter the lead's details manually.
                         </DialogDescription>
                       </DialogHeader>
                       <div className="grid gap-4 py-4">
-                        {/* Mode Toggle */}
-                        <div className="flex gap-2">
-                          <Button
-                            type="button"
-                            variant={leadMode === 'existing' ? 'default' : 'outline'}
-                            size="sm"
-                            onClick={() => setLeadMode('existing')}
-                          >
-                            Select Existing
-                          </Button>
-                          <Button
-                            type="button"
-                            variant={leadMode === 'new' ? 'default' : 'outline'}
-                            size="sm"
-                            onClick={() => setLeadMode('new')}
-                          >
-                            Create New Person
-                          </Button>
-                        </div>
-
-                        {leadMode === 'existing' ? (
-                          <div className="grid gap-2">
-                            <Label htmlFor="lead-person">Person *</Label>
-                            <Select
-                              value={newLead.person_id}
-                              onValueChange={(value) => setNewLead({ ...newLead, person_id: value })}
-                            >
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select a person" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {availablePeopleForLeads.map((person) => (
-                                  <SelectItem key={person.id} value={person.id}>
-                                    {person.name} {person.company ? `(${person.company})` : ''}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                            {availablePeopleForLeads.length === 0 && (
-                              <p className="text-sm text-muted-foreground">
-                                All people are already leads. Switch to "Create New Person" to add one.
-                              </p>
-                            )}
-                          </div>
-                        ) : (
-                          <>
                             <div className="grid gap-2">
                               <Label htmlFor="new-lead-name">Name *</Label>
                               <Input
@@ -1032,12 +768,9 @@ export default function DataManagement() {
                                 id="new-lead-linkedin"
                                 value={newLeadPerson.linkedin}
                                 onChange={(e) => setNewLeadPerson({ ...newLeadPerson, linkedin: e.target.value })}
-                                placeholder="https://linkedin.com/in/johndoe"
-                              />
+                                 placeholder="https://linkedin.com/in/johndoe"
+                               />
                             </div>
-                          </>
-                        )}
-
                         <div className="grid gap-2">
                           <Label htmlFor="lead-tags">Tags (comma-separated)</Label>
                           <Input
@@ -1089,14 +822,13 @@ export default function DataManagement() {
                       <DialogFooter className="flex-col sm:flex-row gap-2">
                         <Button variant="outline" onClick={() => {
                           setLeadDialogOpen(false);
-                          setLeadMode('existing');
                           setNewLeadPerson({ name: '', email: '', phone: '', company: '', role: '', linkedin: '' });
                         }}>
                           Cancel
                         </Button>
                         <Button
                           onClick={handleCreateLead}
-                          disabled={createLead.isPending || (leadMode === 'existing' ? !newLead.person_id : !newLeadPerson.name.trim())}
+                          disabled={createLead.isPending || !newLeadPerson.name.trim()}
                         >
                           {createLead.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
                           Add Lead
