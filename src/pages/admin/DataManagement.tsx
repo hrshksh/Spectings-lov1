@@ -63,6 +63,7 @@ import { toast } from '@/hooks/use-toast';
 import { UserPlus } from 'lucide-react';
 import { usePeople } from '@/hooks/useUserManagement';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { PREDEFINED_TAGS } from '@/constants/tags';
 
 type CompanyEventType = Database['public']['Enums']['company_event_type'];
 
@@ -801,57 +802,21 @@ export default function DataManagement() {
                               ))}
                             </div>
                           )}
-                          {/* Available tags to select */}
-                          {availableTags.length > 0 && (
-                            <div>
-                              <p className="text-xs text-muted-foreground mb-1.5">Select tags:</p>
-                              <div className="flex flex-wrap gap-1.5">
-                                {availableTags.filter(tag => !newLead.tags.includes(tag)).map(tag => (
-                                  <Badge 
-                                    key={tag} 
-                                    variant="outline"
-                                    className="cursor-pointer hover:bg-primary hover:text-primary-foreground transition-colors"
-                                    onClick={() => setNewLead({ ...newLead, tags: [...newLead.tags, tag] })}
-                                  >
-                                    {tag}
-                                  </Badge>
-                                ))}
-                              </div>
+          {/* Available tags to select */}
+                          <div>
+                            <p className="text-xs text-muted-foreground mb-1.5">Select tags:</p>
+                            <div className="flex flex-wrap gap-1.5">
+                              {PREDEFINED_TAGS.filter(tag => !newLead.tags.includes(tag)).map(tag => (
+                                <Badge 
+                                  key={tag} 
+                                  variant="outline"
+                                  className="cursor-pointer hover:bg-primary hover:text-primary-foreground transition-colors"
+                                  onClick={() => setNewLead({ ...newLead, tags: [...newLead.tags, tag] })}
+                                >
+                                  {tag}
+                                </Badge>
+                              ))}
                             </div>
-                          )}
-                          {/* Custom tag input */}
-                          <div className="flex gap-2">
-                            <Input
-                              value={newTagInput}
-                              onChange={(e) => setNewTagInput(e.target.value)}
-                              placeholder="Add custom tag..."
-                              className="flex-1"
-                              onKeyDown={(e) => {
-                                if (e.key === 'Enter') {
-                                  e.preventDefault();
-                                  const tag = newTagInput.trim();
-                                  if (tag && !newLead.tags.includes(tag)) {
-                                    setNewLead({ ...newLead, tags: [...newLead.tags, tag] });
-                                    setNewTagInput('');
-                                  }
-                                }
-                              }}
-                            />
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                const tag = newTagInput.trim();
-                                if (tag && !newLead.tags.includes(tag)) {
-                                  setNewLead({ ...newLead, tags: [...newLead.tags, tag] });
-                                  setNewTagInput('');
-                                }
-                              }}
-                              disabled={!newTagInput.trim()}
-                            >
-                              Add
-                            </Button>
                           </div>
                         </div>
                         <div className="grid gap-2">
@@ -1099,30 +1064,17 @@ export default function DataManagement() {
                         </div>
                         <div className="grid gap-2">
                           <Label htmlFor="tag">Tag *</Label>
-                          <div className="space-y-2">
-                            <Input
-                              id="tag"
-                              value={newTagAssignment.tag}
-                              onChange={(e) => setNewTagAssignment({ ...newTagAssignment, tag: e.target.value })}
-                              placeholder="Enter tag name or select below"
-                            />
-                            {availableTags.length > 0 && (
-                              <div className="flex flex-wrap gap-1.5">
-                                {availableTags.slice(0, 10).map(tag => (
-                                  <Badge 
-                                    key={tag} 
-                                    variant="outline"
-                                    className="cursor-pointer hover:bg-primary hover:text-primary-foreground transition-colors"
-                                    onClick={() => setNewTagAssignment({ ...newTagAssignment, tag })}
-                                  >
-                                    {tag}
-                                  </Badge>
-                                ))}
-                                {availableTags.length > 10 && (
-                                  <Badge variant="secondary">+{availableTags.length - 10} more</Badge>
-                                )}
-                              </div>
-                            )}
+                          <div className="flex flex-wrap gap-1.5">
+                            {PREDEFINED_TAGS.map(tag => (
+                              <Badge 
+                                key={tag} 
+                                variant={newTagAssignment.tag === tag ? "default" : "outline"}
+                                className="cursor-pointer hover:bg-primary hover:text-primary-foreground transition-colors"
+                                onClick={() => setNewTagAssignment({ ...newTagAssignment, tag })}
+                              >
+                                {tag}
+                              </Badge>
+                            ))}
                           </div>
                         </div>
                       </div>
