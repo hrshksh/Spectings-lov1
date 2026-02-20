@@ -110,7 +110,7 @@ export default function PeopleIntelligence() {
 
 
   return (
-    <DashboardLayout title="Leads" subtitle="People tagged by admin for your review">
+    <DashboardLayout title="Peoples" subtitle="People tagged by admin for your review">
       <div className="space-y-4 animate-fade-in">
         {/* Main content */}
         <div className={`grid grid-cols-1 gap-4 transition-all duration-300 ${selectedLead ? 'lg:grid-cols-3' : ''}`}>
@@ -120,8 +120,8 @@ export default function PeopleIntelligence() {
               {/* Toolbar inside card */}
               <div className="flex items-center justify-between gap-3 px-4 py-3 border-b border-border">
                 <h2 className="text-sm font-semibold text-foreground">
-                  Leads
-                  <span className="ml-1.5 text-muted-foreground font-normal">({filteredLeads.length})</span>
+                   Peoples
+                   <span className="ml-1.5 text-muted-foreground font-normal">({filteredLeads.length})</span>
                 </h2>
                 <div className="flex items-center gap-2">
                   <Select value={tagFilter} onValueChange={setTagFilter}>
@@ -161,14 +161,14 @@ export default function PeopleIntelligence() {
                   <div className="text-center py-16 text-muted-foreground">
                     <Users className="h-8 w-8 mx-auto mb-2 opacity-40" />
                     <p className="text-sm font-medium">No tags assigned</p>
-                    <p className="text-xs mt-1">Contact an admin to assign tags to view relevant leads.</p>
+                    <p className="text-xs mt-1">Contact an admin to assign tags to view relevant peoples.</p>
                   </div>
                 ) : filteredLeads.length === 0 ? (
                   <div className="text-center py-16 text-muted-foreground">
                     <p className="text-sm">
                       {tagFilter !== 'all' || statusFilter !== 'all'
-                        ? 'No leads match your filters' 
-                        : 'No leads match your assigned tags'}
+                        ? 'No peoples match your filters' 
+                        : 'No peoples match your assigned tags'}
                     </p>
                   </div>
                 ) : (
