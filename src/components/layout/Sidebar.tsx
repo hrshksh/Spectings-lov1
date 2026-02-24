@@ -64,7 +64,8 @@ const adminNavItems = [
 
 
 export function SidebarProvider({ children }: {children: React.ReactNode;}) {
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed] = useState(false);
+  const setCollapsed = () => {};
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
@@ -191,14 +192,6 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
               <span className="text-primary-foreground font-bold text-xs">BK</span>
             </div>
           }
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setCollapsed(!collapsed)}
-            className={cn('text-sidebar-foreground hover:bg-sidebar-accent h-7 w-7', collapsed && 'hidden')}>
-
-            <ChevronLeft className="h-3.5 w-3.5" />
-          </Button>
         </div>
 
         {/* Navigation */}
@@ -244,19 +237,6 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
           {isAdmin && <NavItem icon={Users} label="User View" path="/people" />}
         </div>
 
-        {/* Expand button */}
-        {collapsed &&
-        <div className="p-2 border-t border-sidebar-border">
-            <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setCollapsed(false)}
-            className="mx-auto text-sidebar-foreground hover:bg-sidebar-accent h-7 w-7 flex">
-
-              <ChevronRight className="h-3.5 w-3.5" />
-            </Button>
-          </div>
-        }
       </aside>
 
       {/* Mobile sidebar */}
