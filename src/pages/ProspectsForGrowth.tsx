@@ -27,13 +27,16 @@ function useUserTags(userId: string | undefined) {
   });
 }
 
-function usePeople(userTags: string[]) {
+type Lead = DBTables<'leads'>;
+interface LeadWithPerson extends Lead { person: Person | null; }
+
+function useGrowthLeads(userTags: string[]) {
   return useQuery({
-    queryKey: ['people-for-growth', userTags],
+    queryKey: ['leads-for-growth', userTags],
     queryFn: async () => {
-      const { data, error } = await supabase.from('people').select('*').order('created_at', { ascending: false }).limit(PAGE_SIZE);
+      const { data, error } = await (supabase.from('leads').select(`*, person:people(*)`) as any).eq('prospect_type', 'growth').order('created_at', { ascending: false }).limit(PAGE_SIZE);
       if (error) throw error;
-      return (data as Person[]).filter(p => p.tags?.some(t => userTags.includes(t)));
+      return ((data as LeadWithPerson[]) || []).filter(l => l.person?.tags?.some(t => userTags.includes(t)));
     },
     enabled: userTags.length > 0,
   });
@@ -49,8 +52,9 @@ export default function ProspectsForGrowth() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   const { data: userTags = [], isLoading: tagsLoading } = useUserTags(user?.id);
-  const { data: people = [], isLoading: peopleLoading } = usePeople(userTags);
-  const isLoading = tagsLoading || peopleLoading;
+  const { data: growthLeads = [], isLoading: leadsLoading } = useGrowthLeads(userTags);
+  const isLoading = tagsLoading || leadsLoading;
+  const people = useMemo(() => growthLeads.map(l => l.person).filter(Boolean) as Person[], [growthLeads]);
 
   const sorted = useMemo(() => {
     if (!sortKey || !sortDir) return people;
