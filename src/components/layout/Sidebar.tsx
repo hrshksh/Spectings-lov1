@@ -11,21 +11,18 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import {
   LayoutDashboard,
   Users,
-  Building2,
+  UsersRound,
+  Eye,
+  Activity,
+  List,
   FileText,
   BookOpen,
-  ChevronLeft,
-  ChevronRight,
   Shield,
   X,
   Menu,
-  ImagePlus,
   Megaphone,
   Briefcase,
-  TrendingUp,
-  UserPlus,
-  Target } from
-'lucide-react';
+} from 'lucide-react';
 
 // Context to share sidebar state with layout
 interface SidebarContextType {
@@ -49,10 +46,10 @@ interface SidebarProps {
 }
 
 const userNavItems = [
-{ icon: Users, label: 'Prospects', path: '/people' },
-{ icon: Building2, label: 'Inspects', path: '/companies' },
-{ icon: FileText, label: 'Perspects', path: '/perspects' },
-{ icon: FileText, label: 'Lists', path: '/lists' }];
+{ icon: UsersRound, label: 'Prospects', path: '/people' },
+{ icon: Eye, label: 'Inspects', path: '/companies' },
+{ icon: Activity, label: 'Perspects', path: '/perspects' },
+{ icon: List, label: 'Lists', path: '/lists' }];
 
 
 const adminNavItems = [
@@ -95,12 +92,6 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
   const { isAdmin: hasAdminAccess } = useAuth();
   const navItems = isAdmin ? adminNavItems : userNavItems;
   const { data: prospectSelections = [] } = useProspectSelections();
-
-  const subsectionIcons: Record<string, React.ElementType> = {
-    for_sales: Target,
-    for_hiring: UserPlus,
-    for_growth: TrendingUp,
-  };
 
   const selectedSubsections = PROSPECT_SUBSECTIONS.filter(s => prospectSelections.includes(s.key));
 
@@ -207,7 +198,18 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
               {!isAdmin && item.label === 'Prospects' && selectedSubsections.length > 0 && (
                 <div className="ml-4 space-y-0.5 mt-0.5">
                   {selectedSubsections.map(sub => (
-                    <NavItem key={sub.path} icon={subsectionIcons[sub.key]} label={sub.label} path={sub.path} />
+                    <Link
+                      key={sub.path}
+                      to={sub.path}
+                      onClick={handleNavClick}
+                      className={cn(
+                        'block rounded-lg px-2.5 py-2 text-sm font-medium transition-all duration-200',
+                        location.pathname === sub.path
+                          ? 'bg-primary text-primary-foreground shadow-sm'
+                          : 'text-sidebar-foreground hover:bg-sidebar-accent'
+                      )}>
+                      {sub.label}
+                    </Link>
                   ))}
                 </div>
               )}
@@ -277,7 +279,18 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
               {!isAdmin && item.label === 'Prospects' && selectedSubsections.length > 0 && (
                 <div className="ml-4 space-y-0.5 mt-0.5">
                   {selectedSubsections.map(sub => (
-                    <NavItem key={sub.path} icon={subsectionIcons[sub.key]} label={sub.label} path={sub.path} />
+                    <Link
+                      key={sub.path}
+                      to={sub.path}
+                      onClick={handleNavClick}
+                      className={cn(
+                        'block rounded-lg px-2.5 py-2 text-sm font-medium transition-all duration-200',
+                        location.pathname === sub.path
+                          ? 'bg-primary text-primary-foreground shadow-sm'
+                          : 'text-sidebar-foreground hover:bg-sidebar-accent'
+                      )}>
+                      {sub.label}
+                    </Link>
                   ))}
                 </div>
               )}
