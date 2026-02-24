@@ -64,9 +64,9 @@ function useAdminLeads() {
 
 // Real-time stats
 function useProspectStats(leads: LeadWithPerson[]) {
-  const salesLeads = leads.filter(l => l.person?.tags?.some(t => ['B2B', 'SaaS', 'E-commerce', 'Marketing Agencies', 'Fintech', 'Consulting', 'IT Services'].includes(t)));
-  const hiringLeads = leads.filter(l => l.person?.tags?.some(t => ['Startups', 'Healthcare', 'HealthTech', 'Manufacturing', 'EdTech'].includes(t)));
-  const growthLeads = leads.filter(l => l.person?.tags?.some(t => ['Social Media', 'Content', 'PropTech', 'Real-Estate'].includes(t)));
+  const salesLeads = leads.filter(l => (l as any).prospect_type === 'sales');
+  const hiringLeads = leads.filter(l => (l as any).prospect_type === 'hiring');
+  const growthLeads = leads.filter(l => (l as any).prospect_type === 'growth');
 
   return {
     total: leads.length,
@@ -93,13 +93,13 @@ export default function ProspectsManagement() {
   // Form state for new lead
   const [form, setForm] = useState({
     name: '', email: '', phone: '', company: '', role: '', linkedin: '',
-    tags: [] as string[], quality_score: 50, notes: '', source: '',
+    tags: [] as string[], quality_score: 50, notes: '', source: '', prospect_type: 'sales' as string,
   });
 
   // Edit form state
   const [editForm, setEditForm] = useState({
     quality_score: 50, notes: '', source: '', status: 'pending' as 'pending' | 'verified' | 'rejected',
-    name: '', email: '', phone: '', company: '', role: '', linkedin: '', tags: [] as string[],
+    name: '', email: '', phone: '', company: '', role: '', linkedin: '', tags: [] as string[], prospect_type: 'sales' as string,
   });
 
   const { data: leads = [], isLoading } = useAdminLeads();
@@ -136,13 +136,14 @@ export default function ProspectsManagement() {
           notes: form.notes || null,
           source: form.source || null,
           organization_id: orgId || null,
-        });
+          prospect_type: form.prospect_type,
+        } as any);
       if (leadErr) throw leadErr;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-prospects'] });
       setDialogOpen(false);
-      setForm({ name: '', email: '', phone: '', company: '', role: '', linkedin: '', tags: [], quality_score: 50, notes: '', source: '' });
+      setForm({ name: '', email: '', phone: '', company: '', role: '', linkedin: '', tags: [], quality_score: 50, notes: '', source: '', prospect_type: 'sales' });
       toast({ title: 'Prospect created successfully' });
     },
     onError: (err: Error) => toast({ title: 'Error creating prospect', description: err.message, variant: 'destructive' }),
@@ -176,6 +177,7 @@ export default function ProspectsManagement() {
         notes: editForm.notes || null,
         source: editForm.source || null,
         status: editForm.status,
+        prospect_type: editForm.prospect_type,
       };
       if (editForm.status === 'verified') {
         const { data: { user } } = await supabase.auth.getUser();
@@ -221,6 +223,7 @@ export default function ProspectsManagement() {
       role: lead.person?.role ?? '',
       linkedin: lead.person?.linkedin ?? '',
       tags: lead.person?.tags ?? [],
+      prospect_type: (lead as any).prospect_type ?? 'sales',
     });
     setEditDialogOpen(true);
   };
@@ -361,7 +364,18 @@ export default function ProspectsManagement() {
                         <Input value={form.linkedin} onChange={e => setForm({ ...form, linkedin: e.target.value })} placeholder="https://linkedin.com/in/..." />
                       </div>
                     </div>
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-3 gap-3">
+                      <div className="grid gap-1.5">
+                        <Label>Type *</Label>
+                        <Select value={form.prospect_type} onValueChange={v => setForm({ ...form, prospect_type: v })}>
+                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="sales">For Sales</SelectItem>
+                            <SelectItem value="hiring">For Hiring</SelectItem>
+                            <SelectItem value="growth">For Growth</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
                       <div className="grid gap-1.5">
                         <Label>Quality Score (0-100)</Label>
                         <Input type="number" min={0} max={100} value={form.quality_score} onChange={e => setForm({ ...form, quality_score: parseInt(e.target.value) || 0 })} />
@@ -431,6 +445,7 @@ export default function ProspectsManagement() {
                           <TableHead className="min-w-[180px]">Email</TableHead>
                           <TableHead className="min-w-[110px]">Phone</TableHead>
                           <TableHead className="w-[80px]">Score</TableHead>
+                          <TableHead className="w-[90px]">Type</TableHead>
                           <TableHead className="min-w-[80px]">Status</TableHead>
                           <TableHead className="min-w-[120px]">Tags</TableHead>
                           <TableHead className="min-w-[50px]">Links</TableHead>
@@ -463,6 +478,11 @@ export default function ProspectsManagement() {
                                   <Progress value={lead.quality_score ?? 0} className="h-1.5 w-10" />
                                   <span className="text-xs font-mono">{lead.quality_score ?? '—'}</span>
                                 </div>
+                              </TableCell>
+                              <TableCell>
+                                <Badge variant="secondary" className="text-[10px] capitalize">
+                                  {(lead as any).prospect_type || 'sales'}
+                                </Badge>
                               </TableCell>
                               <TableCell>
                                 <Badge variant="outline" className={`text-[10px] ${statusColor(lead.status)}`}>
@@ -553,14 +573,17 @@ export default function ProspectsManagement() {
                 <Input value={editForm.linkedin} onChange={e => setEditForm({ ...editForm, linkedin: e.target.value })} />
               </div>
             </div>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 gap-3">
               <div className="grid gap-1.5">
-                <Label>Score (0-100)</Label>
-                <Input type="number" min={0} max={100} value={editForm.quality_score} onChange={e => setEditForm({ ...editForm, quality_score: parseInt(e.target.value) || 0 })} />
-              </div>
-              <div className="grid gap-1.5">
-                <Label>Source</Label>
-                <Input value={editForm.source} onChange={e => setEditForm({ ...editForm, source: e.target.value })} />
+                <Label>Type</Label>
+                <Select value={editForm.prospect_type} onValueChange={v => setEditForm({ ...editForm, prospect_type: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="sales">For Sales</SelectItem>
+                    <SelectItem value="hiring">For Hiring</SelectItem>
+                    <SelectItem value="growth">For Growth</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               <div className="grid gap-1.5">
                 <Label>Status</Label>
@@ -572,6 +595,16 @@ export default function ProspectsManagement() {
                     <SelectItem value="rejected">Rejected</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="grid gap-1.5">
+                <Label>Score (0-100)</Label>
+                <Input type="number" min={0} max={100} value={editForm.quality_score} onChange={e => setEditForm({ ...editForm, quality_score: parseInt(e.target.value) || 0 })} />
+              </div>
+              <div className="grid gap-1.5">
+                <Label>Source</Label>
+                <Input value={editForm.source} onChange={e => setEditForm({ ...editForm, source: e.target.value })} />
               </div>
             </div>
             <div className="grid gap-1.5">

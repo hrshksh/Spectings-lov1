@@ -34,7 +34,7 @@ function useLeads(userTags: string[]) {
   return useInfiniteQuery({
     queryKey: ['leads-for-hiring', userTags],
     queryFn: async ({ pageParam }: { pageParam: string | null }) => {
-      let query = supabase.from('leads').select(`*, person:people(*)`).order('created_at', { ascending: false }).limit(PAGE_SIZE);
+      let query = (supabase.from('leads').select(`*, person:people(*)`) as any).eq('prospect_type', 'hiring').order('created_at', { ascending: false }).limit(PAGE_SIZE);
       if (pageParam) query = query.lt('created_at', pageParam);
       const { data, error } = await query;
       if (error) throw error;
