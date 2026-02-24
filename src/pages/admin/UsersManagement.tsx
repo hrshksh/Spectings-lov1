@@ -62,9 +62,9 @@ const roleLabels: Record<AppRole, string> = {
 
 const planLabels: Record<SubscriptionPlan, string> = {
   free: 'Free',
-  essential: 'Essential',
-  growth: 'Growth',
-  agency: 'Agency',
+  essential: 'Basic',
+  growth: 'Core',
+  agency: 'Elite',
   enterprise: 'Enterprise',
 };
 
