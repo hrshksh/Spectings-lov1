@@ -2,16 +2,14 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
-import Index from "./pages/Index";
-import Dashboard from "./pages/Dashboard";
 import PeopleIntelligence from "./pages/PeopleIntelligence";
 import CompanyIntelligence from "./pages/CompanyIntelligence";
-
+import Perspects from "./pages/Perspects";
+import Lists from "./pages/Lists";
 import CaseStudies from "./pages/CaseStudies";
-import Reports from "./pages/Reports";
 import Settings from "./pages/Settings";
 import Profile from "./pages/Profile";
 import Auth from "./pages/Auth";
@@ -35,11 +33,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Auth />} />
             <Route path="/auth" element={<Auth />} />
-            <Route path="/dashboard" element={
-              <ProtectedRoute>
-                <Dashboard />
-              </ProtectedRoute>
-            } />
+            <Route path="/dashboard" element={<Navigate to="/people" replace />} />
             <Route path="/people" element={
               <ProtectedRoute>
                 <PeopleIntelligence />
@@ -50,14 +44,19 @@ const App = () => (
                 <CompanyIntelligence />
               </ProtectedRoute>
             } />
+            <Route path="/perspects" element={
+              <ProtectedRoute>
+                <Perspects />
+              </ProtectedRoute>
+            } />
+            <Route path="/lists" element={
+              <ProtectedRoute>
+                <Lists />
+              </ProtectedRoute>
+            } />
             <Route path="/case-studies" element={
               <ProtectedRoute>
                 <CaseStudies />
-              </ProtectedRoute>
-            } />
-            <Route path="/reports" element={
-              <ProtectedRoute>
-                <Reports />
               </ProtectedRoute>
             } />
             <Route path="/settings" element={

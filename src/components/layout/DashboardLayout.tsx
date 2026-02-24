@@ -16,7 +16,7 @@ function DashboardContent({ children, title, subtitle, isAdmin }: DashboardLayou
   return (
     <div className="min-h-screen bg-background">
       <Sidebar isAdmin={isAdmin} />
-      <div className={cn('transition-all duration-300', collapsed ? 'md:pl-14' : 'md:pl-52')}>
+      <div className={cn('transition-all duration-300', collapsed ? 'md:pl-14' : 'md:pl-56')}>
         <Header title={title} subtitle={subtitle} mobileMenuTrigger={<MobileMenuTrigger />} />
         <main className="px-4 py-5 lg:px-6 max-w-[1400px]">
           {children}

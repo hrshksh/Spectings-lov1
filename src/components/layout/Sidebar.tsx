@@ -45,10 +45,10 @@ interface SidebarProps {
 }
 
 const userNavItems = [
-  { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
-  { icon: Users, label: 'Peoples', path: '/people' },
-  { icon: Building2, label: 'Companies', path: '/companies' },
-  { icon: FileText, label: 'Reports', path: '/reports' },
+  { icon: Users, label: 'Prospects', path: '/people' },
+  { icon: Building2, label: 'Inspects', path: '/companies' },
+  { icon: FileText, label: 'Perspects', path: '/perspects' },
+  { icon: FileText, label: 'Lists', path: '/lists' },
 ];
 
 const adminNavItems = [
@@ -160,13 +160,13 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
           'fixed left-0 top-0 z-50 h-screen bg-sidebar border-r border-sidebar-border transition-all duration-300 flex flex-col',
           // Mobile: hidden by default, shown as overlay when mobileOpen
           'hidden md:flex',
-          collapsed ? 'w-14' : 'w-52'
+          collapsed ? 'w-14' : 'w-56'
         )}
       >
         {/* Logo */}
         <div className="flex h-14 items-center justify-between border-b border-sidebar-border px-3">
           {!collapsed && (
-            <Link to={isAdmin ? '/admin' : '/dashboard'} className="flex items-center gap-2">
+            <Link to={isAdmin ? '/admin' : '/people'} className="flex items-center gap-2">
               <div className="h-7 w-7 rounded-lg bg-primary flex items-center justify-center">
                 <span className="text-primary-foreground font-bold text-xs">BK</span>
               </div>
@@ -219,7 +219,7 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
           {!isAdmin && <NavItem icon={Briefcase} label="Services" path="/services" />}
           {!isAdmin && <NavItem icon={BookOpen} label="Case Studies" path="/case-studies" />}
           {!isAdmin && hasAdminAccess && <NavItem icon={Shield} label="Admin Panel" path="/admin" />}
-          {isAdmin && <NavItem icon={LayoutDashboard} label="User Dashboard" path="/dashboard" />}
+          {isAdmin && <NavItem icon={Users} label="User View" path="/people" />}
         </div>
 
         {/* Expand button */}
@@ -246,7 +246,7 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
       >
         {/* Mobile header */}
         <div className="flex h-14 items-center justify-between border-b border-sidebar-border px-3">
-          <Link to={isAdmin ? '/admin' : '/dashboard'} className="flex items-center gap-2" onClick={handleNavClick}>
+          <Link to={isAdmin ? '/admin' : '/people'} className="flex items-center gap-2" onClick={handleNavClick}>
             <div className="h-7 w-7 rounded-lg bg-primary flex items-center justify-center">
               <span className="text-primary-foreground font-bold text-xs">BK</span>
             </div>
