@@ -4,6 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
+import { useProspectSelections, PROSPECT_SUBSECTIONS } from '@/hooks/useProspectSelections';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -20,7 +21,10 @@ import {
   Menu,
   ImagePlus,
   Megaphone,
-  Briefcase } from
+  Briefcase,
+  TrendingUp,
+  UserPlus,
+  Target } from
 'lucide-react';
 
 // Context to share sidebar state with layout
@@ -89,6 +93,15 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
   const location = useLocation();
   const { isAdmin: hasAdminAccess } = useAuth();
   const navItems = isAdmin ? adminNavItems : userNavItems;
+  const { data: prospectSelections = [] } = useProspectSelections();
+
+  const subsectionIcons: Record<string, React.ElementType> = {
+    for_sales: Target,
+    for_hiring: UserPlus,
+    for_growth: TrendingUp,
+  };
+
+  const selectedSubsections = PROSPECT_SUBSECTIONS.filter(s => prospectSelections.includes(s.key));
 
   // Fetch active ad banner for user sidebar
   const { data: activeBanner } = useQuery({
@@ -195,9 +208,18 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
               <Badge variant="default" className="text-[10px] py-0.5 px-1.5">Admin</Badge>
             </div>
           }
-          {navItems.map((item) =>
-          <NavItem key={item.path} {...item} />
-          )}
+          {navItems.map((item) => (
+            <div key={item.path}>
+              <NavItem {...item} />
+              {!isAdmin && item.label === 'Prospects' && selectedSubsections.length > 0 && (
+                <div className="ml-4 space-y-0.5 mt-0.5">
+                  {selectedSubsections.map(sub => (
+                    <NavItem key={sub.path} icon={subsectionIcons[sub.key]} label={sub.label} path={sub.path} />
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
         </nav>
 
         {/* Ad Banner - user sidebar only, hidden when no active banner */}
@@ -269,9 +291,18 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
               <Badge variant="default" className="text-[10px] py-0.5 px-1.5">Admin</Badge>
             </div>
           }
-          {navItems.map((item) =>
-          <NavItem key={item.path} {...item} />
-          )}
+          {navItems.map((item) => (
+            <div key={item.path}>
+              <NavItem {...item} />
+              {!isAdmin && item.label === 'Prospects' && selectedSubsections.length > 0 && (
+                <div className="ml-4 space-y-0.5 mt-0.5">
+                  {selectedSubsections.map(sub => (
+                    <NavItem key={sub.path} icon={subsectionIcons[sub.key]} label={sub.label} path={sub.path} />
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
         </nav>
 
         {/* Ad Banner - user mobile sidebar only, hidden when no active banner */}
