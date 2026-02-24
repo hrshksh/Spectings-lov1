@@ -21,7 +21,8 @@ import {
   X,
   Menu,
   Megaphone,
-  Briefcase,
+  Library,
+  Settings,
 } from 'lucide-react';
 
 // Context to share sidebar state with layout
@@ -56,7 +57,7 @@ const adminNavItems = [
 { icon: LayoutDashboard, label: 'Task Queue', path: '/admin' },
 { icon: Users, label: 'Users & Roles', path: '/admin/users' },
 { icon: FileText, label: 'Data Management', path: '/admin/data' },
-{ icon: Briefcase, label: 'Services', path: '/admin/services' },
+{ icon: Library, label: 'Services', path: '/admin/services' },
 { icon: Megaphone, label: 'Ad Management', path: '/admin/ads' }];
 
 
@@ -233,8 +234,9 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
 
         {/* Bottom nav links */}
         <div className="border-t border-sidebar-border p-2 space-y-1">
-          {!isAdmin && <NavItem icon={Briefcase} label="Services" path="/services" />}
+          {!isAdmin && <NavItem icon={Library} label="Services" path="/services" />}
           {!isAdmin && <NavItem icon={BookOpen} label="Case Studies" path="/case-studies" />}
+          {!isAdmin && <NavItem icon={Settings} label="Settings" path="/settings" />}
           {!isAdmin && hasAdminAccess && <NavItem icon={Shield} label="Admin Panel" path="/admin" />}
           {isAdmin && <NavItem icon={Users} label="User View" path="/people" />}
         </div>
@@ -314,8 +316,9 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
 
         {/* Bottom */}
         <div className="border-t border-sidebar-border p-2 space-y-1">
-          {!isAdmin && <NavItem icon={Briefcase} label="Services" path="/services" />}
+          {!isAdmin && <NavItem icon={Library} label="Services" path="/services" />}
           {!isAdmin && <NavItem icon={BookOpen} label="Case Studies" path="/case-studies" />}
+          {!isAdmin && <NavItem icon={Settings} label="Settings" path="/settings" />}
           {!isAdmin && hasAdminAccess && <NavItem icon={Shield} label="Admin Panel" path="/admin" />}
           {isAdmin && <NavItem icon={LayoutDashboard} label="User Dashboard" path="/dashboard" />}
         </div>
