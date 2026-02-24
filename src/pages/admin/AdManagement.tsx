@@ -11,6 +11,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { adBannerSchema } from '@/lib/validations';
 
 interface AdBanner {
   id: string;
@@ -69,14 +70,17 @@ export default function AdManagement() {
 
   const createBanner = useMutation({
     mutationFn: async () => {
+      const validation = adBannerSchema.safeParse({ title: newTitle, link_url: newLink });
+      if (!validation.success) throw new Error(validation.error.errors[0]?.message || 'Invalid input');
+
       setUploading(true);
       let image_url: string | null = null;
       if (newFile) {
         image_url = await uploadImage(newFile);
       }
       const { error } = await supabase.from('ad_banners').insert({
-        title: newTitle,
-        link_url: newLink || null,
+        title: validation.data.title,
+        link_url: validation.data.link_url || null,
         image_url,
         is_active: false,
       });

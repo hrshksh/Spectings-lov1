@@ -12,6 +12,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
+import { serviceSchema } from '@/lib/validations';
 
 interface Service {
   id: string;
@@ -72,11 +73,15 @@ export default function ServicesManagement() {
   const createService = useMutation({
     mutationFn: async () => {
       const features = newFeatures.split('\n').map(f => f.trim()).filter(Boolean);
+      const validation = serviceSchema.safeParse({ title: newTitle, description: newDescription, icon: newIcon, features });
+      if (!validation.success) throw new Error(validation.error.errors[0]?.message || 'Invalid input');
+
+      const v = validation.data;
       const { error } = await supabase.from('services').insert({
-        title: newTitle,
-        description: newDescription || null,
-        icon: newIcon || 'Briefcase',
-        features,
+        title: v.title,
+        description: v.description || null,
+        icon: v.icon || 'Briefcase',
+        features: v.features || [],
         sort_order: services.length,
         is_active: true,
       });

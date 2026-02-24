@@ -25,6 +25,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 import { PREDEFINED_TAGS } from '@/constants/tags';
 import type { Tables as DBTables } from '@/integrations/supabase/types';
+import { personSchema, leadSchema } from '@/lib/validations';
 
 type Person = DBTables<'people'>;
 type Lead = DBTables<'leads'>;
@@ -108,35 +109,52 @@ export default function ProspectsManagement() {
   // Create lead mutation
   const createLead = useMutation({
     mutationFn: async () => {
+      // Validate person fields
+      const personValidation = personSchema.safeParse({
+        name: form.name, email: form.email, phone: form.phone,
+        company: form.company, role: form.role, linkedin: form.linkedin,
+        tags: form.tags,
+      });
+      if (!personValidation.success) throw new Error(personValidation.error.errors[0]?.message || 'Invalid person data');
+
+      // Validate lead fields
+      const leadValidation = leadSchema.safeParse({
+        quality_score: form.quality_score, notes: form.notes,
+        source: form.source, prospect_type: form.prospect_type,
+      });
+      if (!leadValidation.success) throw new Error(leadValidation.error.errors[0]?.message || 'Invalid lead data');
+
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
       const { data: orgId } = await supabase.rpc('get_user_org_id', { _user_id: user.id });
 
+      const pv = personValidation.data;
       const { data: personData, error: personErr } = await supabase
         .from('people')
         .insert({
-          name: form.name,
-          email: form.email || null,
-          phone: form.phone || null,
-          company: form.company || null,
-          role: form.role || null,
-          linkedin: form.linkedin || null,
-          tags: form.tags.length > 0 ? form.tags : null,
+          name: pv.name,
+          email: pv.email || null,
+          phone: pv.phone || null,
+          company: pv.company || null,
+          role: pv.role || null,
+          linkedin: pv.linkedin || null,
+          tags: pv.tags && pv.tags.length > 0 ? pv.tags : null,
           organization_id: orgId || null,
         })
         .select()
         .single();
       if (personErr) throw personErr;
 
+      const lv = leadValidation.data;
       const { error: leadErr } = await supabase
         .from('leads')
         .insert({
           person_id: personData.id,
-          quality_score: form.quality_score,
-          notes: form.notes || null,
-          source: form.source || null,
+          quality_score: lv.quality_score,
+          notes: lv.notes || null,
+          source: lv.source || null,
           organization_id: orgId || null,
-          prospect_type: form.prospect_type,
+          prospect_type: lv.prospect_type,
         } as any);
       if (leadErr) throw leadErr;
     },
