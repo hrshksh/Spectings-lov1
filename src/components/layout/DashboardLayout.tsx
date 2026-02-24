@@ -8,9 +8,10 @@ interface DashboardLayoutProps {
   title: string;
   subtitle?: string;
   isAdmin?: boolean;
+  flush?: boolean;
 }
 
-function DashboardContent({ children, title, subtitle, isAdmin }: DashboardLayoutProps) {
+function DashboardContent({ children, title, subtitle, isAdmin, flush }: DashboardLayoutProps) {
   const { collapsed } = useSidebarState();
   
   return (
@@ -18,7 +19,7 @@ function DashboardContent({ children, title, subtitle, isAdmin }: DashboardLayou
       <Sidebar isAdmin={isAdmin} />
       <div className={cn('transition-all duration-300', collapsed ? 'md:pl-14' : 'md:pl-56')}>
         <Header title={title} subtitle={subtitle} mobileMenuTrigger={<MobileMenuTrigger />} />
-        <main className="px-4 py-5 lg:px-6 max-w-[1400px]">
+        <main className={flush ? '' : 'px-4 py-5 lg:px-6 max-w-[1400px]'}>
           {children}
         </main>
       </div>
