@@ -12,6 +12,7 @@ import { useProfile } from '@/hooks/useSettings';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { profileUpdateSchema } from '@/lib/validations';
 
 export default function Profile() {
   const { user } = useAuth();
@@ -48,11 +49,16 @@ export default function Profile() {
 
   const handleSave = async () => {
     if (!user?.id) return;
+    const validation = profileUpdateSchema.safeParse({ full_name: fullName, phone });
+    if (!validation.success) {
+      toast.error(validation.error.errors[0]?.message || 'Invalid input');
+      return;
+    }
     setSaving(true);
     try {
       const { error } = await supabase
         .from('profiles')
-        .update({ full_name: fullName, phone })
+        .update({ full_name: validation.data.full_name, phone: validation.data.phone })
         .eq('id', user.id);
       if (error) throw error;
       queryClient.invalidateQueries({ queryKey: ['user-profile'] });
