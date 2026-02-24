@@ -9,6 +9,9 @@ import PeopleIntelligence from "./pages/PeopleIntelligence";
 import CompanyIntelligence from "./pages/CompanyIntelligence";
 import Perspects from "./pages/Perspects";
 import Lists from "./pages/Lists";
+import ProspectsForSales from "./pages/ProspectsForSales";
+import ProspectsForHiring from "./pages/ProspectsForHiring";
+import ProspectsForGrowth from "./pages/ProspectsForGrowth";
 import CaseStudies from "./pages/CaseStudies";
 import Settings from "./pages/Settings";
 import Profile from "./pages/Profile";
@@ -37,6 +40,21 @@ const App = () => (
             <Route path="/people" element={
               <ProtectedRoute>
                 <PeopleIntelligence />
+              </ProtectedRoute>
+            } />
+            <Route path="/prospects/for-sales" element={
+              <ProtectedRoute>
+                <ProspectsForSales />
+              </ProtectedRoute>
+            } />
+            <Route path="/prospects/for-hiring" element={
+              <ProtectedRoute>
+                <ProspectsForHiring />
+              </ProtectedRoute>
+            } />
+            <Route path="/prospects/for-growth" element={
+              <ProtectedRoute>
+                <ProspectsForGrowth />
               </ProtectedRoute>
             } />
             <Route path="/companies" element={

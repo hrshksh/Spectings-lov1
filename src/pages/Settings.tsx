@@ -8,7 +8,8 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Building2, Bell, Users, Globe, Plus, Trash2, Check, Loader2 } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Building2, Bell, Users, Globe, Plus, Trash2, Check, Loader2, Target, UserPlus, TrendingUp } from 'lucide-react';
 import { useOrganization } from '@/hooks/useOrganization';
 import { useAuth } from '@/contexts/AuthContext';
 import {
@@ -23,6 +24,13 @@ import {
   useProfile,
   useTeamMembers,
 } from '@/hooks/useSettings';
+import {
+  useProspectSelections,
+  useUpdateProspectSelections,
+  PROSPECT_SUBSECTIONS,
+  getPlanMaxSelections,
+  PLAN_DISPLAY_NAMES,
+} from '@/hooks/useProspectSelections';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 
 const ALERT_CONFIG = [
@@ -33,9 +41,9 @@ const ALERT_CONFIG = [
 ];
 
 const PLANS = [
-  { id: 'essential', name: 'Essential', price: '₹4,999', features: ['5 competitor tracking', '50 leads/month', 'Weekly reports'] },
-  { id: 'growth', name: 'Growth', price: '₹14,999', features: ['15 competitor tracking', '200 leads/month', 'All reports', 'Case studies'] },
-  { id: 'agency', name: 'Agency', price: '₹39,999', features: ['50 competitor tracking', 'Unlimited leads', 'All reports', 'Priority support'] },
+  { id: 'essential', name: 'Basic', price: '₹4,999', features: ['1 prospect section', '5 competitor tracking', '50 leads/month', 'Weekly reports'] },
+  { id: 'growth', name: 'Core', price: '₹14,999', features: ['2 prospect sections', '15 competitor tracking', '200 leads/month', 'All reports', 'Case studies'] },
+  { id: 'agency', name: 'Elite', price: '₹39,999', features: ['3 prospect sections', '50 competitor tracking', 'Unlimited leads', 'All reports', 'Priority support'] },
 ];
 
 export default function Settings() {
@@ -51,6 +59,8 @@ export default function Settings() {
   const toggleAlert = useToggleAlert();
   const { data: profile } = useProfile();
   const { data: teamMembers = [], isLoading: teamLoading } = useTeamMembers(organizationId);
+  const { data: prospectSelections = [] } = useProspectSelections();
+  const updateProspectSelections = useUpdateProspectSelections();
 
   // General tab state
   const [orgName, setOrgName] = useState('');
@@ -91,6 +101,25 @@ export default function Settings() {
   };
 
   const currentPlan = profile?.subscription_plan || 'free';
+  const maxSelections = getPlanMaxSelections(currentPlan);
+
+  const subsectionIcons: Record<string, React.ElementType> = {
+    for_sales: Target,
+    for_hiring: UserPlus,
+    for_growth: TrendingUp,
+  };
+
+  const handleToggleSubsection = (key: string) => {
+    const isSelected = prospectSelections.includes(key);
+    let newSelections: string[];
+    if (isSelected) {
+      newSelections = prospectSelections.filter(s => s !== key);
+    } else {
+      if (prospectSelections.length >= maxSelections) return;
+      newSelections = [...prospectSelections, key];
+    }
+    updateProspectSelections.mutate(newSelections);
+  };
 
   return (
     <DashboardLayout title="Settings" subtitle="Manage your preferences and subscription">
@@ -98,6 +127,7 @@ export default function Settings() {
         <Tabs defaultValue="general" className="space-y-3">
           <TabsList className="h-8">
             <TabsTrigger value="general" className="text-xs h-7">General</TabsTrigger>
+            <TabsTrigger value="prospects" className="text-xs h-7">Prospects</TabsTrigger>
             <TabsTrigger value="competitors" className="text-xs h-7">Competitors</TabsTrigger>
             <TabsTrigger value="alerts" className="text-xs h-7">Alerts</TabsTrigger>
             <TabsTrigger value="billing" className="text-xs h-7">Billing</TabsTrigger>
@@ -156,6 +186,49 @@ export default function Settings() {
                   {(updateOrg.isPending || createOrg.isPending) ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : null}
                   {organizationId ? 'Save Changes' : 'Create Organization'}
                 </Button>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* PROSPECTS TAB */}
+          <TabsContent value="prospects" className="space-y-3">
+            <Card>
+              <CardHeader className="py-2 px-3">
+                <CardTitle className="text-sm font-medium">Prospect Sections</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3 px-3 pb-3 pt-0">
+                <p className="text-xs text-muted-foreground">
+                  Your plan ({PLAN_DISPLAY_NAMES[currentPlan] || currentPlan}) allows {maxSelections === 0 ? 'no' : maxSelections} selection{maxSelections !== 1 ? 's' : ''}.
+                  {prospectSelections.length}/{maxSelections} selected.
+                </p>
+                {maxSelections === 0 && (
+                  <p className="text-xs text-destructive">Upgrade to a paid plan to access prospect sections.</p>
+                )}
+                <div className="space-y-2">
+                  {PROSPECT_SUBSECTIONS.map((sub) => {
+                    const isSelected = prospectSelections.includes(sub.key);
+                    const Icon = subsectionIcons[sub.key];
+                    const disabled = !isSelected && prospectSelections.length >= maxSelections;
+                    return (
+                      <div
+                        key={sub.key}
+                        className={`flex items-center justify-between p-2 rounded-md ${isSelected ? 'bg-primary/10 border border-primary/20' : 'bg-secondary/50'} ${disabled ? 'opacity-50' : ''}`}
+                      >
+                        <div className="flex items-center gap-2">
+                          <div className="h-8 w-8 rounded-md bg-primary/10 flex items-center justify-center">
+                            <Icon className="h-4 w-4 text-primary" />
+                          </div>
+                          <h4 className="text-xs font-medium">{sub.label}</h4>
+                        </div>
+                        <Checkbox
+                          checked={isSelected}
+                          disabled={disabled && !isSelected}
+                          onCheckedChange={() => handleToggleSubsection(sub.key)}
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
               </CardContent>
             </Card>
           </TabsContent>

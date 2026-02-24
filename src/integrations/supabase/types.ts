@@ -392,6 +392,27 @@ export type Database = {
         }
         Relationships: []
       }
+      prospect_selections: {
+        Row: {
+          created_at: string
+          id: string
+          subsection: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          subsection: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          subsection?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       raw_evidence: {
         Row: {
           created_at: string
