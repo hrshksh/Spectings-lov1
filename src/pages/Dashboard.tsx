@@ -117,7 +117,7 @@ export default function Dashboard() {
               <CardDescription className="text-xs">Real-time company events</CardDescription>
             </div>
             <Button variant="outline" size="sm" className="h-7 text-xs" asChild>
-              <Link to="/companies">View all</Link>
+              <Link to="/inspects">View all</Link>
             </Button>
           </CardHeader>
           <CardContent className="px-4 pb-4">
@@ -152,7 +152,7 @@ export default function Dashboard() {
                   </Link>
                 </Button>
                 <Button variant="outline" size="sm" className="h-8 text-xs" asChild>
-                  <Link to="/companies">
+                  <Link to="/inspects">
                     <Building2 className="h-3.5 w-3.5 mr-1.5" />Track Competitors
                   </Link>
                 </Button>

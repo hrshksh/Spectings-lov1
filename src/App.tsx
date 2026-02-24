@@ -57,7 +57,7 @@ const App = () => (
                 <ProspectsForGrowth />
               </ProtectedRoute>
             } />
-            <Route path="/companies" element={
+            <Route path="/inspects" element={
               <ProtectedRoute>
                 <CompanyIntelligence />
               </ProtectedRoute>

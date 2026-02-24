@@ -48,7 +48,7 @@ interface SidebarProps {
 
 const userNavItems = [
 { icon: UsersRound, label: 'Prospects', path: '/people' },
-{ icon: Eye, label: 'Inspects', path: '/companies' },
+{ icon: Eye, label: 'Inspects', path: '/inspects' },
 { icon: Activity, label: 'Perspects', path: '/perspects' },
 { icon: List, label: 'Lists', path: '/lists' }];
 
