@@ -38,7 +38,8 @@ export function useUsers() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [queryClient]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return useQuery({
     queryKey: ['users'],
