@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
-import { useProspectSelections, PROSPECT_SUBSECTIONS } from '@/hooks/useProspectSelections';
+import { useUserSectionAccess, PROSPECT_SUBSECTIONS, hasSection, hasProspectSubsection } from '@/hooks/useSectionAccess';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -47,19 +47,19 @@ interface SidebarProps {
 }
 
 const userNavItems = [
-{ icon: UsersRound, label: 'Prospects', path: '/people' },
-{ icon: Eye, label: 'Inspects', path: '/inspects' },
-{ icon: Activity, label: 'Perspects', path: '/perspects' },
-{ icon: List, label: 'Lists', path: '/lists' }];
+{ icon: UsersRound, label: 'Prospects', path: '/people', section: 'prospects' },
+{ icon: Eye, label: 'Inspects', path: '/inspects', section: 'inspects' },
+{ icon: Activity, label: 'Perspects', path: '/perspects', section: 'perspects' },
+{ icon: List, label: 'Lists', path: '/lists', section: null }];
 
 
-const adminNavItems = [
-{ icon: LayoutDashboard, label: 'Task Queue', path: '/admin' },
-{ icon: Users, label: 'Users & Roles', path: '/admin/users' },
-{ icon: UsersRound, label: 'Prospects', path: '/admin/prospects' },
-{ icon: FileText, label: 'Data Management', path: '/admin/data' },
-{ icon: Library, label: 'Services', path: '/admin/services' },
-{ icon: Megaphone, label: 'Ad Management', path: '/admin/ads' }];
+const adminNavItems: Array<{ icon: React.ElementType; label: string; path: string; section: string | null }> = [
+{ icon: LayoutDashboard, label: 'Task Queue', path: '/admin', section: null },
+{ icon: Users, label: 'Users & Roles', path: '/admin/users', section: null },
+{ icon: UsersRound, label: 'Prospects', path: '/admin/prospects', section: null },
+{ icon: FileText, label: 'Data Management', path: '/admin/data', section: null },
+{ icon: Library, label: 'Services', path: '/admin/services', section: null },
+{ icon: Megaphone, label: 'Ad Management', path: '/admin/ads', section: null }];
 
 
 export function SidebarProvider({ children }: {children: React.ReactNode;}) {
@@ -93,9 +93,15 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
   const location = useLocation();
   const { isAdmin: hasAdminAccess } = useAuth();
   const navItems = isAdmin ? adminNavItems : userNavItems;
-  const { data: prospectSelections = [] } = useProspectSelections();
+  const { data: sectionAccess = [] } = useUserSectionAccess();
 
-  const selectedSubsections = PROSPECT_SUBSECTIONS.filter(s => prospectSelections.includes(s.key));
+  // Filter user nav items by section access (admin sees all)
+  const filteredNavItems = isAdmin
+    ? navItems
+    : navItems.filter(item => item.section === null || hasSection(sectionAccess, item.section));
+
+  // Prospect subsections the user has access to
+  const selectedSubsections = PROSPECT_SUBSECTIONS.filter(s => hasProspectSubsection(sectionAccess, s.key));
 
   // Fetch active ad banner for user sidebar
   const { data: activeBanner } = useQuery({
@@ -194,7 +200,7 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
               <Badge variant="default" className="text-[10px] py-0.5 px-1.5">Admin</Badge>
             </div>
           }
-          {navItems.map((item) => (
+          {filteredNavItems.map((item) => (
             <div key={item.path}>
               <NavItem {...item} />
               {!isAdmin && item.label === 'Prospects' && selectedSubsections.length > 0 && (
@@ -276,7 +282,7 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
               <Badge variant="default" className="text-[10px] py-0.5 px-1.5">Admin</Badge>
             </div>
           }
-          {navItems.map((item) => (
+          {filteredNavItems.map((item) => (
             <div key={item.path}>
               <NavItem {...item} />
               {!isAdmin && item.label === 'Prospects' && selectedSubsections.length > 0 && (

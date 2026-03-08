@@ -29,12 +29,14 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Search, MoreHorizontal, Shield, UserPlus, Loader2, X, Tag, CreditCard, Users, Crown, Filter } from 'lucide-react';
+import { Search, MoreHorizontal, Shield, UserPlus, Loader2, X, Tag, CreditCard, Users, Crown, Filter, LayoutGrid } from 'lucide-react';
 import { useUsers, useAssignRole, useRemoveRole } from '@/hooks/useUserManagement';
 import { useAuth } from '@/contexts/AuthContext';
 import { Constants } from '@/integrations/supabase/types';
 import type { Database } from '@/integrations/supabase/types';
 import { UserTagsDialog } from '@/components/admin/UserTagsDialog';
+import { UserSectionAccessDialog } from '@/components/admin/UserSectionAccessDialog';
+import { useAllUserSectionAccess, ASSIGNABLE_SECTIONS, PROSPECT_SUBSECTIONS } from '@/hooks/useSectionAccess';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
@@ -167,8 +169,10 @@ export default function UsersManagement() {
   const removeRole = useRemoveRole();
   const updateSubscription = useUpdateSubscription();
   const toggleUserActive = useToggleUserActive();
+  const { data: sectionAccessMap = {} } = useAllUserSectionAccess();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedUserForTags, setSelectedUserForTags] = useState<{ id: string; name: string } | null>(null);
+  const [selectedUserForSections, setSelectedUserForSections] = useState<{ id: string; name: string } | null>(null);
   const [filterPlan, setFilterPlan] = useState<SubscriptionPlan | 'all'>('all');
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'inactive'>('all');
 
@@ -351,6 +355,7 @@ export default function UsersManagement() {
                       <TableHead>Subscription</TableHead>
                       <TableHead>Roles</TableHead>
                       <TableHead>Lead Tags</TableHead>
+                      <TableHead>Sections</TableHead>
                       <TableHead>Joined</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
@@ -464,6 +469,37 @@ export default function UsersManagement() {
                             </Button>
                           </div>
                         </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-1.5">
+                            <div className="flex flex-wrap gap-1 max-w-[150px]">
+                              {(sectionAccessMap[user.id] || [])
+                                .filter(s => ([...ASSIGNABLE_SECTIONS.map(a => a.key as string), ...PROSPECT_SUBSECTIONS.map(p => p.key as string)] as string[]).includes(s))
+                                .slice(0, 2)
+                                .map(sec => (
+                                  <Badge key={sec} variant="outline" className="text-xs capitalize">
+                                    {sec.replace('for_', '').replace('_', ' ')}
+                                  </Badge>
+                                ))}
+                              {(sectionAccessMap[user.id]?.length || 0) > 2 && (
+                                <Badge variant="outline" className="text-xs">+{(sectionAccessMap[user.id]?.length || 0) - 2}</Badge>
+                              )}
+                              {!(sectionAccessMap[user.id]?.length) && (
+                                <span className="text-sm text-muted-foreground">None</span>
+                              )}
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6"
+                              onClick={() => setSelectedUserForSections({
+                                id: user.id,
+                                name: user.full_name || user.email,
+                              })}
+                            >
+                              <LayoutGrid className="h-3.5 w-3.5" />
+                            </Button>
+                          </div>
+                        </TableCell>
                         <TableCell className="text-muted-foreground text-sm">
                           {new Date(user.created_at).toLocaleDateString()}
                         </TableCell>
@@ -515,6 +551,15 @@ export default function UsersManagement() {
           onOpenChange={(open) => !open && setSelectedUserForTags(null)}
           userId={selectedUserForTags.id}
           userName={selectedUserForTags.name}
+        />
+      )}
+
+      {selectedUserForSections && (
+        <UserSectionAccessDialog
+          open={!!selectedUserForSections}
+          onOpenChange={(open) => !open && setSelectedUserForSections(null)}
+          userId={selectedUserForSections.id}
+          userName={selectedUserForSections.name}
         />
       )}
     </DashboardLayout>

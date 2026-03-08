@@ -37,34 +37,34 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Auth />} />
             <Route path="/auth" element={<Auth />} />
-            <Route path="/dashboard" element={<Navigate to="/people" replace />} />
+            <Route path="/dashboard" element={<Navigate to="/lists" replace />} />
             <Route path="/people" element={
-              <ProtectedRoute>
+              <ProtectedRoute requiredSection="prospects">
                 <PeopleIntelligence />
               </ProtectedRoute>
             } />
             <Route path="/prospects/for-sales" element={
-              <ProtectedRoute>
+              <ProtectedRoute requiredSection="prospects" requiredSubsection="for_sales">
                 <ProspectsForSales />
               </ProtectedRoute>
             } />
             <Route path="/prospects/for-hiring" element={
-              <ProtectedRoute>
+              <ProtectedRoute requiredSection="prospects" requiredSubsection="for_hiring">
                 <ProspectsForHiring />
               </ProtectedRoute>
             } />
             <Route path="/prospects/for-growth" element={
-              <ProtectedRoute>
+              <ProtectedRoute requiredSection="prospects" requiredSubsection="for_growth">
                 <ProspectsForGrowth />
               </ProtectedRoute>
             } />
             <Route path="/inspects" element={
-              <ProtectedRoute>
+              <ProtectedRoute requiredSection="inspects">
                 <CompanyIntelligence />
               </ProtectedRoute>
             } />
             <Route path="/perspects" element={
-              <ProtectedRoute>
+              <ProtectedRoute requiredSection="perspects">
                 <Perspects />
               </ProtectedRoute>
             } />
