@@ -28,6 +28,8 @@ import ProspectsManagement from "./pages/admin/ProspectsManagement";
 import InspectsManagement from "./pages/admin/InspectsManagement";
 import PerspectsManagement from "./pages/admin/PerspectsManagement";
 import Services from "./pages/Services";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -44,6 +46,8 @@ const App = () => (
             <Routes>
               <Route path="/" element={<Auth />} />
               <Route path="/auth" element={<Auth />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/dashboard" element={<SlugRedirect to="/lists" />} />
 
               {/* Legacy non-slug routes → redirect to slug-prefixed */}
