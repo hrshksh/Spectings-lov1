@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Building2, Users, Plus, Check, Loader2, Trash2, ShieldCheck, Eye, Activity, UsersRound } from 'lucide-react';
+import { Building2, Users, Plus, Loader2, Trash2, ShieldCheck, Eye, Activity, UsersRound } from 'lucide-react';
 import { useOrganization } from '@/hooks/useOrganization';
 import { useAuth } from '@/contexts/AuthContext';
 import {
@@ -22,11 +22,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
-const PLANS = [
-  { id: 'essential', name: 'Basic', price: '₹4,999', features: ['1 prospect section', '5 competitor tracking', '50 leads/month', 'Weekly reports'] },
-  { id: 'growth', name: 'Core', price: '₹14,999', features: ['2 prospect sections', '15 competitor tracking', '200 leads/month', 'All reports', 'Case studies'] },
-  { id: 'agency', name: 'Elite', price: '₹39,999', features: ['3 prospect sections', '50 competitor tracking', 'Unlimited leads', 'All reports', 'Priority support'] },
-];
 
 const SECTION_ICONS: Record<string, React.ElementType> = {
   prospects: UsersRound,
@@ -213,34 +208,11 @@ export default function Settings() {
 
           {/* PLAN TAB */}
           <TabsContent value="plan" className="space-y-3">
-            {/* Current plan */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-              {PLANS.map((plan) => {
-                const isCurrent = (profile?.subscription_plan || 'free') === plan.id;
-                return (
-                  <Card key={plan.id} className={isCurrent ? 'ring-1 ring-primary' : ''}>
-                    <CardContent className="p-3">
-                      {isCurrent && <Badge className="mb-2 text-[10px]">Current Plan</Badge>}
-                      <h3 className="text-sm font-bold">{plan.name}</h3>
-                      <div className="mt-1 mb-3"><span className="text-xl font-bold">{plan.price}</span><span className="text-xs text-muted-foreground">/month</span></div>
-                      <ul className="space-y-1.5 mb-3">
-                        {plan.features.map((f, i) => (<li key={i} className="flex items-center gap-1.5 text-xs"><Check className="h-3 w-3 text-primary" />{f}</li>))}
-                      </ul>
-                      <Button variant={isCurrent ? 'outline' : 'default'} size="sm" className="w-full h-8 text-xs" disabled={isCurrent}>
-                        {isCurrent ? 'Current Plan' : 'Upgrade'}
-                      </Button>
-                    </CardContent>
-                  </Card>
-                );
-              })}
-            </div>
-
-            {/* Assigned Sections */}
             <Card>
               <CardHeader className="py-2 px-3">
                 <CardTitle className="text-sm font-medium flex items-center gap-1.5">
                   <ShieldCheck className="h-4 w-4 text-primary" />
-                  Your Assigned Sections
+                  Your Plan
                 </CardTitle>
               </CardHeader>
               <CardContent className="px-3 pb-3 pt-0">
@@ -250,27 +222,29 @@ export default function Settings() {
                   <div className="space-y-2">
                     {mainSections.map((s) => {
                       const Icon = SECTION_ICONS[s.key] || Eye;
+                      const isProspects = s.key === 'prospects';
                       return (
-                        <div key={s.key} className="flex items-center gap-2 p-2 rounded-md bg-secondary/50">
-                          <div className="h-7 w-7 rounded-md bg-primary/10 flex items-center justify-center">
-                            <Icon className="h-3.5 w-3.5 text-primary" />
+                        <div key={s.key}>
+                          <div className="flex items-center gap-2 p-2 rounded-md bg-secondary/50">
+                            <div className="h-7 w-7 rounded-md bg-primary/10 flex items-center justify-center">
+                              <Icon className="h-3.5 w-3.5 text-primary" />
+                            </div>
+                            <span className="text-xs font-medium">{s.label}</span>
+                            <Badge variant="secondary" className="text-[10px] ml-auto">Active</Badge>
                           </div>
-                          <span className="text-xs font-medium">{s.label}</span>
-                          <Badge variant="secondary" className="text-[10px] ml-auto">Active</Badge>
+                          {isProspects && prospectSubs.length > 0 && (
+                            <div className="ml-4 border-l-2 border-border pl-3 space-y-1.5 mt-1.5">
+                              {prospectSubs.map((sub) => (
+                                <div key={sub.key} className="flex items-center gap-2 p-1.5 rounded-md bg-secondary/30">
+                                  <span className="text-xs">{sub.label}</span>
+                                  <Badge variant="outline" className="text-[10px] ml-auto">Enabled</Badge>
+                                </div>
+                              ))}
+                            </div>
+                          )}
                         </div>
                       );
                     })}
-                    {prospectSubs.length > 0 && (
-                      <div className="ml-4 border-l-2 border-border pl-3 space-y-1.5">
-                        <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Prospect Subsections</p>
-                        {prospectSubs.map((s) => (
-                          <div key={s.key} className="flex items-center gap-2 p-1.5 rounded-md bg-secondary/30">
-                            <span className="text-xs">{s.label}</span>
-                            <Badge variant="outline" className="text-[10px] ml-auto">Enabled</Badge>
-                          </div>
-                        ))}
-                      </div>
-                    )}
                   </div>
                 )}
               </CardContent>
