@@ -3,8 +3,9 @@ import { DashboardLayout } from '@/components/layout';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
-  Eye, ArrowUpDown, ArrowUp, ArrowDown, Bookmark, Download
+  Eye, ArrowUpDown, ArrowUp, ArrowDown, Bookmark, Download, Plus
 } from 'lucide-react';
+import { AddCompanyDialog } from '@/components/inspects/AddCompanyDialog';
 import { supabase } from '@/integrations/supabase/client';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
