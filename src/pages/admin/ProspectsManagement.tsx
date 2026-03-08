@@ -80,6 +80,7 @@ export default function ProspectsManagement() {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [csvImportOpen, setCsvImportOpen] = useState(false);
   const [editingLead, setEditingLead] = useState<LeadWithPerson | null>(null);
 
   // Form state — prospect_type is auto-set from active subsection
