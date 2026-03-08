@@ -158,6 +158,7 @@ export default function CompanyIntelligence() {
                   <th className="w-10 px-3 py-2.5 border-b border-r border-border text-left">
                     <Checkbox checked={selectedIds.size === sorted.length && sorted.length > 0} onCheckedChange={toggleAll} />
                   </th>
+                  <th className="w-10 px-3 py-2.5 border-b border-r border-border text-left font-medium text-muted-foreground text-xs">Save</th>
                   <th className="min-w-[120px] px-3 py-2.5 border-b border-r border-border text-left font-medium text-muted-foreground text-xs">
                     <button className="flex items-center gap-1 hover:text-foreground transition-colors" onClick={() => handleSort('date')}>
                       <span>Date</span><SortIcon field="date" />
@@ -180,10 +181,19 @@ export default function CompanyIntelligence() {
                 {sorted.map(event => {
                   const isSelected = selectedIds.has(event.id);
                   const companyName = (event.company as any)?.name ?? '—';
+                  const isSaved = savedIds.includes(event.id);
                   return (
                     <tr key={event.id} className={`group transition-colors hover:bg-muted/30 ${isSelected ? 'bg-muted/50' : ''}`}>
                       <td className="px-3 py-2 border-b border-r border-border">
                         <Checkbox checked={isSelected} onCheckedChange={() => toggleSelect(event.id)} />
+                      </td>
+                      <td className="px-3 py-2 border-b border-r border-border">
+                        <button
+                          onClick={() => toggleSave.mutate({ recordId: event.id, sourceType: 'inspect', isSaved })}
+                          className="hover:text-primary transition-colors"
+                        >
+                          <Bookmark className={`h-3.5 w-3.5 ${isSaved ? 'fill-primary text-primary' : 'text-muted-foreground'}`} />
+                        </button>
                       </td>
                       <td className="px-3 py-2 border-b border-r border-border text-xs text-muted-foreground">
                         {format(new Date(event.created_at), 'MMM dd, yyyy')}
