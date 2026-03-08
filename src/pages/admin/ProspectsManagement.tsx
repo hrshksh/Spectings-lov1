@@ -442,6 +442,7 @@ export default function ProspectsManagement() {
                   </DialogContent>
                 </Dialog>
                 </div>
+              </div>
 
               {/* Table */}
               <Card>
