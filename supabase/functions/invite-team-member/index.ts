@@ -86,8 +86,24 @@ Deno.serve(async (req) => {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      return new Response(JSON.stringify({ error: "This user already has an account. They can be added from the admin panel." }), {
-        status: 400,
+
+      // Add existing user directly to the org
+      const { error: addErr } = await adminClient
+        .from("organization_members")
+        .insert({ organization_id, user_id: existingProfile.id });
+      if (addErr) throw addErr;
+
+      // Assign customer_user role if they don't have one
+      const { data: existingRole } = await adminClient
+        .from("user_roles")
+        .select("id")
+        .eq("user_id", existingProfile.id)
+        .maybeSingle();
+      if (!existingRole) {
+        await adminClient.from("user_roles").insert({ user_id: existingProfile.id, role: "customer_user" });
+      }
+
+      return new Response(JSON.stringify({ status: "added", message: "User added to team" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
