@@ -3,12 +3,13 @@ import { DashboardLayout } from '@/components/layout';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
-  Linkedin, Loader2, Users, ArrowUpDown, ArrowUp, ArrowDown
+  Linkedin, Loader2, Users, ArrowUpDown, ArrowUp, ArrowDown, Bookmark
 } from 'lucide-react';
 import type { Tables as DBTables } from '@/integrations/supabase/types';
 import { supabase } from '@/integrations/supabase/client';
-import { useQuery, useInfiniteQuery } from '@tanstack/react-query';
+import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
+import { toast } from 'sonner';
 
 type Person = DBTables<'people'>;
 type Lead = DBTables<'leads'>;
@@ -47,6 +48,41 @@ function useLeads(userTags: string[]) {
   });
 }
 
+function useSavedItems() {
+  const { user } = useAuth();
+  return useQuery({
+    queryKey: ['saved-items', 'prospect', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return [];
+      const { data, error } = await supabase.from('saved_items' as any).select('record_id').eq('user_id', user.id).eq('source_type', 'prospect');
+      if (error) throw error;
+      return (data as any[]).map((d: any) => d.record_id as string);
+    },
+    enabled: !!user?.id,
+  });
+}
+
+function useToggleSave() {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ recordId, isSaved }: { recordId: string; isSaved: boolean }) => {
+      if (!user?.id) throw new Error('Not authenticated');
+      if (isSaved) {
+        await supabase.from('saved_items' as any).delete().eq('user_id', user.id).eq('record_id', recordId).eq('source_type', 'prospect');
+      } else {
+        const { error } = await supabase.from('saved_items' as any).insert([{ user_id: user.id, record_id: recordId, source_type: 'prospect' }] as any);
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['saved-items', 'prospect'] });
+      queryClient.invalidateQueries({ queryKey: ['saved-items-all'] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+}
+
 type SortKey = 'name' | 'company' | 'role' | 'quality_score';
 type SortDir = 'asc' | 'desc' | null;
 
@@ -58,6 +94,8 @@ export default function ProspectsForSales() {
 
   const { data: userTags = [], isLoading: tagsLoading } = useUserTags(user?.id);
   const { data: leadsData, isLoading: leadsLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useLeads(userTags);
+  const { data: savedIds = [] } = useSavedItems();
+  const toggleSave = useToggleSave();
   const isLoading = tagsLoading || leadsLoading;
 
   const leads = useMemo(() => leadsData?.pages.flatMap(p => p.leads) ?? [], [leadsData]);
@@ -110,6 +148,7 @@ export default function ProspectsForSales() {
                   <th className="w-10 px-3 py-2.5 border-b border-r border-border text-left">
                     <Checkbox checked={selectedIds.size === sorted.length && sorted.length > 0} onCheckedChange={toggleAll} />
                   </th>
+                  <th className="w-10 px-3 py-2.5 border-b border-r border-border text-left font-medium text-muted-foreground text-xs">Save</th>
                   <th className="min-w-[200px] px-3 py-2.5 border-b border-r border-border text-left font-medium text-muted-foreground text-xs">
                     <button className="flex items-center gap-1 hover:text-foreground transition-colors" onClick={() => handleSort('name')}><span>Full Name</span><SortIcon field="name" /></button>
                   </th>
@@ -131,10 +170,16 @@ export default function ProspectsForSales() {
                 {sorted.map(lead => {
                   const p = lead.person!;
                   const isSelected = selectedIds.has(lead.id);
+                  const isSaved = savedIds.includes(lead.id);
                   return (
                     <tr key={lead.id} className={`group transition-colors hover:bg-muted/30 ${isSelected ? 'bg-muted/50' : ''}`}>
                       <td className="px-3 py-2 border-b border-r border-border">
                         <Checkbox checked={isSelected} onCheckedChange={() => toggleSelect(lead.id)} />
+                      </td>
+                      <td className="px-3 py-2 border-b border-r border-border">
+                        <button onClick={() => toggleSave.mutate({ recordId: lead.id, isSaved })} className="hover:text-primary transition-colors">
+                          <Bookmark className={`h-3.5 w-3.5 ${isSaved ? 'fill-primary text-primary' : 'text-muted-foreground'}`} />
+                        </button>
                       </td>
                       <td className="px-3 py-2 border-b border-r border-border">
                         <div className="flex items-center gap-2">

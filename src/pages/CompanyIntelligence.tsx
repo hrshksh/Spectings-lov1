@@ -3,11 +3,13 @@ import { DashboardLayout } from '@/components/layout';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
-  Loader2, Eye, ArrowUpDown, ArrowUp, ArrowDown
+  Loader2, Eye, ArrowUpDown, ArrowUp, ArrowDown, Bookmark
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { useInfiniteQuery } from '@tanstack/react-query';
+import { useInfiniteQuery, useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
+import { useAuth } from '@/contexts/AuthContext';
+import { toast } from 'sonner';
 
 const PAGE_SIZE = 50;
 
@@ -56,12 +58,53 @@ function useCompanyEvents() {
   });
 }
 
+function useSavedItems(sourceType: string) {
+  const { user } = useAuth();
+  return useQuery({
+    queryKey: ['saved-items', sourceType, user?.id],
+    queryFn: async () => {
+      if (!user?.id) return [];
+      const { data, error } = await supabase
+        .from('saved_items' as any)
+        .select('record_id')
+        .eq('user_id', user.id)
+        .eq('source_type', sourceType);
+      if (error) throw error;
+      return (data as any[]).map((d: any) => d.record_id as string);
+    },
+    enabled: !!user?.id,
+  });
+}
+
+function useToggleSave() {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ recordId, sourceType, isSaved }: { recordId: string; sourceType: string; isSaved: boolean }) => {
+      if (!user?.id) throw new Error('Not authenticated');
+      if (isSaved) {
+        await supabase.from('saved_items' as any).delete().eq('user_id', user.id).eq('record_id', recordId).eq('source_type', sourceType);
+      } else {
+        const { error } = await supabase.from('saved_items' as any).insert([{ user_id: user.id, record_id: recordId, source_type: sourceType }] as any);
+        if (error) throw error;
+      }
+    },
+    onSuccess: (_, { sourceType }) => {
+      queryClient.invalidateQueries({ queryKey: ['saved-items', sourceType] });
+      queryClient.invalidateQueries({ queryKey: ['saved-items-all'] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+}
+
 export default function CompanyIntelligence() {
   const [sortKey, setSortKey] = useState<SortKey | null>(null);
   const [sortDir, setSortDir] = useState<SortDir>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useCompanyEvents();
+  const { data: savedIds = [] } = useSavedItems('inspect');
+  const toggleSave = useToggleSave();
 
   const events = useMemo(() => data?.pages.flatMap(p => p.events) ?? [], [data]);
 
@@ -115,6 +158,7 @@ export default function CompanyIntelligence() {
                   <th className="w-10 px-3 py-2.5 border-b border-r border-border text-left">
                     <Checkbox checked={selectedIds.size === sorted.length && sorted.length > 0} onCheckedChange={toggleAll} />
                   </th>
+                  <th className="w-10 px-3 py-2.5 border-b border-r border-border text-left font-medium text-muted-foreground text-xs">Save</th>
                   <th className="min-w-[120px] px-3 py-2.5 border-b border-r border-border text-left font-medium text-muted-foreground text-xs">
                     <button className="flex items-center gap-1 hover:text-foreground transition-colors" onClick={() => handleSort('date')}>
                       <span>Date</span><SortIcon field="date" />
@@ -137,10 +181,19 @@ export default function CompanyIntelligence() {
                 {sorted.map(event => {
                   const isSelected = selectedIds.has(event.id);
                   const companyName = (event.company as any)?.name ?? '—';
+                  const isSaved = savedIds.includes(event.id);
                   return (
                     <tr key={event.id} className={`group transition-colors hover:bg-muted/30 ${isSelected ? 'bg-muted/50' : ''}`}>
                       <td className="px-3 py-2 border-b border-r border-border">
                         <Checkbox checked={isSelected} onCheckedChange={() => toggleSelect(event.id)} />
+                      </td>
+                      <td className="px-3 py-2 border-b border-r border-border">
+                        <button
+                          onClick={() => toggleSave.mutate({ recordId: event.id, sourceType: 'inspect', isSaved })}
+                          className="hover:text-primary transition-colors"
+                        >
+                          <Bookmark className={`h-3.5 w-3.5 ${isSaved ? 'fill-primary text-primary' : 'text-muted-foreground'}`} />
+                        </button>
                       </td>
                       <td className="px-3 py-2 border-b border-r border-border text-xs text-muted-foreground">
                         {format(new Date(event.created_at), 'MMM dd, yyyy')}

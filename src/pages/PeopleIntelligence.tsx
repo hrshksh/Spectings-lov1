@@ -1,10 +1,10 @@
 import { Navigate } from 'react-router-dom';
-import { useProspectSelections, PROSPECT_SUBSECTIONS } from '@/hooks/useProspectSelections';
+import { useUserSectionAccess, PROSPECT_SUBSECTIONS } from '@/hooks/useSectionAccess';
 import { DashboardLayout } from '@/components/layout';
 import { Loader2 } from 'lucide-react';
 
 export default function PeopleIntelligence() {
-  const { data: selections, isLoading } = useProspectSelections();
+  const { data: sections = [], isLoading } = useUserSectionAccess();
 
   if (isLoading) {
     return (
@@ -16,9 +16,9 @@ export default function PeopleIntelligence() {
     );
   }
 
-  // Redirect to first selected subsection, or For Sales by default
-  const firstSelected = PROSPECT_SUBSECTIONS.find(s => selections?.includes(s.key));
-  const redirectPath = firstSelected?.path || '/prospects/for-sales';
+  // Redirect to first assigned subsection
+  const firstSub = PROSPECT_SUBSECTIONS.find(s => sections.includes(s.key));
+  const redirectPath = firstSub?.path || '/prospects/for-sales';
 
   return <Navigate to={redirectPath} replace />;
 }
