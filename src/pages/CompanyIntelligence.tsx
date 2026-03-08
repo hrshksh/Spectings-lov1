@@ -65,6 +65,7 @@ export default function CompanyIntelligence() {
   const [sortKey, setSortKey] = useState<SortKey | null>(null);
   const [sortDir, setSortDir] = useState<SortDir>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [addCompanyOpen, setAddCompanyOpen] = useState(false);
 
   const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useCompanyEvents();
   const { data: savedIds = [] } = useSavedItemIds('inspect');
@@ -128,7 +129,9 @@ export default function CompanyIntelligence() {
     sortKey === field ? (sortDir === 'asc' ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />) : <ArrowUpDown className="h-3 w-3 opacity-40" />;
 
   return (
-    <DashboardLayout title="Inspects" subtitle="Company activity intelligence" flush>
+    <DashboardLayout title="Inspects" subtitle="Company activity intelligence" flush
+      headerActions={<Button size="sm" className="gap-1" onClick={() => setAddCompanyOpen(true)}><Plus className="h-4 w-4" />Add Company</Button>}
+    >
       {isLoading ? (
         <TableSkeleton columns={5} flush />
       ) : sorted.length === 0 ? (
