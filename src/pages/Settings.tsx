@@ -244,7 +244,7 @@ export default function Settings() {
           <TabsContent value="billing" className="space-y-3">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
               {PLANS.map((plan) => {
-                const isCurrent = currentPlan === plan.id;
+                const isCurrent = (profile?.subscription_plan || 'free') === plan.id;
                 return (
                   <Card key={plan.id} className={isCurrent ? 'ring-1 ring-primary' : ''}>
                     <CardContent className="p-3">
