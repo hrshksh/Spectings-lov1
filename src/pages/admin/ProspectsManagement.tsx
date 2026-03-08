@@ -18,8 +18,9 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
 import {
-  Search, Plus, Trash2, Loader2, Users, Briefcase, TrendingUp, Linkedin, Edit2,
+  Search, Plus, Trash2, Loader2, Users, Briefcase, TrendingUp, Linkedin, Edit2, Upload,
 } from 'lucide-react';
+import CsvImportDialog from '@/components/admin/CsvImportDialog';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
