@@ -80,7 +80,26 @@ function useAllCompanies() {
         .order('created_at', { ascending: false })
         .limit(500);
       if (error) throw error;
-      return data;
+
+      // Fetch all trackers with org names
+      const { data: trackers } = await supabase
+        .from('company_trackers' as any)
+        .select('company_id, organization:organizations(name)');
+
+      // Group tracker org names by company_id
+      const trackersMap: Record<string, string[]> = {};
+      if (trackers) {
+        for (const t of trackers as any[]) {
+          const cid = t.company_id;
+          const orgName = t.organization?.name;
+          if (orgName) {
+            if (!trackersMap[cid]) trackersMap[cid] = [];
+            if (!trackersMap[cid].includes(orgName)) trackersMap[cid].push(orgName);
+          }
+        }
+      }
+
+      return (data || []).map((c: any) => ({ ...c, _trackerOrgs: trackersMap[c.id] || [] }));
     },
   });
 }
