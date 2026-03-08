@@ -38,6 +38,7 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
+          <DynamicFavicon />
           <ErrorBoundary>
             <Routes>
               <Route path="/" element={<Auth />} />
