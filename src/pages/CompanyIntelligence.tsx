@@ -3,8 +3,9 @@ import { DashboardLayout } from '@/components/layout';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
-  Eye, ArrowUpDown, ArrowUp, ArrowDown, Bookmark, Download
+  Eye, ArrowUpDown, ArrowUp, ArrowDown, Bookmark, Download, Plus
 } from 'lucide-react';
+import { AddCompanyDialog } from '@/components/inspects/AddCompanyDialog';
 import { supabase } from '@/integrations/supabase/client';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
@@ -64,6 +65,7 @@ export default function CompanyIntelligence() {
   const [sortKey, setSortKey] = useState<SortKey | null>(null);
   const [sortDir, setSortDir] = useState<SortDir>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [addCompanyOpen, setAddCompanyOpen] = useState(false);
 
   const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useCompanyEvents();
   const { data: savedIds = [] } = useSavedItemIds('inspect');
@@ -128,6 +130,7 @@ export default function CompanyIntelligence() {
 
   return (
     <DashboardLayout title="Inspects" subtitle="Company activity intelligence" flush>
+      <AddCompanyDialog open={addCompanyOpen} onOpenChange={setAddCompanyOpen} />
       {isLoading ? (
         <TableSkeleton columns={5} flush />
       ) : sorted.length === 0 ? (
@@ -136,7 +139,8 @@ export default function CompanyIntelligence() {
             <Eye className="h-7 w-7 opacity-40" />
           </div>
           <p className="text-sm font-medium text-foreground">No activity data yet</p>
-          <p className="text-xs mt-1 max-w-[260px]">Company events will appear here once your admin adds tracked companies and their activities.</p>
+          <p className="text-xs mt-1 max-w-[260px] mb-4">Add companies to track and activity will appear here.</p>
+          <Button size="sm" className="gap-1" onClick={() => setAddCompanyOpen(true)}><Plus className="h-4 w-4" />Add Company</Button>
         </div>
       ) : (
         <div className="flex flex-col h-[calc(100vh-57px)]">
@@ -215,8 +219,13 @@ export default function CompanyIntelligence() {
           )}
 
           <div className="flex items-center justify-between px-4 py-1.5 border-t border-border bg-muted/20 shrink-0">
-            <span className="text-[11px] text-muted-foreground">{sorted.length} event{sorted.length !== 1 ? 's' : ''}</span>
-            {selectedIds.size > 0 && <span className="text-[11px] text-muted-foreground">{selectedIds.size} selected</span>}
+            <div className="flex items-center gap-3">
+              <span className="text-[11px] text-muted-foreground">{sorted.length} event{sorted.length !== 1 ? 's' : ''}</span>
+              {selectedIds.size > 0 && <span className="text-[11px] text-muted-foreground">{selectedIds.size} selected</span>}
+            </div>
+            <Button variant="ghost" size="sm" className="h-7 text-xs gap-1" onClick={() => setAddCompanyOpen(true)}>
+              <Plus className="h-3 w-3" />Add Company
+            </Button>
           </div>
         </div>
       )}
