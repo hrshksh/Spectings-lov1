@@ -139,7 +139,8 @@ export default function CompanyIntelligence() {
             <Eye className="h-7 w-7 opacity-40" />
           </div>
           <p className="text-sm font-medium text-foreground">No activity data yet</p>
-          <p className="text-xs mt-1 max-w-[260px]">Company events will appear here once your admin adds tracked companies and their activities.</p>
+          <p className="text-xs mt-1 max-w-[260px] mb-4">Add companies to track and activity will appear here.</p>
+          <Button size="sm" className="gap-1" onClick={() => setAddCompanyOpen(true)}><Plus className="h-4 w-4" />Add Company</Button>
         </div>
       ) : (
         <div className="flex flex-col h-[calc(100vh-57px)]">
