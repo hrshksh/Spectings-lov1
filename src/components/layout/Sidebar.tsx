@@ -204,20 +204,22 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
             <div key={item.path}>
               <NavItem {...item} />
               {!isAdmin && item.label === 'Prospects' && selectedSubsections.length > 0 && (
-                <div className="ml-4 space-y-0.5 mt-0.5">
-                  {selectedSubsections.map(sub => (
-                    <Link
-                      key={sub.path}
-                      to={sub.path}
-                      onClick={handleNavClick}
-                      className={cn(
-                        'block rounded-lg px-2.5 py-2 text-sm font-medium transition-all duration-200',
-                        location.pathname === sub.path
-                          ? 'bg-primary text-primary-foreground shadow-sm'
-                          : 'text-sidebar-foreground hover:bg-sidebar-accent'
-                      )}>
-                      {sub.label}
-                    </Link>
+                <div className="ml-[1.15rem] mt-0.5 border-l-2 border-sidebar-border">
+                  {selectedSubsections.map((sub, idx) => (
+                    <div key={sub.path} className="relative">
+                      <div className="absolute left-0 top-1/2 w-3 h-0 border-t-2 border-sidebar-border" />
+                      <Link
+                        to={sub.path}
+                        onClick={handleNavClick}
+                        className={cn(
+                          'block rounded-lg ml-4 px-2.5 py-1.5 text-[13px] font-medium transition-all duration-200',
+                          location.pathname === sub.path
+                            ? 'bg-primary text-primary-foreground shadow-sm'
+                            : 'text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent'
+                        )}>
+                        {sub.label}
+                      </Link>
+                    </div>
                   ))}
                 </div>
               )}
@@ -286,20 +288,22 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
             <div key={item.path}>
               <NavItem {...item} />
               {!isAdmin && item.label === 'Prospects' && selectedSubsections.length > 0 && (
-                <div className="ml-4 space-y-0.5 mt-0.5">
-                  {selectedSubsections.map(sub => (
-                    <Link
-                      key={sub.path}
-                      to={sub.path}
-                      onClick={handleNavClick}
-                      className={cn(
-                        'block rounded-lg px-2.5 py-2 text-sm font-medium transition-all duration-200',
-                        location.pathname === sub.path
-                          ? 'bg-primary text-primary-foreground shadow-sm'
-                          : 'text-sidebar-foreground hover:bg-sidebar-accent'
-                      )}>
-                      {sub.label}
-                    </Link>
+                <div className="ml-[1.15rem] mt-0.5 border-l-2 border-sidebar-border">
+                  {selectedSubsections.map((sub, idx) => (
+                    <div key={sub.path} className="relative">
+                      <div className="absolute left-0 top-1/2 w-3 h-0 border-t-2 border-sidebar-border" />
+                      <Link
+                        to={sub.path}
+                        onClick={handleNavClick}
+                        className={cn(
+                          'block rounded-lg ml-4 px-2.5 py-1.5 text-[13px] font-medium transition-all duration-200',
+                          location.pathname === sub.path
+                            ? 'bg-primary text-primary-foreground shadow-sm'
+                            : 'text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent'
+                        )}>
+                        {sub.label}
+                      </Link>
+                    </div>
                   ))}
                 </div>
               )}
