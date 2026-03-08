@@ -196,7 +196,7 @@ export default function CompanyIntelligence() {
                         <span className="text-sm font-medium">{companyName}</span>
                       </td>
                       <td className="px-3 py-2 border-b border-r border-border">
-                        <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${EVENT_TYPE_COLORS[event.event_type] || ''}`}>
+                        <span className={`inline-flex items-center rounded-full px-2 py-px text-[10px] font-semibold ${EVENT_TYPE_COLORS[event.event_type] || ''}`}>
                           {EVENT_TYPE_LABELS[event.event_type] || event.event_type}
                         </span>
                       </td>
