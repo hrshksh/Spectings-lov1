@@ -28,14 +28,14 @@ const EVENT_TYPE_LABELS: Record<string, string> = {
 };
 
 const EVENT_TYPE_COLORS: Record<string, string> = {
-  pricing_change: 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20',
-  product_launch: 'bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/20',
-  hiring: 'bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20',
-  campaign: 'bg-purple-500/10 text-purple-700 dark:text-purple-400 border-purple-500/20',
-  news: 'bg-slate-500/10 text-slate-700 dark:text-slate-400 border-slate-500/20',
-  review: 'bg-pink-500/10 text-pink-700 dark:text-pink-400 border-pink-500/20',
-  funding: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20',
-  acquisition: 'bg-red-500/10 text-red-700 dark:text-red-400 border-red-500/20',
+  pricing_change: 'bg-amber-500 text-white',
+  product_launch: 'bg-blue-500 text-white',
+  hiring: 'bg-green-600 text-white',
+  campaign: 'bg-purple-500 text-white',
+  news: 'bg-slate-500 text-white',
+  review: 'bg-pink-500 text-white',
+  funding: 'bg-emerald-500 text-white',
+  acquisition: 'bg-red-500 text-white',
 };
 
 type SortKey = 'date' | 'company' | 'type';
