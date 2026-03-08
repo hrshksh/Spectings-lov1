@@ -13,7 +13,7 @@ Deno.serve(async (req) => {
 
   try {
     const authHeader = req.headers.get("authorization");
-    if (!authHeader) {
+    if (!authHeader?.startsWith("Bearer ")) {
       return new Response(JSON.stringify({ error: "Missing authorization" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -22,17 +22,24 @@ Deno.serve(async (req) => {
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const anonKey = Deno.env.get("SUPABASE_PUBLISHABLE_KEY")!;
 
-    const userClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_PUBLISHABLE_KEY")!, {
+    // Verify caller identity
+    const userClient = createClient(supabaseUrl, anonKey, {
       global: { headers: { Authorization: authHeader } },
     });
-    const { data: { user: caller }, error: authErr } = await userClient.auth.getUser();
-    if (authErr || !caller) {
+
+    const token = authHeader.replace("Bearer ", "");
+    const { data: claimsData, error: claimsErr } = await userClient.auth.getClaims(token);
+    if (claimsErr || !claimsData?.claims) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    const callerId = claimsData.claims.sub as string;
+    const callerEmail = claimsData.claims.email as string;
 
     const { email, organization_id, organization_name } = await req.json();
     if (!email || !organization_id) {
@@ -42,6 +49,7 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Admin client for privileged operations
     const adminClient = createClient(supabaseUrl, serviceRoleKey);
 
     // Check caller is a member of the org
@@ -49,7 +57,7 @@ Deno.serve(async (req) => {
       .from("organization_members")
       .select("id")
       .eq("organization_id", organization_id)
-      .eq("user_id", caller.id)
+      .eq("user_id", callerId)
       .maybeSingle();
     if (!membership) {
       return new Response(JSON.stringify({ error: "You are not a member of this organization" }), {
@@ -58,7 +66,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Check if user already exists in the system
+    // Check if user already exists
     const { data: existingProfile } = await adminClient
       .from("profiles")
       .select("id")
@@ -66,7 +74,6 @@ Deno.serve(async (req) => {
       .maybeSingle();
 
     if (existingProfile) {
-      // Check if already a member of this org
       const { data: existingMember } = await adminClient
         .from("organization_members")
         .select("id")
@@ -90,7 +97,7 @@ Deno.serve(async (req) => {
       data: {
         org_id: organization_id,
         org_name: organization_name || "your team",
-        invited_by: caller.email,
+        invited_by: callerEmail,
       },
     });
     if (inviteErr) throw inviteErr;
