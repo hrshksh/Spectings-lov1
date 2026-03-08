@@ -18,8 +18,9 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
 import {
-  Search, Plus, Trash2, Loader2, Users, Briefcase, TrendingUp, Linkedin, Edit2,
+  Search, Plus, Trash2, Loader2, Users, Briefcase, TrendingUp, Linkedin, Edit2, Upload,
 } from 'lucide-react';
+import CsvImportDialog from '@/components/admin/CsvImportDialog';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
@@ -79,6 +80,7 @@ export default function ProspectsManagement() {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [csvImportOpen, setCsvImportOpen] = useState(false);
   const [editingLead, setEditingLead] = useState<LeadWithPerson | null>(null);
 
   // Form state — prospect_type is auto-set from active subsection
@@ -356,10 +358,14 @@ export default function ProspectsManagement() {
                   </div>
                 </div>
 
-                <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-                  <DialogTrigger asChild>
-                    <Button><Plus className="h-4 w-4 mr-2" />Add {activeLabel}</Button>
-                  </DialogTrigger>
+                <div className="flex items-center gap-2">
+                  <Button variant="outline" onClick={() => setCsvImportOpen(true)}>
+                    <Upload className="h-4 w-4 mr-2" />CSV Import
+                  </Button>
+                  <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button><Plus className="h-4 w-4 mr-2" />Add {activeLabel}</Button>
+                    </DialogTrigger>
                   <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
                       <DialogTitle>Add Prospect — {activeLabel}</DialogTitle>
@@ -435,6 +441,7 @@ export default function ProspectsManagement() {
                     </DialogFooter>
                   </DialogContent>
                 </Dialog>
+                </div>
               </div>
 
               {/* Table */}
@@ -651,6 +658,8 @@ export default function ProspectsManagement() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <CsvImportDialog open={csvImportOpen} onOpenChange={setCsvImportOpen} prospectType={activeSubsection} />
     </DashboardLayout>
   );
 }
