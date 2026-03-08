@@ -246,7 +246,7 @@ export default function Settings() {
                       <Button size="sm" className="h-7 text-xs"><Plus className="h-3 w-3 mr-1" />Add Member</Button>
                     </DialogTrigger>
                     <DialogContent className="max-w-sm">
-                      <DialogHeader><DialogTitle className="text-sm">Invite Team Member</DialogTitle></DialogHeader>
+                      <DialogHeader><DialogTitle className="text-sm">Add Team Member</DialogTitle></DialogHeader>
                       <div className="space-y-3">
                         <div className="space-y-1">
                           <Label className="text-xs">Email Address</Label>
@@ -258,12 +258,12 @@ export default function Settings() {
                             className="h-8 text-sm"
                           />
                           <p className="text-[10px] text-muted-foreground">
-                            An invitation email will be sent to join your team.
+                            The user will be added to your team. New users will receive a password setup email.
                           </p>
                         </div>
                         <Button size="sm" className="h-8 w-full" onClick={handleAddMember} disabled={inviteMember.isPending || !memberEmail.trim()}>
-                          {inviteMember.isPending ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <Mail className="h-3 w-3 mr-1" />}
-                          Send Invite
+                          {inviteMember.isPending ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <Plus className="h-3 w-3 mr-1" />}
+                          Add Member
                         </Button>
                       </div>
                     </DialogContent>
