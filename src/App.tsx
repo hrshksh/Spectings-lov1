@@ -122,6 +122,11 @@ const App = () => (
                   <AdManagement />
                 </ProtectedRoute>
               } />
+              <Route path="/admin/logo" element={
+                <ProtectedRoute requireAdmin>
+                  <LogoManagement />
+                </ProtectedRoute>
+              } />
               <Route path="/admin/inspects" element={
                 <ProtectedRoute requireAdmin>
                   <InspectsManagement />
