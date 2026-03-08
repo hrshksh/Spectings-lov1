@@ -200,7 +200,7 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
               <Badge variant="default" className="text-[10px] py-0.5 px-1.5">Admin</Badge>
             </div>
           }
-          {navItems.map((item) => (
+          {filteredNavItems.map((item) => (
             <div key={item.path}>
               <NavItem {...item} />
               {!isAdmin && item.label === 'Prospects' && selectedSubsections.length > 0 && (
@@ -282,7 +282,7 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
               <Badge variant="default" className="text-[10px] py-0.5 px-1.5">Admin</Badge>
             </div>
           }
-          {navItems.map((item) => (
+          {filteredNavItems.map((item) => (
             <div key={item.path}>
               <NavItem {...item} />
               {!isAdmin && item.label === 'Prospects' && selectedSubsections.length > 0 && (
