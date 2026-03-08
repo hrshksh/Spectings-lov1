@@ -129,9 +129,8 @@ export default function CompanyIntelligence() {
     sortKey === field ? (sortDir === 'asc' ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />) : <ArrowUpDown className="h-3 w-3 opacity-40" />;
 
   return (
-    <DashboardLayout title="Inspects" subtitle="Company activity intelligence" flush
-      headerActions={<Button size="sm" className="gap-1" onClick={() => setAddCompanyOpen(true)}><Plus className="h-4 w-4" />Add Company</Button>}
-    >
+    <DashboardLayout title="Inspects" subtitle="Company activity intelligence" flush>
+      <AddCompanyDialog open={addCompanyOpen} onOpenChange={setAddCompanyOpen} />
       {isLoading ? (
         <TableSkeleton columns={5} flush />
       ) : sorted.length === 0 ? (
