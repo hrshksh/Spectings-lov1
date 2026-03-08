@@ -90,34 +90,12 @@ export default function Settings() {
     });
   };
 
-  const currentPlan = profile?.subscription_plan || 'free';
-  const maxSelections = getPlanMaxSelections(currentPlan);
-
-  const subsectionIcons: Record<string, React.ElementType> = {
-    for_sales: Target,
-    for_hiring: UserPlus,
-    for_growth: TrendingUp,
-  };
-
-  const handleToggleSubsection = (key: string) => {
-    const isSelected = prospectSelections.includes(key);
-    let newSelections: string[];
-    if (isSelected) {
-      newSelections = prospectSelections.filter(s => s !== key);
-    } else {
-      if (prospectSelections.length >= maxSelections) return;
-      newSelections = [...prospectSelections, key];
-    }
-    updateProspectSelections.mutate(newSelections);
-  };
-
   return (
     <DashboardLayout title="Settings" subtitle="Manage your preferences and subscription">
       <div className="space-y-3 animate-fade-in">
         <Tabs defaultValue="general" className="space-y-3">
           <TabsList className="h-8">
             <TabsTrigger value="general" className="text-xs h-7">General</TabsTrigger>
-            <TabsTrigger value="prospects" className="text-xs h-7">Prospects</TabsTrigger>
             <TabsTrigger value="competitors" className="text-xs h-7">Competitors</TabsTrigger>
             <TabsTrigger value="alerts" className="text-xs h-7">Alerts</TabsTrigger>
             <TabsTrigger value="billing" className="text-xs h-7">Billing</TabsTrigger>
