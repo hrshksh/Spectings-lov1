@@ -158,48 +158,7 @@ export default function Settings() {
             </Card>
           </TabsContent>
 
-          {/* PROSPECTS TAB */}
-          <TabsContent value="prospects" className="space-y-3">
-            <Card>
-              <CardHeader className="py-2 px-3">
-                <CardTitle className="text-sm font-medium">Prospect Sections</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3 px-3 pb-3 pt-0">
-                <p className="text-xs text-muted-foreground">
-                  Your plan ({PLAN_DISPLAY_NAMES[currentPlan] || currentPlan}) allows {maxSelections === 0 ? 'no' : maxSelections} selection{maxSelections !== 1 ? 's' : ''}.
-                  {prospectSelections.length}/{maxSelections} selected.
-                </p>
-                {maxSelections === 0 && (
-                  <p className="text-xs text-destructive">Upgrade to a paid plan to access prospect sections.</p>
-                )}
-                <div className="space-y-2">
-                  {PROSPECT_SUBSECTIONS.map((sub) => {
-                    const isSelected = prospectSelections.includes(sub.key);
-                    const Icon = subsectionIcons[sub.key];
-                    const disabled = !isSelected && prospectSelections.length >= maxSelections;
-                    return (
-                      <div
-                        key={sub.key}
-                        className={`flex items-center justify-between p-2 rounded-md ${isSelected ? 'bg-primary/10 border border-primary/20' : 'bg-secondary/50'} ${disabled ? 'opacity-50' : ''}`}
-                      >
-                        <div className="flex items-center gap-2">
-                          <div className="h-8 w-8 rounded-md bg-primary/10 flex items-center justify-center">
-                            <Icon className="h-4 w-4 text-primary" />
-                          </div>
-                          <h4 className="text-xs font-medium">{sub.label}</h4>
-                        </div>
-                        <Checkbox
-                          checked={isSelected}
-                          disabled={disabled && !isSelected}
-                          onCheckedChange={() => handleToggleSubsection(sub.key)}
-                        />
-                      </div>
-                    );
-                  })}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
+
 
           {/* COMPETITORS TAB */}
           <TabsContent value="competitors" className="space-y-3">
