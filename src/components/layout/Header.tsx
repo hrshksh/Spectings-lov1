@@ -12,7 +12,7 @@ import { User, Settings, LogOut, HelpCircle } from 'lucide-react';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { useAuth } from '@/contexts/AuthContext';
 import { useOrganization } from '@/hooks/useOrganization';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 
 export interface HeaderProps {
   title: string;
@@ -24,6 +24,8 @@ export function Header({ title, subtitle, mobileMenuTrigger }: HeaderProps) {
   const { user, signOut } = useAuth();
   const { organization } = useOrganization();
   const navigate = useNavigate();
+  const { slug: urlSlug } = useParams<{ slug: string }>();
+  const orgSlug = urlSlug || organization?.slug || 'default';
 
   const orgName = organization?.name || 'My Organization';
   const emailDomain = user?.email?.split('@')[1] || '';
@@ -70,11 +72,11 @@ export function Header({ title, subtitle, mobileMenuTrigger }: HeaderProps) {
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="text-xs py-1.5" onClick={() => navigate('/profile')}>
+            <DropdownMenuItem className="text-xs py-1.5" onClick={() => navigate(`/${orgSlug}/profile`)}>
               <User className="mr-2 h-3.5 w-3.5" />
               Profile
             </DropdownMenuItem>
-            <DropdownMenuItem className="text-xs py-1.5" onClick={() => navigate('/settings')}>
+            <DropdownMenuItem className="text-xs py-1.5" onClick={() => navigate(`/${orgSlug}/settings`)}>
               <Settings className="mr-2 h-3.5 w-3.5" />
               Settings
             </DropdownMenuItem>
