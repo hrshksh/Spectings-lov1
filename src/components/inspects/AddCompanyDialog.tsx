@@ -23,6 +23,19 @@ export function AddCompanyDialog({ open, onOpenChange }: AddCompanyDialogProps) 
       const trimmedName = name.trim();
       if (!trimmedName) throw new Error('Company name is required');
 
+      // Check if company already exists (case-insensitive)
+      const { data: existing } = await supabase
+        .from('companies')
+        .select('id, name')
+        .ilike('name', trimmedName)
+        .limit(1);
+
+      if (existing && existing.length > 0) {
+        // Company already exists — no need to insert
+        toast.info(`"${existing[0].name}" is already being tracked`);
+        return { alreadyExists: true };
+      }
+
       const { data: orgId } = await supabase.rpc('get_user_org_id', { _user_id: (await supabase.auth.getUser()).data.user!.id });
 
       const { error } = await supabase.from('companies').insert({
@@ -32,12 +45,16 @@ export function AddCompanyDialog({ open, onOpenChange }: AddCompanyDialogProps) 
         organization_id: orgId,
       });
       if (error) throw error;
+      return { alreadyExists: false };
     },
-    onSuccess: () => {
+    onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ['inspects-events'] });
       queryClient.invalidateQueries({ queryKey: ['tracked-competitors'] });
       queryClient.invalidateQueries({ queryKey: ['admin-companies-list'] });
-      toast.success('Company added to tracking');
+      queryClient.invalidateQueries({ queryKey: ['admin-all-companies'] });
+      if (!result?.alreadyExists) {
+        toast.success('Company added to tracking');
+      }
       handleClose();
     },
     onError: (e: Error) => toast.error(e.message),
