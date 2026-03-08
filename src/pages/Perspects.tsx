@@ -3,12 +3,14 @@ import { DashboardLayout } from '@/components/layout';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
-  Loader2, Activity, ArrowUpDown, ArrowUp, ArrowDown, Bookmark
+  Activity, ArrowUpDown, ArrowUp, ArrowDown, Bookmark, Download
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { useInfiniteQuery, useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
+import { useInfiniteQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
-import { useAuth } from '@/contexts/AuthContext';
+import { useSavedItemIds, useToggleSave } from '@/hooks/useSavedItems';
+import { TableSkeleton } from '@/components/ui/table-skeleton';
+import { exportToCsv } from '@/lib/csv-export';
 import { toast } from 'sonner';
 
 const PAGE_SIZE = 50;
@@ -21,58 +23,18 @@ function useTrends() {
     queryKey: ['perspects-trends'],
     queryFn: async ({ pageParam }: { pageParam: string | null }) => {
       let query = supabase
-        .from('trends' as any)
+        .from('trends')
         .select('*')
         .order('trend_date', { ascending: false })
         .limit(PAGE_SIZE);
       if (pageParam) query = query.lt('trend_date', pageParam);
       const { data, error } = await query;
       if (error) throw error;
-      const items = data as any[];
-      const nextCursor = items.length === PAGE_SIZE ? items[items.length - 1].trend_date : null;
-      return { items, nextCursor };
+      const nextCursor = data.length === PAGE_SIZE ? data[data.length - 1].trend_date : null;
+      return { items: data, nextCursor };
     },
     initialPageParam: null as string | null,
     getNextPageParam: (lastPage) => lastPage.nextCursor,
-  });
-}
-
-function useSavedItems(sourceType: string) {
-  const { user } = useAuth();
-  return useQuery({
-    queryKey: ['saved-items', sourceType, user?.id],
-    queryFn: async () => {
-      if (!user?.id) return [];
-      const { data, error } = await supabase
-        .from('saved_items' as any)
-        .select('record_id')
-        .eq('user_id', user.id)
-        .eq('source_type', sourceType);
-      if (error) throw error;
-      return (data as any[]).map((d: any) => d.record_id as string);
-    },
-    enabled: !!user?.id,
-  });
-}
-
-function useToggleSave() {
-  const { user } = useAuth();
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: async ({ recordId, sourceType, isSaved }: { recordId: string; sourceType: string; isSaved: boolean }) => {
-      if (!user?.id) throw new Error('Not authenticated');
-      if (isSaved) {
-        await supabase.from('saved_items' as any).delete().eq('user_id', user.id).eq('record_id', recordId).eq('source_type', sourceType);
-      } else {
-        const { error } = await supabase.from('saved_items' as any).insert([{ user_id: user.id, record_id: recordId, source_type: sourceType }] as any);
-        if (error) throw error;
-      }
-    },
-    onSuccess: (_, { sourceType }) => {
-      queryClient.invalidateQueries({ queryKey: ['saved-items', sourceType] });
-      queryClient.invalidateQueries({ queryKey: ['saved-items-all'] });
-    },
-    onError: (e: Error) => toast.error(e.message),
   });
 }
 
@@ -82,19 +44,16 @@ export default function Perspects() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useTrends();
-  const { data: savedIds = [] } = useSavedItems('perspect');
+  const { data: savedIds = [] } = useSavedItemIds('perspect');
   const toggleSave = useToggleSave();
 
   const items = useMemo(() => data?.pages.flatMap(p => p.items) ?? [], [data]);
 
   const sorted = useMemo(() => {
     if (!sortKey || !sortDir) return items;
-    return [...items].sort((a: any, b: any) => {
-      let aVal: any, bVal: any;
-      switch (sortKey) {
-        case 'date': aVal = a.trend_date; bVal = b.trend_date; break;
-        case 'trend': aVal = a.trend ?? ''; bVal = b.trend ?? ''; break;
-      }
+    return [...items].sort((a, b) => {
+      const aVal = sortKey === 'date' ? a.trend_date : (a.trend ?? '');
+      const bVal = sortKey === 'date' ? b.trend_date : (b.trend ?? '');
       if (aVal === bVal) return 0;
       return (aVal < bVal ? -1 : 1) * (sortDir === 'asc' ? 1 : -1);
     });
@@ -111,7 +70,22 @@ export default function Perspects() {
     setSelectedIds(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
   };
   const toggleAll = () => {
-    selectedIds.size === sorted.length ? setSelectedIds(new Set()) : setSelectedIds(new Set(sorted.map((e: any) => e.id)));
+    selectedIds.size === sorted.length ? setSelectedIds(new Set()) : setSelectedIds(new Set(sorted.map(e => e.id)));
+  };
+
+  const handleExportCsv = () => {
+    const selected = sorted.filter(e => selectedIds.has(e.id));
+    if (selected.length === 0) { toast.info('Select rows to export'); return; }
+    exportToCsv('perspects-export', selected.map(t => ({
+      date: t.trend_date,
+      trend: t.trend,
+      summary: t.summary ?? '',
+    })), [
+      { key: 'date', label: 'Date' },
+      { key: 'trend', label: 'Trend' },
+      { key: 'summary', label: 'Summary' },
+    ]);
+    toast.success(`Exported ${selected.length} rows`);
   };
 
   const SortIcon = ({ field }: { field: SortKey }) =>
@@ -120,15 +94,25 @@ export default function Perspects() {
   return (
     <DashboardLayout title="Perspects" subtitle="Market trends and insights" flush>
       {isLoading ? (
-        <div className="flex justify-center py-20"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
+        <TableSkeleton columns={5} flush />
       ) : sorted.length === 0 ? (
-        <div className="text-center py-20 text-muted-foreground">
-          <Activity className="h-8 w-8 mx-auto mb-2 opacity-40" />
-          <p className="text-sm font-medium">No trends yet</p>
-          <p className="text-xs mt-1">Market trends will appear here once added by admin.</p>
+        <div className="flex flex-col items-center justify-center py-20 text-center text-muted-foreground animate-fade-in">
+          <div className="h-14 w-14 rounded-2xl bg-muted flex items-center justify-center mb-4">
+            <Activity className="h-7 w-7 opacity-40" />
+          </div>
+          <p className="text-sm font-medium text-foreground">No trends yet</p>
+          <p className="text-xs mt-1 max-w-[260px]">Market trends will appear here once your admin publishes them through the management panel.</p>
         </div>
       ) : (
         <div className="flex flex-col h-[calc(100vh-57px)]">
+          {selectedIds.size > 0 && (
+            <div className="flex items-center gap-2 px-4 py-1.5 border-b border-border bg-muted/40 shrink-0 animate-fade-in">
+              <span className="text-xs text-muted-foreground">{selectedIds.size} selected</span>
+              <Button variant="outline" size="sm" className="h-7 text-xs gap-1" onClick={handleExportCsv}>
+                <Download className="h-3 w-3" />Export CSV
+              </Button>
+            </div>
+          )}
           <div className="flex-1 overflow-auto">
             <table className="w-full text-sm border-collapse">
               <thead className="sticky top-0 z-10">
@@ -151,7 +135,7 @@ export default function Perspects() {
                 </tr>
               </thead>
               <tbody>
-                {sorted.map((item: any) => {
+                {sorted.map(item => {
                   const isSelected = selectedIds.has(item.id);
                   const isSaved = savedIds.includes(item.id);
                   return (
@@ -186,7 +170,7 @@ export default function Perspects() {
           {hasNextPage && (
             <div className="flex justify-center py-2 border-t border-border">
               <Button variant="ghost" size="sm" onClick={() => fetchNextPage()} disabled={isFetchingNextPage} className="text-xs">
-                {isFetchingNextPage ? <><Loader2 className="h-3 w-3 mr-1 animate-spin" />Loading...</> : 'Load More'}
+                {isFetchingNextPage ? 'Loading...' : 'Load More'}
               </Button>
             </div>
           )}

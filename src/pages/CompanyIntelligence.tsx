@@ -3,12 +3,14 @@ import { DashboardLayout } from '@/components/layout';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
-  Loader2, Eye, ArrowUpDown, ArrowUp, ArrowDown, Bookmark
+  Eye, ArrowUpDown, ArrowUp, ArrowDown, Bookmark, Download
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { useInfiniteQuery, useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
+import { useInfiniteQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
-import { useAuth } from '@/contexts/AuthContext';
+import { useSavedItemIds, useToggleSave } from '@/hooks/useSavedItems';
+import { TableSkeleton } from '@/components/ui/table-skeleton';
+import { exportToCsv } from '@/lib/csv-export';
 import { toast } from 'sonner';
 
 const PAGE_SIZE = 50;
@@ -58,52 +60,13 @@ function useCompanyEvents() {
   });
 }
 
-function useSavedItems(sourceType: string) {
-  const { user } = useAuth();
-  return useQuery({
-    queryKey: ['saved-items', sourceType, user?.id],
-    queryFn: async () => {
-      if (!user?.id) return [];
-      const { data, error } = await supabase
-        .from('saved_items' as any)
-        .select('record_id')
-        .eq('user_id', user.id)
-        .eq('source_type', sourceType);
-      if (error) throw error;
-      return (data as any[]).map((d: any) => d.record_id as string);
-    },
-    enabled: !!user?.id,
-  });
-}
-
-function useToggleSave() {
-  const { user } = useAuth();
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: async ({ recordId, sourceType, isSaved }: { recordId: string; sourceType: string; isSaved: boolean }) => {
-      if (!user?.id) throw new Error('Not authenticated');
-      if (isSaved) {
-        await supabase.from('saved_items' as any).delete().eq('user_id', user.id).eq('record_id', recordId).eq('source_type', sourceType);
-      } else {
-        const { error } = await supabase.from('saved_items' as any).insert([{ user_id: user.id, record_id: recordId, source_type: sourceType }] as any);
-        if (error) throw error;
-      }
-    },
-    onSuccess: (_, { sourceType }) => {
-      queryClient.invalidateQueries({ queryKey: ['saved-items', sourceType] });
-      queryClient.invalidateQueries({ queryKey: ['saved-items-all'] });
-    },
-    onError: (e: Error) => toast.error(e.message),
-  });
-}
-
 export default function CompanyIntelligence() {
   const [sortKey, setSortKey] = useState<SortKey | null>(null);
   const [sortDir, setSortDir] = useState<SortDir>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useCompanyEvents();
-  const { data: savedIds = [] } = useSavedItems('inspect');
+  const { data: savedIds = [] } = useSavedItemIds('inspect');
   const toggleSave = useToggleSave();
 
   const events = useMemo(() => data?.pages.flatMap(p => p.events) ?? [], [data]);
@@ -111,10 +74,10 @@ export default function CompanyIntelligence() {
   const sorted = useMemo(() => {
     if (!sortKey || !sortDir) return events;
     return [...events].sort((a, b) => {
-      let aVal: any, bVal: any;
+      let aVal: string, bVal: string;
       switch (sortKey) {
         case 'date': aVal = a.created_at; bVal = b.created_at; break;
-        case 'company': aVal = (a.company as any)?.name ?? ''; bVal = (b.company as any)?.name ?? ''; break;
+        case 'company': aVal = (a.company as { name: string } | null)?.name ?? ''; bVal = (b.company as { name: string } | null)?.name ?? ''; break;
         case 'type': aVal = a.event_type; bVal = b.event_type; break;
       }
       if (aVal === bVal) return 0;
@@ -136,21 +99,49 @@ export default function CompanyIntelligence() {
     selectedIds.size === sorted.length ? setSelectedIds(new Set()) : setSelectedIds(new Set(sorted.map(e => e.id)));
   };
 
+  const handleExportCsv = () => {
+    const items = sorted.filter(e => selectedIds.has(e.id));
+    if (items.length === 0) { toast.info('Select rows to export'); return; }
+    exportToCsv('inspects-export', items.map(e => ({
+      date: format(new Date(e.created_at), 'yyyy-MM-dd'),
+      company: (e.company as { name: string } | null)?.name ?? '',
+      type: EVENT_TYPE_LABELS[e.event_type] || e.event_type,
+      summary: e.summary ?? '',
+    })), [
+      { key: 'date', label: 'Date' },
+      { key: 'company', label: 'Company' },
+      { key: 'type', label: 'Type' },
+      { key: 'summary', label: 'Summary' },
+    ]);
+    toast.success(`Exported ${items.length} rows`);
+  };
+
   const SortIcon = ({ field }: { field: SortKey }) =>
     sortKey === field ? (sortDir === 'asc' ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />) : <ArrowUpDown className="h-3 w-3 opacity-40" />;
 
   return (
     <DashboardLayout title="Inspects" subtitle="Company activity intelligence" flush>
       {isLoading ? (
-        <div className="flex justify-center py-20"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
+        <TableSkeleton columns={6} flush />
       ) : sorted.length === 0 ? (
-        <div className="text-center py-20 text-muted-foreground">
-          <Eye className="h-8 w-8 mx-auto mb-2 opacity-40" />
-          <p className="text-sm font-medium">No activity data yet</p>
-          <p className="text-xs mt-1">Activity will appear here once added by admin.</p>
+        <div className="flex flex-col items-center justify-center py-20 text-center text-muted-foreground animate-fade-in">
+          <div className="h-14 w-14 rounded-2xl bg-muted flex items-center justify-center mb-4">
+            <Eye className="h-7 w-7 opacity-40" />
+          </div>
+          <p className="text-sm font-medium text-foreground">No activity data yet</p>
+          <p className="text-xs mt-1 max-w-[260px]">Company events will appear here once your admin adds tracked companies and their activities.</p>
         </div>
       ) : (
         <div className="flex flex-col h-[calc(100vh-57px)]">
+          {/* Bulk action bar */}
+          {selectedIds.size > 0 && (
+            <div className="flex items-center gap-2 px-4 py-1.5 border-b border-border bg-muted/40 shrink-0 animate-fade-in">
+              <span className="text-xs text-muted-foreground">{selectedIds.size} selected</span>
+              <Button variant="outline" size="sm" className="h-7 text-xs gap-1" onClick={handleExportCsv}>
+                <Download className="h-3 w-3" />Export CSV
+              </Button>
+            </div>
+          )}
           <div className="flex-1 overflow-auto">
             <table className="w-full text-sm border-collapse">
               <thead className="sticky top-0 z-10">
@@ -180,7 +171,7 @@ export default function CompanyIntelligence() {
               <tbody>
                 {sorted.map(event => {
                   const isSelected = selectedIds.has(event.id);
-                  const companyName = (event.company as any)?.name ?? '—';
+                  const companyName = (event.company as { name: string } | null)?.name ?? '—';
                   const isSaved = savedIds.includes(event.id);
                   return (
                     <tr key={event.id} className={`group transition-colors hover:bg-muted/30 ${isSelected ? 'bg-muted/50' : ''}`}>
@@ -219,7 +210,7 @@ export default function CompanyIntelligence() {
           {hasNextPage && (
             <div className="flex justify-center py-2 border-t border-border">
               <Button variant="ghost" size="sm" onClick={() => fetchNextPage()} disabled={isFetchingNextPage} className="text-xs">
-                {isFetchingNextPage ? <><Loader2 className="h-3 w-3 mr-1 animate-spin" />Loading...</> : 'Load More'}
+                {isFetchingNextPage ? 'Loading...' : 'Load More'}
               </Button>
             </div>
           )}
