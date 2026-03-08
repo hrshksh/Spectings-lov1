@@ -15,7 +15,6 @@ import {
   Eye,
   Activity,
   List,
-  FileText,
   BookOpen,
   Shield,
   X,
