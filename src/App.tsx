@@ -22,6 +22,7 @@ import DataManagement from "./pages/admin/DataManagement";
 import AdManagement from "./pages/admin/AdManagement";
 import ServicesManagement from "./pages/admin/ServicesManagement";
 import ProspectsManagement from "./pages/admin/ProspectsManagement";
+import InspectsManagement from "./pages/admin/InspectsManagement";
 import Services from "./pages/Services";
 import NotFound from "./pages/NotFound";
 
@@ -121,6 +122,11 @@ const App = () => (
             <Route path="/admin/ads" element={
               <ProtectedRoute requireAdmin>
                 <AdManagement />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/inspects" element={
+              <ProtectedRoute requireAdmin>
+                <InspectsManagement />
               </ProtectedRoute>
             } />
             <Route path="/admin/*" element={

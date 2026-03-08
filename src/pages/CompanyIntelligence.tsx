@@ -1,511 +1,182 @@
-import { useState, useMemo } from 'react';
-import { useInfiniteQuery, useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { toast } from 'sonner';
+import { useMemo, useState } from 'react';
 import { DashboardLayout } from '@/components/layout';
-import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { 
-  Building2, TrendingUp, Zap, FileText, 
-  DollarSign, Download, Users,
-  Activity, ChevronDown, MoreHorizontal, Eye, Bell, Trash2, Globe, Calendar,
-  X, Megaphone, Newspaper, Star, AlertCircle, Loader2
+import { Checkbox } from '@/components/ui/checkbox';
+import {
+  Loader2, Eye, ArrowUpDown, ArrowUp, ArrowDown
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
-import type { Tables } from '@/integrations/supabase/types';
-import { AddCompetitorDialog } from '@/components/competitors/AddCompetitorDialog';
+import { useInfiniteQuery } from '@tanstack/react-query';
+import { format } from 'date-fns';
 
-type Company = Tables<'companies'>;
-type CompanyEvent = Tables<'company_events'>;
+const PAGE_SIZE = 50;
 
-const COMPANIES_PAGE_SIZE = 50;
+const EVENT_TYPE_LABELS: Record<string, string> = {
+  pricing_change: 'Pricing Change',
+  product_launch: 'Product Launch',
+  hiring: 'Hiring',
+  campaign: 'Campaign',
+  news: 'News',
+  review: 'Review',
+  funding: 'Funding',
+  acquisition: 'Acquisition',
+};
 
-export default function CompanyIntelligence() {
-  const [selectedCompetitor, setSelectedCompetitor] = useState<string | null>(null);
-  const [addDialogOpen, setAddDialogOpen] = useState(false);
+const EVENT_TYPE_COLORS: Record<string, string> = {
+  pricing_change: 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20',
+  product_launch: 'bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/20',
+  hiring: 'bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20',
+  campaign: 'bg-purple-500/10 text-purple-700 dark:text-purple-400 border-purple-500/20',
+  news: 'bg-slate-500/10 text-slate-700 dark:text-slate-400 border-slate-500/20',
+  review: 'bg-pink-500/10 text-pink-700 dark:text-pink-400 border-pink-500/20',
+  funding: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20',
+  acquisition: 'bg-red-500/10 text-red-700 dark:text-red-400 border-red-500/20',
+};
 
-  const { data: companiesData, isLoading: companiesLoading, error: companiesError, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
-    queryKey: ['companies', 'tracked'],
+type SortKey = 'date' | 'company' | 'type';
+type SortDir = 'asc' | 'desc' | null;
+
+function useCompanyEvents() {
+  return useInfiniteQuery({
+    queryKey: ['inspects-events'],
     queryFn: async ({ pageParam }: { pageParam: string | null }) => {
       let query = supabase
-        .from('companies')
-        .select('*')
-        .eq('is_tracked', true)
-        .order('name')
-        .limit(COMPANIES_PAGE_SIZE);
-
-      if (pageParam) {
-        query = query.gt('name', pageParam);
-      }
-
+        .from('company_events')
+        .select('*, company:companies(name)')
+        .order('created_at', { ascending: false })
+        .limit(PAGE_SIZE);
+      if (pageParam) query = query.lt('created_at', pageParam);
       const { data, error } = await query;
       if (error) throw error;
-
-      const nextCursor = data.length === COMPANIES_PAGE_SIZE
-        ? data[data.length - 1].name
-        : null;
-
-      return { companies: data as Company[], nextCursor };
+      const nextCursor = data.length === PAGE_SIZE ? data[data.length - 1].created_at : null;
+      return { events: data, nextCursor };
     },
     initialPageParam: null as string | null,
     getNextPageParam: (lastPage) => lastPage.nextCursor,
   });
+}
 
-  const trackedCompanies = useMemo(() => {
-    if (!companiesData) return [];
-    return companiesData.pages.flatMap(page => page.companies);
-  }, [companiesData]);
+export default function CompanyIntelligence() {
+  const [sortKey, setSortKey] = useState<SortKey | null>(null);
+  const [sortDir, setSortDir] = useState<SortDir>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
-  const { data: companyEvents = [], isLoading: eventsLoading } = useQuery({
-    queryKey: ['company_events'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('company_events')
-        .select('*')
-        .order('published_at', { ascending: false })
-        .limit(500);
-      if (error) throw error;
-      return data as CompanyEvent[];
-    }
-  });
+  const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useCompanyEvents();
 
-  const isLoading = companiesLoading || eventsLoading;
-  const queryClient = useQueryClient();
+  const events = useMemo(() => data?.pages.flatMap(p => p.events) ?? [], [data]);
 
-  const untrackCompanyMutation = useMutation({
-    mutationFn: async (companyId: string) => {
-      const { error } = await supabase
-        .from('companies')
-        .update({ is_tracked: false })
-        .eq('id', companyId);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['companies'] });
-      toast.success('Company removed from tracking list');
-      setSelectedCompetitor(null);
-    },
-    onError: () => {
-      toast.error('Failed to untrack company');
-    }
-  });
+  const sorted = useMemo(() => {
+    if (!sortKey || !sortDir) return events;
+    return [...events].sort((a, b) => {
+      let aVal: any, bVal: any;
+      switch (sortKey) {
+        case 'date': aVal = a.created_at; bVal = b.created_at; break;
+        case 'company': aVal = (a.company as any)?.name ?? ''; bVal = (b.company as any)?.name ?? ''; break;
+        case 'type': aVal = a.event_type; bVal = b.event_type; break;
+      }
+      if (aVal === bVal) return 0;
+      return (aVal < bVal ? -1 : 1) * (sortDir === 'asc' ? 1 : -1);
+    });
+  }, [events, sortKey, sortDir]);
 
-  const getCompanyEvents = (companyId: string) => {
-    return companyEvents.filter((event) => event.company_id === companyId);
+  const handleSort = (key: SortKey) => {
+    if (sortKey === key) {
+      if (sortDir === 'asc') setSortDir('desc');
+      else { setSortKey(null); setSortDir(null); }
+    } else { setSortKey(key); setSortDir('asc'); }
   };
 
-  const getEventIcon = (eventType: string) => {
-    switch (eventType) {
-      case 'pricing_change': return <DollarSign className="h-4 w-4" />;
-      case 'product_launch': return <Zap className="h-4 w-4" />;
-      case 'hiring': return <Users className="h-4 w-4" />;
-      case 'funding': return <TrendingUp className="h-4 w-4" />;
-      case 'campaign': return <Megaphone className="h-4 w-4" />;
-      case 'news': return <Newspaper className="h-4 w-4" />;
-      case 'review': return <Star className="h-4 w-4" />;
-      default: return <Activity className="h-4 w-4" />;
-    }
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
+  };
+  const toggleAll = () => {
+    selectedIds.size === sorted.length ? setSelectedIds(new Set()) : setSelectedIds(new Set(sorted.map(e => e.id)));
   };
 
-  const getEventColor = (eventType: string) => {
-    switch (eventType) {
-      case 'pricing_change': return 'bg-amber-500';
-      case 'product_launch': return 'bg-blue-500';
-      case 'hiring': return 'bg-green-500';
-      case 'funding': return 'bg-purple-500';
-      case 'campaign': return 'bg-pink-500';
-      case 'news': return 'bg-cyan-500';
-      case 'review': return 'bg-orange-500';
-      default: return 'bg-muted-foreground';
-    }
-  };
-
-  const getEventBadgeVariant = (eventType: string) => {
-    switch (eventType) {
-      case 'pricing_change': return 'bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-400';
-      case 'product_launch': return 'bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-400';
-      case 'hiring': return 'bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-400';
-      case 'funding': return 'bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-400';
-      case 'campaign': return 'bg-pink-100 text-pink-700 dark:bg-pink-950 dark:text-pink-400';
-      case 'news': return 'bg-cyan-100 text-cyan-700 dark:bg-cyan-950 dark:text-cyan-400';
-      case 'review': return 'bg-orange-100 text-orange-700 dark:bg-orange-950 dark:text-orange-400';
-      default: return 'bg-muted text-muted-foreground';
-    }
-  };
-
-  const formatEventType = (type: string) => {
-    return type.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
-  };
-
-  const totalEvents = companyEvents.length;
-  const pricingChanges = companyEvents.filter(e => e.event_type === 'pricing_change').length;
-  const productLaunches = companyEvents.filter(e => e.event_type === 'product_launch').length;
+  const SortIcon = ({ field }: { field: SortKey }) =>
+    sortKey === field ? (sortDir === 'asc' ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />) : <ArrowUpDown className="h-3 w-3 opacity-40" />;
 
   return (
-    <DashboardLayout title="Competitor Tracking" subtitle="Monitor and analyze your competitors">
-      <div className="space-y-4 animate-fade-in">
-        {/* Stats Row */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center">
-                  <Building2 className="h-4 w-4 text-primary" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold tracking-tight">{isLoading ? '—' : trackedCompanies.length}</p>
-                  <p className="text-xs text-muted-foreground">Tracked</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center">
-                  <Activity className="h-4 w-4 text-primary" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold tracking-tight">{isLoading ? '—' : totalEvents}</p>
-                  <p className="text-xs text-muted-foreground">Total Events</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center">
-                  <DollarSign className="h-4 w-4 text-primary" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold tracking-tight">{isLoading ? '—' : pricingChanges}</p>
-                  <p className="text-xs text-muted-foreground">Pricing Changes</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center">
-                  <Zap className="h-4 w-4 text-primary" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold tracking-tight">{isLoading ? '—' : productLaunches}</p>
-                  <p className="text-xs text-muted-foreground">Product Launches</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+    <DashboardLayout title="Inspects" subtitle="Company activity intelligence" flush>
+      {isLoading ? (
+        <div className="flex justify-center py-20"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
+      ) : sorted.length === 0 ? (
+        <div className="text-center py-20 text-muted-foreground">
+          <Eye className="h-8 w-8 mx-auto mb-2 opacity-40" />
+          <p className="text-sm font-medium">No activity data yet</p>
+          <p className="text-xs mt-1">Activity will appear here once added by admin.</p>
         </div>
+      ) : (
+        <div className="flex flex-col h-[calc(100vh-57px)]">
+          <div className="flex-1 overflow-auto">
+            <table className="w-full text-sm border-collapse">
+              <thead className="sticky top-0 z-10">
+                <tr className="bg-muted/60 backdrop-blur-sm">
+                  <th className="w-10 px-3 py-2.5 border-b border-r border-border text-left">
+                    <Checkbox checked={selectedIds.size === sorted.length && sorted.length > 0} onCheckedChange={toggleAll} />
+                  </th>
+                  <th className="min-w-[120px] px-3 py-2.5 border-b border-r border-border text-left font-medium text-muted-foreground text-xs">
+                    <button className="flex items-center gap-1 hover:text-foreground transition-colors" onClick={() => handleSort('date')}>
+                      <span>Date</span><SortIcon field="date" />
+                    </button>
+                  </th>
+                  <th className="min-w-[180px] px-3 py-2.5 border-b border-r border-border text-left font-medium text-muted-foreground text-xs">
+                    <button className="flex items-center gap-1 hover:text-foreground transition-colors" onClick={() => handleSort('company')}>
+                      <span>Company</span><SortIcon field="company" />
+                    </button>
+                  </th>
+                  <th className="min-w-[130px] px-3 py-2.5 border-b border-r border-border text-left font-medium text-muted-foreground text-xs">
+                    <button className="flex items-center gap-1 hover:text-foreground transition-colors" onClick={() => handleSort('type')}>
+                      <span>Type</span><SortIcon field="type" />
+                    </button>
+                  </th>
+                  <th className="min-w-[300px] px-3 py-2.5 border-b border-border text-left font-medium text-muted-foreground text-xs">Activity</th>
+                </tr>
+              </thead>
+              <tbody>
+                {sorted.map(event => {
+                  const isSelected = selectedIds.has(event.id);
+                  const companyName = (event.company as any)?.name ?? '—';
+                  return (
+                    <tr key={event.id} className={`group transition-colors hover:bg-muted/30 ${isSelected ? 'bg-muted/50' : ''}`}>
+                      <td className="px-3 py-2 border-b border-r border-border">
+                        <Checkbox checked={isSelected} onCheckedChange={() => toggleSelect(event.id)} />
+                      </td>
+                      <td className="px-3 py-2 border-b border-r border-border text-xs text-muted-foreground">
+                        {format(new Date(event.created_at), 'MMM dd, yyyy')}
+                      </td>
+                      <td className="px-3 py-2 border-b border-r border-border">
+                        <span className="text-sm font-medium">{companyName}</span>
+                      </td>
+                      <td className="px-3 py-2 border-b border-r border-border">
+                        <span className={`inline-flex items-center rounded-md border px-2 py-0.5 text-[11px] font-medium ${EVENT_TYPE_COLORS[event.event_type] || ''}`}>
+                          {EVENT_TYPE_LABELS[event.event_type] || event.event_type}
+                        </span>
+                      </td>
+                      <td className="px-3 py-2 border-b border-border text-xs text-muted-foreground">
+                        {event.summary || '—'}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
 
-        {/* Action bar */}
-        <div className="flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-foreground">
-            Competitors
-            <span className="ml-1.5 text-muted-foreground font-normal">({trackedCompanies.length})</span>
-          </h2>
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" className="h-8 text-xs">
-              <Download className="h-3.5 w-3.5 mr-1.5" />
-              Export
-            </Button>
-            <Button size="sm" className="h-8 text-xs" onClick={() => setAddDialogOpen(true)}>
-              <Building2 className="h-3.5 w-3.5 mr-1.5" />
-              Add Competitor
-            </Button>
+          {hasNextPage && (
+            <div className="flex justify-center py-2 border-t border-border">
+              <Button variant="ghost" size="sm" onClick={() => fetchNextPage()} disabled={isFetchingNextPage} className="text-xs">
+                {isFetchingNextPage ? <><Loader2 className="h-3 w-3 mr-1 animate-spin" />Loading...</> : 'Load More'}
+              </Button>
+            </div>
+          )}
+
+          <div className="flex items-center justify-between px-4 py-1.5 border-t border-border bg-muted/20 shrink-0">
+            <span className="text-[11px] text-muted-foreground">{sorted.length} event{sorted.length !== 1 ? 's' : ''}</span>
+            {selectedIds.size > 0 && <span className="text-[11px] text-muted-foreground">{selectedIds.size} selected</span>}
           </div>
         </div>
-
-        <AddCompetitorDialog open={addDialogOpen} onOpenChange={setAddDialogOpen} />
-
-        {/* Error */}
-        {companiesError && (
-          <Card className="border-destructive">
-            <CardContent className="p-4 flex items-center gap-3 text-destructive">
-              <AlertCircle className="h-5 w-5" />
-              <p className="text-sm">Failed to load competitors. Please try again.</p>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Loading */}
-        {isLoading && (
-          <div className="space-y-3">
-            {[1, 2, 3].map((i) => (
-              <Card key={i}>
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-4">
-                    <Skeleton className="h-12 w-12 rounded-xl" />
-                    <div className="flex-1 space-y-2">
-                      <Skeleton className="h-4 w-32" />
-                      <Skeleton className="h-3 w-48" />
-                    </div>
-                    <Skeleton className="h-6 w-20" />
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
-
-        {/* Competitors List */}
-        {!isLoading && !companiesError && (
-          <div className="space-y-3">
-            {trackedCompanies.map((company) => {
-              const events = getCompanyEvents(company.id);
-              const isSelected = selectedCompetitor === company.id;
-              
-              const eventStats = events.reduce((acc, event) => {
-                acc[event.event_type] = (acc[event.event_type] || 0) + 1;
-                return acc;
-              }, {} as Record<string, number>);
-              
-              return (
-                <Card 
-                  key={company.id}
-                  className={cn(
-                    "cursor-pointer transition-all duration-200 overflow-hidden",
-                    isSelected 
-                      ? "ring-1 ring-primary" 
-                      : "hover:border-primary/30"
-                  )}
-                  onClick={() => setSelectedCompetitor(isSelected ? null : company.id)}
-                >
-                  {/* Header */}
-                  <div className="p-4 flex items-center gap-4">
-                    <div className="h-11 w-11 rounded-xl bg-muted flex items-center justify-center flex-shrink-0">
-                      <Building2 className="h-5 w-5 text-muted-foreground" />
-                    </div>
-                    
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-0.5">
-                        <h3 className="text-sm font-semibold truncate">{company.name}</h3>
-                        {company.domain && (
-                          <a 
-                            href={`https://${company.domain}`} 
-                            target="_blank" 
-                            rel="noopener noreferrer" 
-                            className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 flex-shrink-0"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <Globe className="h-3 w-3" />
-                            <span className="hidden sm:inline">{company.domain}</span>
-                          </a>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        {company.industry && (
-                          <Badge variant="secondary" className="text-[10px]">{company.industry}</Badge>
-                        )}
-                        {company.size && (
-                          <Badge variant="outline" className="text-[10px]">{company.size}</Badge>
-                        )}
-                        {company.founded && (
-                          <span className="text-[10px] text-muted-foreground hidden sm:inline">Est. {company.founded}</span>
-                        )}
-                      </div>
-                    </div>
-                    
-                    {/* Quick stats when collapsed */}
-                    {!isSelected && Object.keys(eventStats).length > 0 && (
-                      <div className="hidden xl:flex items-center gap-3">
-                        {Object.entries(eventStats).slice(0, 3).map(([type, count]) => (
-                          <div key={type} className="text-center">
-                            <div className={cn(
-                              "inline-flex items-center justify-center h-7 w-7 rounded-md mb-0.5",
-                              getEventBadgeVariant(type)
-                            )}>
-                              {getEventIcon(type)}
-                            </div>
-                            <p className="text-[10px] text-muted-foreground">{count}</p>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                    
-                    <div className="flex items-center gap-2 flex-shrink-0">
-                      <Badge variant="outline" className="text-[10px]">
-                        {events.length} events
-                      </Badge>
-                      <ChevronDown className={cn(
-                        "h-4 w-4 text-muted-foreground transition-transform duration-200",
-                        isSelected && "rotate-180"
-                      )} />
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                          <Button variant="ghost" size="icon" className="h-7 w-7">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-44">
-                          <DropdownMenuItem className="text-xs">
-                            <Eye className="h-3.5 w-3.5 mr-2" />View Profile
-                          </DropdownMenuItem>
-                          <DropdownMenuItem className="text-xs">
-                            <Globe className="h-3.5 w-3.5 mr-2" />Visit Website
-                          </DropdownMenuItem>
-                          <DropdownMenuItem className="text-xs">
-                            <FileText className="h-3.5 w-3.5 mr-2" />Generate Report
-                          </DropdownMenuItem>
-                          <DropdownMenuItem className="text-xs">
-                            <Bell className="h-3.5 w-3.5 mr-2" />Set Alerts
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem 
-                            className="text-xs text-destructive"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              untrackCompanyMutation.mutate(company.id);
-                            }}
-                          >
-                            <Trash2 className="h-3.5 w-3.5 mr-2" />Stop Tracking
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                  </div>
-
-                  {/* Expanded Content */}
-                  {isSelected && (
-                    <div className="border-t" onClick={(e) => e.stopPropagation()}>
-                      {/* Event type stats */}
-                      <div className="p-4 border-b bg-muted/20">
-                        <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
-                          {[
-                            { type: 'pricing_change', label: 'Pricing', icon: DollarSign },
-                            { type: 'product_launch', label: 'Products', icon: Zap },
-                            { type: 'hiring', label: 'Hiring', icon: Users },
-                            { type: 'funding', label: 'Funding', icon: TrendingUp },
-                            { type: 'campaign', label: 'Campaigns', icon: Megaphone },
-                            { type: 'news', label: 'News', icon: Newspaper },
-                          ].map(({ type, label, icon: Icon }) => (
-                            <div key={type} className="flex items-center gap-2 p-2 rounded-lg bg-background border">
-                              <div className={cn(
-                                "h-7 w-7 rounded-md flex items-center justify-center flex-shrink-0",
-                                getEventBadgeVariant(type)
-                              )}>
-                                <Icon className="h-3.5 w-3.5" />
-                              </div>
-                              <div className="min-w-0">
-                                <p className="text-lg font-semibold leading-none">{eventStats[type] || 0}</p>
-                                <p className="text-[9px] text-muted-foreground truncate">{label}</p>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                      
-                      {/* Timeline */}
-                      <div className="p-4">
-                        <div className="flex items-center justify-between mb-4">
-                          <h4 className="text-xs font-semibold flex items-center gap-2">
-                            <Calendar className="h-4 w-4 text-muted-foreground" />
-                            Activity Timeline
-                          </h4>
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
-                            className="h-7 text-xs"
-                            onClick={() => setSelectedCompetitor(null)}
-                          >
-                            <X className="h-3 w-3 mr-1" />
-                            Collapse
-                          </Button>
-                        </div>
-                        
-                        {events.length > 0 ? (
-                          <div className="relative">
-                            <div className="absolute left-3 top-0 bottom-0 w-px bg-border" />
-                            <div className="space-y-0">
-                              {events.map((event) => (
-                                <div 
-                                  key={event.id} 
-                                  className="relative pl-8 py-3 border-b last:border-b-0 hover:bg-muted/30 transition-colors"
-                                >
-                                  <div className={cn(
-                                    "absolute left-1.5 top-4 h-3.5 w-3.5 rounded-full ring-4 ring-background flex items-center justify-center",
-                                    getEventColor(event.event_type)
-                                  )}>
-                                    <div className="h-1 w-1 rounded-full bg-white" />
-                                  </div>
-                                  
-                                  <div className="flex flex-col sm:flex-row sm:items-start gap-1 sm:gap-4">
-                                    <div className="flex items-center gap-3">
-                                      <div className="w-16 flex-shrink-0">
-                                        <p className="text-xs font-medium">
-                                          {event.published_at ? new Date(event.published_at).toLocaleDateString('en-US', { 
-                                            month: 'short', 
-                                            day: 'numeric'
-                                          }) : 'N/A'}
-                                        </p>
-                                        <p className="text-[10px] text-muted-foreground">
-                                          {event.published_at ? new Date(event.published_at).getFullYear() : ''}
-                                        </p>
-                                      </div>
-                                      <span className={cn(
-                                        "inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-medium",
-                                        getEventBadgeVariant(event.event_type)
-                                      )}>
-                                        {getEventIcon(event.event_type)}
-                                        <span className="hidden xs:inline">{formatEventType(event.event_type)}</span>
-                                      </span>
-                                    </div>
-                                    <p className="flex-1 text-sm text-foreground leading-relaxed">
-                                      {event.summary || 'No summary available'}
-                                    </p>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="text-center py-8 text-sm text-muted-foreground bg-muted/20 rounded-lg">
-                            No activities tracked yet for this competitor
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                </Card>
-              );
-            })}
-
-            {/* Load More */}
-            {hasNextPage && (
-              <div className="flex justify-center py-4">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => fetchNextPage()}
-                  disabled={isFetchingNextPage}
-                  className="text-xs"
-                >
-                  {isFetchingNextPage ? (
-                    <><Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />Loading...</>
-                  ) : (
-                    'Load More'
-                  )}
-                </Button>
-              </div>
-            )}
-            
-            {trackedCompanies.length === 0 && (
-              <Card>
-                <CardContent className="py-16 text-center">
-                  <Building2 className="h-8 w-8 mx-auto mb-2 text-muted-foreground opacity-40" />
-                  <p className="text-sm font-medium text-muted-foreground">No competitors tracked</p>
-                  <p className="text-xs text-muted-foreground mt-1">Add companies to start monitoring.</p>
-                </CardContent>
-              </Card>
-            )}
-          </div>
-        )}
-      </div>
+      )}
     </DashboardLayout>
   );
 }
