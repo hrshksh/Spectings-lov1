@@ -46,6 +46,19 @@ const App = () => (
               <Route path="/auth" element={<Auth />} />
               <Route path="/dashboard" element={<SlugRedirect to="/lists" />} />
 
+              {/* Legacy non-slug routes → redirect to slug-prefixed */}
+              <Route path="/lists" element={<SlugRedirect to="/lists" />} />
+              <Route path="/people" element={<SlugRedirect to="/people" />} />
+              <Route path="/prospects/for-sales" element={<SlugRedirect to="/prospects/for-sales" />} />
+              <Route path="/prospects/for-hiring" element={<SlugRedirect to="/prospects/for-hiring" />} />
+              <Route path="/prospects/for-growth" element={<SlugRedirect to="/prospects/for-growth" />} />
+              <Route path="/inspects" element={<SlugRedirect to="/inspects" />} />
+              <Route path="/perspects" element={<SlugRedirect to="/perspects" />} />
+              <Route path="/case-studies" element={<SlugRedirect to="/case-studies" />} />
+              <Route path="/settings" element={<SlugRedirect to="/settings" />} />
+              <Route path="/services" element={<SlugRedirect to="/services" />} />
+              <Route path="/profile" element={<SlugRedirect to="/profile" />} />
+
               {/* Slug-prefixed user routes */}
               <Route path="/:slug/people" element={
                 <ProtectedRoute requiredSection="prospects">
