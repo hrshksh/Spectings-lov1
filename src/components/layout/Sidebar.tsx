@@ -93,6 +93,7 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
   const { collapsed, setCollapsed, mobileOpen, setMobileOpen } = useSidebarState();
   const location = useLocation();
   const { isAdmin: hasAdminAccess } = useAuth();
+  const { resolvedTheme } = useTheme();
   const navItems = isAdmin ? adminNavItems : userNavItems;
   const { data: sectionAccess = [] } = useUserSectionAccess();
 
@@ -103,6 +104,22 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
 
   // Prospect subsections the user has access to
   const selectedSubsections = PROSPECT_SUBSECTIONS.filter(s => hasProspectSubsection(sectionAccess, s.key));
+
+  // Fetch site logo
+  const { data: siteLogo } = useQuery({
+    queryKey: ['site-logo'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('site_logos')
+        .select('*')
+        .limit(1)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const logoUrl = resolvedTheme === 'dark' ? siteLogo?.dark_logo_url : siteLogo?.light_logo_url;
 
   // Fetch active ad banner for user sidebar
   const { data: activeBanner } = useQuery({
