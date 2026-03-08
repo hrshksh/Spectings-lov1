@@ -43,9 +43,9 @@ function useInviteTeamMember() {
       if (data?.error) throw new Error(data.error);
       return data as { status: string; message: string };
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['team-members'] });
-      toast.success('Invitation email sent successfully');
+      toast.success(data?.message || 'Team member added successfully');
     },
     onError: (e: Error) => toast.error(e.message),
   });
