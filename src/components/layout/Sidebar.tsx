@@ -19,6 +19,7 @@ import {
   BookOpen,
   Shield,
   X,
+  ImagePlus,
   Menu,
   Megaphone,
   Library,
