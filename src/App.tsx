@@ -18,11 +18,11 @@ import Profile from "./pages/Profile";
 import Auth from "./pages/Auth";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import UsersManagement from "./pages/admin/UsersManagement";
-import DataManagement from "./pages/admin/DataManagement";
 import AdManagement from "./pages/admin/AdManagement";
 import ServicesManagement from "./pages/admin/ServicesManagement";
 import ProspectsManagement from "./pages/admin/ProspectsManagement";
 import InspectsManagement from "./pages/admin/InspectsManagement";
+import PerspectsManagement from "./pages/admin/PerspectsManagement";
 import Services from "./pages/Services";
 import NotFound from "./pages/NotFound";
 
@@ -104,11 +104,6 @@ const App = () => (
                 <UsersManagement />
               </ProtectedRoute>
             } />
-            <Route path="/admin/data" element={
-              <ProtectedRoute requireAdmin>
-                <DataManagement />
-              </ProtectedRoute>
-            } />
             <Route path="/admin/services" element={
               <ProtectedRoute requireAdmin>
                 <ServicesManagement />
@@ -127,6 +122,11 @@ const App = () => (
             <Route path="/admin/inspects" element={
               <ProtectedRoute requireAdmin>
                 <InspectsManagement />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/perspects" element={
+              <ProtectedRoute requireAdmin>
+                <PerspectsManagement />
               </ProtectedRoute>
             } />
             <Route path="/admin/*" element={
