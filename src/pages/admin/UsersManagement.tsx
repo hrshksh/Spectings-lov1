@@ -355,6 +355,7 @@ export default function UsersManagement() {
                       <TableHead>Subscription</TableHead>
                       <TableHead>Roles</TableHead>
                       <TableHead>Lead Tags</TableHead>
+                      <TableHead>Sections</TableHead>
                       <TableHead>Joined</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
@@ -465,6 +466,37 @@ export default function UsersManagement() {
                               })}
                             >
                               <Tag className="h-3.5 w-3.5" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-1.5">
+                            <div className="flex flex-wrap gap-1 max-w-[150px]">
+                              {(sectionAccessMap[user.id] || [])
+                                .filter(s => [...ASSIGNABLE_SECTIONS.map(a => a.key), ...PROSPECT_SUBSECTIONS.map(p => p.key)].includes(s))
+                                .slice(0, 2)
+                                .map(sec => (
+                                  <Badge key={sec} variant="outline" className="text-xs capitalize">
+                                    {sec.replace('for_', '').replace('_', ' ')}
+                                  </Badge>
+                                ))}
+                              {(sectionAccessMap[user.id]?.length || 0) > 2 && (
+                                <Badge variant="outline" className="text-xs">+{(sectionAccessMap[user.id]?.length || 0) - 2}</Badge>
+                              )}
+                              {!(sectionAccessMap[user.id]?.length) && (
+                                <span className="text-sm text-muted-foreground">None</span>
+                              )}
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6"
+                              onClick={() => setSelectedUserForSections({
+                                id: user.id,
+                                name: user.full_name || user.email,
+                              })}
+                            >
+                              <LayoutGrid className="h-3.5 w-3.5" />
                             </Button>
                           </div>
                         </TableCell>
