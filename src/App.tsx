@@ -20,6 +20,7 @@ import Auth from "./pages/Auth";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import UsersManagement from "./pages/admin/UsersManagement";
 import AdManagement from "./pages/admin/AdManagement";
+import LogoManagement from "./pages/admin/LogoManagement";
 import ServicesManagement from "./pages/admin/ServicesManagement";
 import ProspectsManagement from "./pages/admin/ProspectsManagement";
 import InspectsManagement from "./pages/admin/InspectsManagement";
