@@ -181,6 +181,42 @@ export type Database = {
           },
         ]
       }
+      company_trackers: {
+        Row: {
+          company_id: string
+          created_at: string
+          id: string
+          organization_id: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          id?: string
+          organization_id: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          id?: string
+          organization_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_trackers_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "company_trackers_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       leads: {
         Row: {
           created_at: string

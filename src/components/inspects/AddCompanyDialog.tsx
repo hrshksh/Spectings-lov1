@@ -30,21 +30,35 @@ export function AddCompanyDialog({ open, onOpenChange }: AddCompanyDialogProps) 
         .ilike('name', trimmedName)
         .limit(1);
 
+      const { data: orgId } = await supabase.rpc('get_user_org_id', { _user_id: (await supabase.auth.getUser()).data.user!.id });
+
       if (existing && existing.length > 0) {
-        // Company already exists — no need to insert
-        toast.info(`"${existing[0].name}" is already being tracked`);
+        // Company already exists — just add this org as a tracker
+        if (orgId) {
+          await supabase.from('company_trackers' as any).upsert(
+            { company_id: existing[0].id, organization_id: orgId },
+            { onConflict: 'company_id,organization_id' }
+          );
+        }
+        toast.info(`"${existing[0].name}" is already being tracked — your organization has been linked`);
         return { alreadyExists: true };
       }
 
-      const { data: orgId } = await supabase.rpc('get_user_org_id', { _user_id: (await supabase.auth.getUser()).data.user!.id });
-
-      const { error } = await supabase.from('companies').insert({
+      const { data: newCompany, error } = await supabase.from('companies').insert({
         name: trimmedName,
         domain: domain.trim() || null,
         is_tracked: true,
         organization_id: orgId,
-      });
+      }).select('id').single();
       if (error) throw error;
+
+      // Also record this org as a tracker
+      if (orgId && newCompany) {
+        await supabase.from('company_trackers' as any).insert({
+          company_id: newCompany.id,
+          organization_id: orgId,
+        });
+      }
       return { alreadyExists: false };
     },
     onSuccess: (result) => {

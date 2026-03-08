@@ -80,7 +80,26 @@ function useAllCompanies() {
         .order('created_at', { ascending: false })
         .limit(500);
       if (error) throw error;
-      return data;
+
+      // Fetch all trackers with org names
+      const { data: trackers } = await supabase
+        .from('company_trackers' as any)
+        .select('company_id, organization:organizations(name)');
+
+      // Group tracker org names by company_id
+      const trackersMap: Record<string, string[]> = {};
+      if (trackers) {
+        for (const t of trackers as any[]) {
+          const cid = t.company_id;
+          const orgName = t.organization?.name;
+          if (orgName) {
+            if (!trackersMap[cid]) trackersMap[cid] = [];
+            if (!trackersMap[cid].includes(orgName)) trackersMap[cid].push(orgName);
+          }
+        }
+      }
+
+      return (data || []).map((c: any) => ({ ...c, _trackerOrgs: trackersMap[c.id] || [] }));
     },
   });
 }
@@ -238,7 +257,7 @@ export default function InspectsManagement() {
                     <TableRow>
                       <TableHead>Company</TableHead>
                       <TableHead>Domain</TableHead>
-                      <TableHead>Organization</TableHead>
+                      <TableHead>Added By</TableHead>
                       <TableHead>Tracked</TableHead>
                       <TableHead>Added</TableHead>
                       <TableHead className="w-[60px]">Actions</TableHead>
@@ -254,7 +273,15 @@ export default function InspectsManagement() {
                           ) : '—'}
                         </TableCell>
                         <TableCell className="text-xs text-muted-foreground">
-                          {(company as any).organization?.name || '—'}
+                          {(company as any)._trackerOrgs?.length > 0 ? (
+                            <div className="flex flex-wrap gap-1">
+                              {(company as any)._trackerOrgs.map((org: string) => (
+                                <Badge key={org} variant="secondary" className="text-[10px] font-normal">{org}</Badge>
+                              ))}
+                            </div>
+                          ) : (
+                            (company as any).organization?.name || '—'
+                          )}
                         </TableCell>
                         <TableCell>
                           <Badge variant={company.is_tracked ? 'default' : 'secondary'} className="text-[11px]">
