@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Building2, Users, Plus, Loader2, Trash2, ShieldCheck, Eye, Activity, UsersRound } from 'lucide-react';
+import { Building2, Users, Plus, Loader2, Trash2, ShieldCheck, Eye, Activity, UsersRound, Mail } from 'lucide-react';
 import { useOrganization } from '@/hooks/useOrganization';
 import { useAuth } from '@/contexts/AuthContext';
 import {
@@ -32,37 +32,24 @@ const SECTION_ICONS: Record<string, React.ElementType> = {
   for_growth: UsersRound,
 };
 
-function useAddTeamMember() {
+function useInviteTeamMember() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ email, orgId }: { email: string; orgId: string }) => {
-      // Find the user profile by email
-      const { data: profile, error: pErr } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('email', email)
-        .maybeSingle();
-      if (pErr) throw pErr;
-      if (!profile) throw new Error('No user found with that email. They must sign up first.');
-
-      // Check if already a member
-      const { data: existing } = await supabase
-        .from('organization_members')
-        .select('id')
-        .eq('organization_id', orgId)
-        .eq('user_id', profile.id)
-        .maybeSingle();
-      if (existing) throw new Error('This user is already a team member.');
-
-      // Add as member
-      const { error: mErr } = await supabase
-        .from('organization_members')
-        .insert({ organization_id: orgId, user_id: profile.id });
-      if (mErr) throw mErr;
+    mutationFn: async ({ email, orgId, orgName }: { email: string; orgId: string; orgName?: string }) => {
+      const { data, error } = await supabase.functions.invoke('invite-team-member', {
+        body: { email, organization_id: orgId, organization_name: orgName },
+      });
+      if (error) throw new Error(error.message || 'Failed to invite');
+      if (data?.error) throw new Error(data.error);
+      return data as { status: string; message: string };
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['team-members'] });
-      toast.success('Team member added');
+      if (data.status === 'invited') {
+        toast.success('Invitation email sent successfully');
+      } else {
+        toast.success('Team member added');
+      }
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -95,7 +82,7 @@ export default function Settings() {
   const { data: profile } = useProfile();
   const { data: teamMembers = [], isLoading: teamLoading } = useTeamMembers(organizationId);
   const { data: sectionAccess = [] } = useUserSectionAccess();
-  const addMember = useAddTeamMember();
+  const inviteMember = useInviteTeamMember();
   const removeMember = useRemoveTeamMember();
 
   // General tab state
@@ -131,9 +118,10 @@ export default function Settings() {
 
   const handleAddMember = () => {
     if (!memberEmail.trim() || !organizationId) return;
-    addMember.mutate({ email: memberEmail.trim(), orgId: organizationId }, {
-      onSuccess: () => { setMemberEmail(''); setAddOpen(false); },
-    });
+    inviteMember.mutate(
+      { email: memberEmail.trim(), orgId: organizationId, orgName: organization?.name },
+      { onSuccess: () => { setMemberEmail(''); setAddOpen(false); } },
+    );
   };
 
   // Sections the user has access to
@@ -262,7 +250,7 @@ export default function Settings() {
                       <Button size="sm" className="h-7 text-xs"><Plus className="h-3 w-3 mr-1" />Add Member</Button>
                     </DialogTrigger>
                     <DialogContent className="max-w-sm">
-                      <DialogHeader><DialogTitle className="text-sm">Add Team Member</DialogTitle></DialogHeader>
+                      <DialogHeader><DialogTitle className="text-sm">Invite Team Member</DialogTitle></DialogHeader>
                       <div className="space-y-3">
                         <div className="space-y-1">
                           <Label className="text-xs">Email Address</Label>
@@ -273,11 +261,13 @@ export default function Settings() {
                             placeholder="colleague@company.com"
                             className="h-8 text-sm"
                           />
-                          <p className="text-[10px] text-muted-foreground">The user must have an existing account.</p>
+                          <p className="text-[10px] text-muted-foreground">
+                            If the user has an account, they'll be added instantly. Otherwise, an invitation email will be sent.
+                          </p>
                         </div>
-                        <Button size="sm" className="h-8 w-full" onClick={handleAddMember} disabled={addMember.isPending || !memberEmail.trim()}>
-                          {addMember.isPending ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : null}
-                          Add to Team
+                        <Button size="sm" className="h-8 w-full" onClick={handleAddMember} disabled={inviteMember.isPending || !memberEmail.trim()}>
+                          {inviteMember.isPending ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <Mail className="h-3 w-3 mr-1" />}
+                          Send Invite
                         </Button>
                       </div>
                     </DialogContent>
