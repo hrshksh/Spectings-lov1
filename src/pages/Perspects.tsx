@@ -88,13 +88,20 @@ export default function Perspects() {
     toast.success(`Exported ${selected.length} rows`);
   };
 
+  const handleBulkSave = () => {
+    const unsaved = Array.from(selectedIds).filter(id => !savedIds.includes(id));
+    if (unsaved.length === 0) { toast.info('All selected items are already saved'); return; }
+    unsaved.forEach(id => toggleSave.mutate({ recordId: id, sourceType: 'perspect', isSaved: false }));
+    toast.success(`Saving ${unsaved.length} items to list`);
+  };
+
   const SortIcon = ({ field }: { field: SortKey }) =>
     sortKey === field ? (sortDir === 'asc' ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />) : <ArrowUpDown className="h-3 w-3 opacity-40" />;
 
   return (
     <DashboardLayout title="Perspects" subtitle="Market trends and insights" flush>
       {isLoading ? (
-        <TableSkeleton columns={5} flush />
+        <TableSkeleton columns={4} flush />
       ) : sorted.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-center text-muted-foreground animate-fade-in">
           <div className="h-14 w-14 rounded-2xl bg-muted flex items-center justify-center mb-4">
@@ -108,6 +115,9 @@ export default function Perspects() {
           {selectedIds.size > 0 && (
             <div className="flex items-center gap-2 px-4 py-1.5 border-b border-border bg-muted/40 shrink-0 animate-fade-in">
               <span className="text-xs text-muted-foreground">{selectedIds.size} selected</span>
+              <Button variant="outline" size="sm" className="h-7 text-xs gap-1" onClick={handleBulkSave}>
+                <Bookmark className="h-3 w-3" />Save to List
+              </Button>
               <Button variant="outline" size="sm" className="h-7 text-xs gap-1" onClick={handleExportCsv}>
                 <Download className="h-3 w-3" />Export CSV
               </Button>
@@ -120,7 +130,6 @@ export default function Perspects() {
                   <th className="w-10 px-3 py-2.5 border-b border-r border-border text-left">
                     <Checkbox checked={selectedIds.size === sorted.length && sorted.length > 0} onCheckedChange={toggleAll} />
                   </th>
-                  <th className="w-10 px-3 py-2.5 border-b border-r border-border text-left font-medium text-muted-foreground text-xs">Save</th>
                   <th className="min-w-[120px] px-3 py-2.5 border-b border-r border-border text-left font-medium text-muted-foreground text-xs">
                     <button className="flex items-center gap-1 hover:text-foreground transition-colors" onClick={() => handleSort('date')}>
                       <span>Date</span><SortIcon field="date" />
@@ -137,19 +146,10 @@ export default function Perspects() {
               <tbody>
                 {sorted.map(item => {
                   const isSelected = selectedIds.has(item.id);
-                  const isSaved = savedIds.includes(item.id);
                   return (
                     <tr key={item.id} className={`group transition-colors hover:bg-muted/30 ${isSelected ? 'bg-muted/50' : ''}`}>
                       <td className="px-3 py-2 border-b border-r border-border">
                         <Checkbox checked={isSelected} onCheckedChange={() => toggleSelect(item.id)} />
-                      </td>
-                      <td className="px-3 py-2 border-b border-r border-border">
-                        <button
-                          onClick={() => toggleSave.mutate({ recordId: item.id, sourceType: 'perspect', isSaved })}
-                          className="hover:text-primary transition-colors"
-                        >
-                          <Bookmark className={`h-3.5 w-3.5 ${isSaved ? 'fill-primary text-primary' : 'text-muted-foreground'}`} />
-                        </button>
                       </td>
                       <td className="px-3 py-2 border-b border-r border-border text-xs text-muted-foreground">
                         {format(new Date(item.trend_date), 'MMM dd, yyyy')}

@@ -108,13 +108,20 @@ export default function ProspectsForGrowth() {
     toast.success(`Exported ${selected.length} rows`);
   };
 
+  const handleBulkSave = () => {
+    const unsaved = Array.from(selectedIds).filter(id => !savedIds.includes(id));
+    if (unsaved.length === 0) { toast.info('All selected items are already saved'); return; }
+    unsaved.forEach(id => toggleSave.mutate({ recordId: id, sourceType: 'prospect', isSaved: false }));
+    toast.success(`Saving ${unsaved.length} items to list`);
+  };
+
   const SortIcon = ({ field }: { field: SortKey }) =>
     sortKey === field ? (sortDir === 'asc' ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />) : <ArrowUpDown className="h-3 w-3 opacity-40" />;
 
   return (
     <DashboardLayout title="For Growth" subtitle="People profiles for growth opportunities" flush>
       {isLoading ? (
-        <TableSkeleton columns={10} flush />
+        <TableSkeleton columns={9} flush />
       ) : userTags.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-center text-muted-foreground animate-fade-in">
           <div className="h-14 w-14 rounded-2xl bg-muted flex items-center justify-center mb-4">
@@ -133,6 +140,9 @@ export default function ProspectsForGrowth() {
           {selectedIds.size > 0 && (
             <div className="flex items-center gap-2 px-4 py-1.5 border-b border-border bg-muted/40 shrink-0 animate-fade-in">
               <span className="text-xs text-muted-foreground">{selectedIds.size} selected</span>
+              <Button variant="outline" size="sm" className="h-7 text-xs gap-1" onClick={handleBulkSave}>
+                <Bookmark className="h-3 w-3" />Save to List
+              </Button>
               <Button variant="outline" size="sm" className="h-7 text-xs gap-1" onClick={handleExportCsv}>
                 <Download className="h-3 w-3" />Export CSV
               </Button>
@@ -145,7 +155,6 @@ export default function ProspectsForGrowth() {
                   <th className="w-10 px-3 py-2.5 border-b border-r border-border text-left">
                     <Checkbox checked={selectedIds.size === sorted.length && sorted.length > 0} onCheckedChange={toggleAll} />
                   </th>
-                  <th className="w-10 px-3 py-2.5 border-b border-r border-border text-left font-medium text-muted-foreground text-xs">Save</th>
                   <th className="min-w-[200px] px-3 py-2.5 border-b border-r border-border text-left font-medium text-muted-foreground text-xs">
                     <button className="flex items-center gap-1 hover:text-foreground transition-colors" onClick={() => handleSort('name')}><span>Full Name</span><SortIcon field="name" /></button>
                   </th>
@@ -168,16 +177,10 @@ export default function ProspectsForGrowth() {
                 {sorted.map(lead => {
                   const p = lead.person!;
                   const isSelected = selectedIds.has(lead.id);
-                  const isSaved = savedIds.includes(lead.id);
                   return (
                     <tr key={lead.id} className={`group transition-colors hover:bg-muted/30 ${isSelected ? 'bg-muted/50' : ''}`}>
                       <td className="px-3 py-2 border-b border-r border-border">
                         <Checkbox checked={isSelected} onCheckedChange={() => toggleSelect(lead.id)} />
-                      </td>
-                      <td className="px-3 py-2 border-b border-r border-border">
-                        <button onClick={() => toggleSave.mutate({ recordId: lead.id, sourceType: 'prospect', isSaved })} className="hover:text-primary transition-colors">
-                          <Bookmark className={`h-3.5 w-3.5 ${isSaved ? 'fill-primary text-primary' : 'text-muted-foreground'}`} />
-                        </button>
                       </td>
                       <td className="px-3 py-2 border-b border-r border-border">
                         <div className="flex items-center gap-2">
