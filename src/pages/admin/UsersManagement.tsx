@@ -553,6 +553,15 @@ export default function UsersManagement() {
           userName={selectedUserForTags.name}
         />
       )}
+
+      {selectedUserForSections && (
+        <UserSectionAccessDialog
+          open={!!selectedUserForSections}
+          onOpenChange={(open) => !open && setSelectedUserForSections(null)}
+          userId={selectedUserForSections.id}
+          userName={selectedUserForSections.name}
+        />
+      )}
     </DashboardLayout>
   );
 }

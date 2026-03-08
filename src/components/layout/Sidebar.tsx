@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
-import { useProspectSelections, PROSPECT_SUBSECTIONS } from '@/hooks/useProspectSelections';
+import { useUserSectionAccess, PROSPECT_SUBSECTIONS, hasSection, hasProspectSubsection } from '@/hooks/useSectionAccess';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -47,10 +47,10 @@ interface SidebarProps {
 }
 
 const userNavItems = [
-{ icon: UsersRound, label: 'Prospects', path: '/people' },
-{ icon: Eye, label: 'Inspects', path: '/inspects' },
-{ icon: Activity, label: 'Perspects', path: '/perspects' },
-{ icon: List, label: 'Lists', path: '/lists' }];
+{ icon: UsersRound, label: 'Prospects', path: '/people', section: 'prospects' },
+{ icon: Eye, label: 'Inspects', path: '/inspects', section: 'inspects' },
+{ icon: Activity, label: 'Perspects', path: '/perspects', section: 'perspects' },
+{ icon: List, label: 'Lists', path: '/lists', section: null }];
 
 
 const adminNavItems = [
