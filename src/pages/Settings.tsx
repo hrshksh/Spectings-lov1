@@ -8,8 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Building2, Bell, Users, Globe, Plus, Trash2, Check, Loader2, Target, UserPlus, TrendingUp } from 'lucide-react';
+import { Building2, Bell, Users, Globe, Plus, Trash2, Check, Loader2 } from 'lucide-react';
 import { useOrganization } from '@/hooks/useOrganization';
 import { useAuth } from '@/contexts/AuthContext';
 import {
@@ -24,13 +23,6 @@ import {
   useProfile,
   useTeamMembers,
 } from '@/hooks/useSettings';
-import {
-  useProspectSelections,
-  useUpdateProspectSelections,
-  PROSPECT_SUBSECTIONS,
-  getPlanMaxSelections,
-  PLAN_DISPLAY_NAMES,
-} from '@/hooks/useProspectSelections';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 
 const ALERT_CONFIG = [
@@ -59,8 +51,6 @@ export default function Settings() {
   const toggleAlert = useToggleAlert();
   const { data: profile } = useProfile();
   const { data: teamMembers = [], isLoading: teamLoading } = useTeamMembers(organizationId);
-  const { data: prospectSelections = [] } = useProspectSelections();
-  const updateProspectSelections = useUpdateProspectSelections();
 
   // General tab state
   const [orgName, setOrgName] = useState('');
