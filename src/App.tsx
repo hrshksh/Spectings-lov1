@@ -46,6 +46,8 @@ const App = () => (
             <Routes>
               <Route path="/" element={<Auth />} />
               <Route path="/auth" element={<Auth />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/dashboard" element={<SlugRedirect to="/lists" />} />
 
               {/* Legacy non-slug routes → redirect to slug-prefixed */}
