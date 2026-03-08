@@ -4,12 +4,16 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
-  Linkedin, Loader2, Users, ArrowUpDown, ArrowUp, ArrowDown
+  Linkedin, Users, ArrowUpDown, ArrowUp, ArrowDown, Bookmark, Download
 } from 'lucide-react';
 import type { Tables as DBTables } from '@/integrations/supabase/types';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useInfiniteQuery } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
+import { useSavedItemIds, useToggleSave } from '@/hooks/useSavedItems';
+import { TableSkeleton } from '@/components/ui/table-skeleton';
+import { exportToCsv } from '@/lib/csv-export';
+import { toast } from 'sonner';
 
 type Person = DBTables<'people'>;
 type Lead = DBTables<'leads'>;
@@ -59,6 +63,8 @@ export default function ProspectsForHiring() {
 
   const { data: userTags = [], isLoading: tagsLoading } = useUserTags(user?.id);
   const { data: leadsData, isLoading: leadsLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useLeads(userTags);
+  const { data: savedIds = [] } = useSavedItemIds('prospect');
+  const toggleSave = useToggleSave();
   const isLoading = tagsLoading || leadsLoading;
   const leads = useMemo(() => leadsData?.pages.flatMap(p => p.leads) ?? [], [leadsData]);
   const filtered = useMemo(() => leads.filter(l => l.person), [leads]);
@@ -66,7 +72,7 @@ export default function ProspectsForHiring() {
   const sorted = useMemo(() => {
     if (!sortKey || !sortDir) return filtered;
     return [...filtered].sort((a, b) => {
-      let aVal: any, bVal: any;
+      let aVal: string | number, bVal: string | number;
       switch (sortKey) {
         case 'name': aVal = a.person?.name ?? ''; bVal = b.person?.name ?? ''; break;
         case 'company': aVal = a.person?.company ?? ''; bVal = b.person?.company ?? ''; break;
@@ -87,6 +93,29 @@ export default function ProspectsForHiring() {
   const toggleSelect = (id: string) => { setSelectedIds(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; }); };
   const toggleAll = () => { selectedIds.size === sorted.length ? setSelectedIds(new Set()) : setSelectedIds(new Set(sorted.map(l => l.id))); };
 
+  const handleExportCsv = () => {
+    const items = sorted.filter(l => selectedIds.has(l.id));
+    if (items.length === 0) { toast.info('Select rows to export'); return; }
+    exportToCsv('prospects-hiring-export', items.map(l => ({
+      name: l.person?.name ?? '',
+      company: l.person?.company ?? '',
+      role: l.person?.role ?? '',
+      email: l.person?.email ?? '',
+      phone: l.person?.phone ?? '',
+      confidence: l.person?.confidence ?? '',
+      status: l.status,
+    })), [
+      { key: 'name', label: 'Candidate' },
+      { key: 'company', label: 'Company' },
+      { key: 'role', label: 'Role' },
+      { key: 'email', label: 'Email' },
+      { key: 'phone', label: 'Phone' },
+      { key: 'confidence', label: 'Score' },
+      { key: 'status', label: 'Status' },
+    ]);
+    toast.success(`Exported ${items.length} rows`);
+  };
+
   const SortIcon = ({ field }: { field: SortKey }) =>
     sortKey === field ? (sortDir === 'asc' ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />) : <ArrowUpDown className="h-3 w-3 opacity-40" />;
 
@@ -99,17 +128,30 @@ export default function ProspectsForHiring() {
   return (
     <DashboardLayout title="For Hiring" subtitle="Candidate profiles for recruitment" flush>
       {isLoading ? (
-        <div className="flex justify-center py-20"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
+        <TableSkeleton columns={10} flush />
       ) : userTags.length === 0 ? (
-        <div className="text-center py-20 text-muted-foreground">
-          <Users className="h-8 w-8 mx-auto mb-2 opacity-40" />
-          <p className="text-sm font-medium">No tags assigned</p>
-          <p className="text-xs mt-1">Contact admin to assign tags.</p>
+        <div className="flex flex-col items-center justify-center py-20 text-center text-muted-foreground animate-fade-in">
+          <div className="h-14 w-14 rounded-2xl bg-muted flex items-center justify-center mb-4">
+            <Users className="h-7 w-7 opacity-40" />
+          </div>
+          <p className="text-sm font-medium text-foreground">No tags assigned</p>
+          <p className="text-xs mt-1 max-w-[260px]">Your admin needs to assign industry tags to your account before candidates can be displayed.</p>
         </div>
       ) : sorted.length === 0 ? (
-        <div className="text-center py-20 text-muted-foreground"><p className="text-sm">No candidates found</p></div>
+        <div className="flex flex-col items-center justify-center py-20 text-center text-muted-foreground animate-fade-in">
+          <p className="text-sm font-medium text-foreground">No candidates found</p>
+          <p className="text-xs mt-1">No hiring candidates match your assigned tags yet.</p>
+        </div>
       ) : (
         <div className="flex flex-col h-[calc(100vh-57px)]">
+          {selectedIds.size > 0 && (
+            <div className="flex items-center gap-2 px-4 py-1.5 border-b border-border bg-muted/40 shrink-0 animate-fade-in">
+              <span className="text-xs text-muted-foreground">{selectedIds.size} selected</span>
+              <Button variant="outline" size="sm" className="h-7 text-xs gap-1" onClick={handleExportCsv}>
+                <Download className="h-3 w-3" />Export CSV
+              </Button>
+            </div>
+          )}
           <div className="flex-1 overflow-auto">
             <table className="w-full text-sm border-collapse">
               <thead className="sticky top-0 z-10">
@@ -117,6 +159,7 @@ export default function ProspectsForHiring() {
                   <th className="w-10 px-3 py-2.5 border-b border-r border-border text-left">
                     <Checkbox checked={selectedIds.size === sorted.length && sorted.length > 0} onCheckedChange={toggleAll} />
                   </th>
+                  <th className="w-10 px-3 py-2.5 border-b border-r border-border text-left font-medium text-muted-foreground text-xs">Save</th>
                   <th className="min-w-[200px] px-3 py-2.5 border-b border-r border-border text-left font-medium text-muted-foreground text-xs">
                     <button className="flex items-center gap-1 hover:text-foreground transition-colors" onClick={() => handleSort('name')}><span>Candidate</span><SortIcon field="name" /></button>
                   </th>
@@ -141,10 +184,16 @@ export default function ProspectsForHiring() {
                 {sorted.map(lead => {
                   const p = lead.person!;
                   const isSelected = selectedIds.has(lead.id);
+                  const isSaved = savedIds.includes(lead.id);
                   return (
                     <tr key={lead.id} className={`group transition-colors hover:bg-muted/30 ${isSelected ? 'bg-muted/50' : ''}`}>
                       <td className="px-3 py-2 border-b border-r border-border">
                         <Checkbox checked={isSelected} onCheckedChange={() => toggleSelect(lead.id)} />
+                      </td>
+                      <td className="px-3 py-2 border-b border-r border-border">
+                        <button onClick={() => toggleSave.mutate({ recordId: lead.id, sourceType: 'prospect', isSaved })} className="hover:text-primary transition-colors">
+                          <Bookmark className={`h-3.5 w-3.5 ${isSaved ? 'fill-primary text-primary' : 'text-muted-foreground'}`} />
+                        </button>
                       </td>
                       <td className="px-3 py-2 border-b border-r border-border">
                         <div className="flex items-center gap-2">
@@ -179,7 +228,7 @@ export default function ProspectsForHiring() {
           {hasNextPage && (
             <div className="flex justify-center py-2 border-t border-border">
               <Button variant="ghost" size="sm" onClick={() => fetchNextPage()} disabled={isFetchingNextPage} className="text-xs">
-                {isFetchingNextPage ? <><Loader2 className="h-3 w-3 mr-1 animate-spin" />Loading...</> : 'Load More'}
+                {isFetchingNextPage ? 'Loading...' : 'Load More'}
               </Button>
             </div>
           )}

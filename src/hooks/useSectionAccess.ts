@@ -27,11 +27,11 @@ export function useUserSectionAccess() {
     queryFn: async () => {
       if (!user?.id) return [];
       const { data, error } = await supabase
-        .from('user_section_access' as any)
+        .from('user_section_access')
         .select('section')
         .eq('user_id', user.id);
       if (error) throw error;
-      return (data as any[])?.map((d: any) => d.section as string) ?? [];
+      return data?.map(d => d.section) ?? [];
     },
     enabled: !!user?.id,
   });
@@ -44,11 +44,11 @@ export function useUserSectionAccessById(userId: string | null) {
     queryFn: async () => {
       if (!userId) return [];
       const { data, error } = await supabase
-        .from('user_section_access' as any)
+        .from('user_section_access')
         .select('section')
         .eq('user_id', userId);
       if (error) throw error;
-      return (data as any[])?.map((d: any) => d.section as string) ?? [];
+      return data?.map(d => d.section) ?? [];
     },
     enabled: !!userId,
   });
@@ -61,15 +61,15 @@ export function useUpdateUserSectionAccess() {
     mutationFn: async ({ userId, sections }: { userId: string; sections: string[] }) => {
       // Delete all existing
       await supabase
-        .from('user_section_access' as any)
+        .from('user_section_access')
         .delete()
         .eq('user_id', userId);
       // Insert new
       if (sections.length > 0) {
         const rows = sections.map(s => ({ user_id: userId, section: s }));
         const { error } = await supabase
-          .from('user_section_access' as any)
-          .insert(rows as any);
+          .from('user_section_access')
+          .insert(rows);
         if (error) throw error;
       }
     },
@@ -88,11 +88,11 @@ export function useAllUserSectionAccess() {
     queryKey: ['all-user-section-access'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('user_section_access' as any)
+        .from('user_section_access')
         .select('user_id, section');
       if (error) throw error;
       const map: Record<string, string[]> = {};
-      (data as any[])?.forEach((d: any) => {
+      data?.forEach(d => {
         if (!map[d.user_id]) map[d.user_id] = [];
         map[d.user_id].push(d.section);
       });
