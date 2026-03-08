@@ -1,36 +1,26 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { DashboardLayout } from '@/components/layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Building2, Bell, Users, Globe, Plus, Trash2, Check, Loader2 } from 'lucide-react';
+import { Building2, Users, Plus, Check, Loader2, Trash2, ShieldCheck, Eye, Activity, UsersRound } from 'lucide-react';
 import { useOrganization } from '@/hooks/useOrganization';
 import { useAuth } from '@/contexts/AuthContext';
 import {
   useCreateOrganization,
   useUpdateOrganization,
-  useTrackedCompetitors,
-  useToggleCompetitorTracking,
-  useAddCompetitor,
-  useDeleteCompetitor,
-  useAlertPreferences,
-  useToggleAlert,
   useProfile,
   useTeamMembers,
 } from '@/hooks/useSettings';
+import { useUserSectionAccess, ASSIGNABLE_SECTIONS, PROSPECT_SUBSECTIONS, hasSection, hasProspectSubsection } from '@/hooks/useSectionAccess';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-
-const ALERT_CONFIG = [
-  { type: 'competitor_events', title: 'Competitor Events', icon: Building2 },
-  { type: 'trend_spikes', title: 'Trend Spikes', icon: Globe },
-  { type: 'negative_sentiment', title: 'Negative Sentiment', icon: Bell },
-  { type: 'new_leads', title: 'New Leads', icon: Users },
-];
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 const PLANS = [
   { id: 'essential', name: 'Basic', price: '₹4,999', features: ['1 prospect section', '5 competitor tracking', '50 leads/month', 'Weekly reports'] },
@@ -38,19 +28,80 @@ const PLANS = [
   { id: 'agency', name: 'Elite', price: '₹39,999', features: ['3 prospect sections', '50 competitor tracking', 'Unlimited leads', 'All reports', 'Priority support'] },
 ];
 
+const SECTION_ICONS: Record<string, React.ElementType> = {
+  prospects: UsersRound,
+  inspects: Eye,
+  perspects: Activity,
+  for_sales: UsersRound,
+  for_hiring: UsersRound,
+  for_growth: UsersRound,
+};
+
+function useAddTeamMember() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ email, orgId }: { email: string; orgId: string }) => {
+      // Find the user profile by email
+      const { data: profile, error: pErr } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('email', email)
+        .maybeSingle();
+      if (pErr) throw pErr;
+      if (!profile) throw new Error('No user found with that email. They must sign up first.');
+
+      // Check if already a member
+      const { data: existing } = await supabase
+        .from('organization_members')
+        .select('id')
+        .eq('organization_id', orgId)
+        .eq('user_id', profile.id)
+        .maybeSingle();
+      if (existing) throw new Error('This user is already a team member.');
+
+      // Add as member
+      const { error: mErr } = await supabase
+        .from('organization_members')
+        .insert({ organization_id: orgId, user_id: profile.id });
+      if (mErr) throw mErr;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['team-members'] });
+      toast.success('Team member added');
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+}
+
+function useRemoveTeamMember() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ userId, orgId }: { userId: string; orgId: string }) => {
+      const { error } = await supabase
+        .from('organization_members')
+        .delete()
+        .eq('organization_id', orgId)
+        .eq('user_id', userId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['team-members'] });
+      toast.success('Team member removed');
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+}
+
 export default function Settings() {
   const { user } = useAuth();
   const { organizationId, organization } = useOrganization();
   const createOrg = useCreateOrganization();
   const updateOrg = useUpdateOrganization();
-  const { data: competitors = [], isLoading: compLoading } = useTrackedCompetitors(organizationId);
-  const toggleTracking = useToggleCompetitorTracking();
-  const addCompetitor = useAddCompetitor();
-  const deleteCompetitor = useDeleteCompetitor();
-  const { data: alertPrefs = {} } = useAlertPreferences();
-  const toggleAlert = useToggleAlert();
   const { data: profile } = useProfile();
   const { data: teamMembers = [], isLoading: teamLoading } = useTeamMembers(organizationId);
+  const { data: sectionAccess = [] } = useUserSectionAccess();
+  const addMember = useAddTeamMember();
+  const removeMember = useRemoveTeamMember();
 
   // General tab state
   const [orgName, setOrgName] = useState('');
@@ -69,9 +120,9 @@ export default function Settings() {
     setGeneralInitialized(true);
   }
 
-  // Add competitor dialog
+  // Add member dialog
   const [addOpen, setAddOpen] = useState(false);
-  const [newCompName, setNewCompName] = useState('');
+  const [memberEmail, setMemberEmail] = useState('');
 
   const handleSaveOrg = () => {
     if (!orgName.trim()) return;
@@ -83,12 +134,16 @@ export default function Settings() {
     }
   };
 
-  const handleAddCompetitor = () => {
-    if (!newCompName.trim() || !organizationId) return;
-    addCompetitor.mutate({ name: newCompName.trim(), orgId: organizationId }, {
-      onSuccess: () => { setNewCompName(''); setAddOpen(false); },
+  const handleAddMember = () => {
+    if (!memberEmail.trim() || !organizationId) return;
+    addMember.mutate({ email: memberEmail.trim(), orgId: organizationId }, {
+      onSuccess: () => { setMemberEmail(''); setAddOpen(false); },
     });
   };
+
+  // Sections the user has access to
+  const mainSections = ASSIGNABLE_SECTIONS.filter(s => hasSection(sectionAccess, s.key));
+  const prospectSubs = PROSPECT_SUBSECTIONS.filter(s => hasProspectSubsection(sectionAccess, s.key));
 
   return (
     <DashboardLayout title="Settings" subtitle="Manage your preferences and subscription">
@@ -96,9 +151,7 @@ export default function Settings() {
         <Tabs defaultValue="general" className="space-y-3">
           <TabsList className="h-8">
             <TabsTrigger value="general" className="text-xs h-7">General</TabsTrigger>
-            <TabsTrigger value="competitors" className="text-xs h-7">Competitors</TabsTrigger>
-            <TabsTrigger value="alerts" className="text-xs h-7">Alerts</TabsTrigger>
-            <TabsTrigger value="billing" className="text-xs h-7">Billing</TabsTrigger>
+            <TabsTrigger value="plan" className="text-xs h-7">Plan</TabsTrigger>
             <TabsTrigger value="team" className="text-xs h-7">Team</TabsTrigger>
           </TabsList>
 
@@ -158,90 +211,9 @@ export default function Settings() {
             </Card>
           </TabsContent>
 
-
-
-          {/* COMPETITORS TAB */}
-          <TabsContent value="competitors" className="space-y-3">
-            <Card>
-              <CardHeader className="py-2 px-3">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-sm font-medium">Tracked Competitors</CardTitle>
-                  <Dialog open={addOpen} onOpenChange={setAddOpen}>
-                    <DialogTrigger asChild>
-                      <Button size="sm" className="h-7 text-xs"><Plus className="h-3 w-3 mr-1" />Add Competitor</Button>
-                    </DialogTrigger>
-                    <DialogContent className="max-w-sm">
-                      <DialogHeader><DialogTitle className="text-sm">Add Competitor</DialogTitle></DialogHeader>
-                      <div className="space-y-3">
-                        <div className="space-y-1">
-                          <Label className="text-xs">Company Name</Label>
-                          <Input value={newCompName} onChange={e => setNewCompName(e.target.value)} placeholder="e.g. Freshworks" className="h-8 text-sm" />
-                        </div>
-                        <Button size="sm" className="h-8 w-full" onClick={handleAddCompetitor} disabled={addCompetitor.isPending || !newCompName.trim()}>
-                          {addCompetitor.isPending ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : null}
-                          Add
-                        </Button>
-                      </div>
-                    </DialogContent>
-                  </Dialog>
-                </div>
-              </CardHeader>
-              <CardContent className="px-3 pb-3 pt-0">
-                {compLoading ? (
-                  <div className="flex items-center justify-center py-6"><Loader2 className="h-4 w-4 animate-spin text-muted-foreground" /></div>
-                ) : competitors.length === 0 ? (
-                  <p className="text-xs text-muted-foreground py-4 text-center">No competitors tracked yet. Add one to get started.</p>
-                ) : (
-                  <div className="space-y-2">
-                    {competitors.map((c) => (
-                      <div key={c.id} className="flex items-center justify-between p-2 rounded-md bg-secondary/50">
-                        <div className="flex items-center gap-2">
-                          <div className="h-8 w-8 rounded-md bg-muted flex items-center justify-center"><Building2 className="h-4 w-4 text-muted-foreground" /></div>
-                          <div>
-                            <h4 className="text-xs font-medium">{c.name}</h4>
-                            <p className="text-[10px] text-muted-foreground">{c.is_tracked ? 'Actively tracking' : 'Not tracked'}</p>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Switch
-                            checked={c.is_tracked}
-                            onCheckedChange={(checked) => toggleTracking.mutate({ id: c.id, is_tracked: checked })}
-                          />
-                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => deleteCompetitor.mutate(c.id)}>
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* ALERTS TAB */}
-          <TabsContent value="alerts" className="space-y-3">
-            <Card>
-              <CardHeader className="py-2 px-3"><CardTitle className="text-sm font-medium">Alert Preferences</CardTitle></CardHeader>
-              <CardContent className="space-y-2 px-3 pb-3 pt-0">
-                {ALERT_CONFIG.map((alert) => (
-                  <div key={alert.type} className="flex items-center justify-between p-2 rounded-md bg-secondary/50">
-                    <div className="flex items-center gap-2">
-                      <div className="h-8 w-8 rounded-md bg-primary/10 flex items-center justify-center"><alert.icon className="h-4 w-4 text-primary" /></div>
-                      <h4 className="text-xs font-medium">{alert.title}</h4>
-                    </div>
-                    <Switch
-                      checked={alertPrefs[alert.type] !== false}
-                      onCheckedChange={(checked) => toggleAlert.mutate({ alertType: alert.type, enabled: checked })}
-                    />
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* BILLING TAB */}
-          <TabsContent value="billing" className="space-y-3">
+          {/* PLAN TAB */}
+          <TabsContent value="plan" className="space-y-3">
+            {/* Current plan */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
               {PLANS.map((plan) => {
                 const isCurrent = (profile?.subscription_plan || 'free') === plan.id;
@@ -262,6 +234,47 @@ export default function Settings() {
                 );
               })}
             </div>
+
+            {/* Assigned Sections */}
+            <Card>
+              <CardHeader className="py-2 px-3">
+                <CardTitle className="text-sm font-medium flex items-center gap-1.5">
+                  <ShieldCheck className="h-4 w-4 text-primary" />
+                  Your Assigned Sections
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="px-3 pb-3 pt-0">
+                {mainSections.length === 0 && prospectSubs.length === 0 ? (
+                  <p className="text-xs text-muted-foreground py-4 text-center">No sections assigned yet. Contact your admin to get access.</p>
+                ) : (
+                  <div className="space-y-2">
+                    {mainSections.map((s) => {
+                      const Icon = SECTION_ICONS[s.key] || Eye;
+                      return (
+                        <div key={s.key} className="flex items-center gap-2 p-2 rounded-md bg-secondary/50">
+                          <div className="h-7 w-7 rounded-md bg-primary/10 flex items-center justify-center">
+                            <Icon className="h-3.5 w-3.5 text-primary" />
+                          </div>
+                          <span className="text-xs font-medium">{s.label}</span>
+                          <Badge variant="secondary" className="text-[10px] ml-auto">Active</Badge>
+                        </div>
+                      );
+                    })}
+                    {prospectSubs.length > 0 && (
+                      <div className="ml-4 border-l-2 border-border pl-3 space-y-1.5">
+                        <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Prospect Subsections</p>
+                        {prospectSubs.map((s) => (
+                          <div key={s.key} className="flex items-center gap-2 p-1.5 rounded-md bg-secondary/30">
+                            <span className="text-xs">{s.label}</span>
+                            <Badge variant="outline" className="text-[10px] ml-auto">Enabled</Badge>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </TabsContent>
 
           {/* TEAM TAB */}
@@ -270,35 +283,77 @@ export default function Settings() {
               <CardHeader className="py-2 px-3">
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-sm font-medium">Team Members</CardTitle>
+                  <Dialog open={addOpen} onOpenChange={setAddOpen}>
+                    <DialogTrigger asChild>
+                      <Button size="sm" className="h-7 text-xs"><Plus className="h-3 w-3 mr-1" />Add Member</Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-sm">
+                      <DialogHeader><DialogTitle className="text-sm">Add Team Member</DialogTitle></DialogHeader>
+                      <div className="space-y-3">
+                        <div className="space-y-1">
+                          <Label className="text-xs">Email Address</Label>
+                          <Input
+                            type="email"
+                            value={memberEmail}
+                            onChange={e => setMemberEmail(e.target.value)}
+                            placeholder="colleague@company.com"
+                            className="h-8 text-sm"
+                          />
+                          <p className="text-[10px] text-muted-foreground">The user must have an existing account.</p>
+                        </div>
+                        <Button size="sm" className="h-8 w-full" onClick={handleAddMember} disabled={addMember.isPending || !memberEmail.trim()}>
+                          {addMember.isPending ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : null}
+                          Add to Team
+                        </Button>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
                 </div>
               </CardHeader>
               <CardContent className="px-3 pb-3 pt-0">
                 {teamLoading ? (
                   <div className="flex items-center justify-center py-6"><Loader2 className="h-4 w-4 animate-spin text-muted-foreground" /></div>
                 ) : teamMembers.length === 0 ? (
-                  <p className="text-xs text-muted-foreground py-4 text-center">No team members found.</p>
+                  <p className="text-xs text-muted-foreground py-4 text-center">No team members found. Add members by their email.</p>
                 ) : (
                   <div className="space-y-2">
-                    {teamMembers.map((m) => (
-                      <div key={m.id} className="flex items-center justify-between p-2 rounded-md bg-secondary/50">
-                        <div className="flex items-center gap-2">
-                          <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center">
-                            <span className="text-primary-foreground text-xs font-medium">
-                              {(m.full_name || m.email).split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()}
-                            </span>
+                    {teamMembers.map((m) => {
+                      const isCurrentUser = m.id === user?.id;
+                      return (
+                        <div key={m.id} className="flex items-center justify-between p-2 rounded-md bg-secondary/50">
+                          <div className="flex items-center gap-2">
+                            <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center">
+                              <span className="text-primary-foreground text-xs font-medium">
+                                {(m.full_name || m.email).split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()}
+                              </span>
+                            </div>
+                            <div>
+                              <h4 className="text-xs font-medium">
+                                {m.full_name || 'Unnamed'}
+                                {isCurrentUser && <span className="text-muted-foreground ml-1">(you)</span>}
+                              </h4>
+                              <p className="text-[10px] text-muted-foreground">{m.email}</p>
+                            </div>
                           </div>
-                          <div>
-                            <h4 className="text-xs font-medium">{m.full_name || 'Unnamed'}</h4>
-                            <p className="text-[10px] text-muted-foreground">{m.email}</p>
+                          <div className="flex items-center gap-2">
+                            <Badge variant={m.primaryRole.includes('admin') ? 'default' : 'secondary'} className="text-[10px] capitalize">
+                              {m.primaryRole.replace('_', ' ')}
+                            </Badge>
+                            {!isCurrentUser && organizationId && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7 text-destructive hover:text-destructive"
+                                onClick={() => removeMember.mutate({ userId: m.id, orgId: organizationId })}
+                                disabled={removeMember.isPending}
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </Button>
+                            )}
                           </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <Badge variant={m.primaryRole.includes('admin') ? 'default' : 'secondary'} className="text-[10px] capitalize">
-                            {m.primaryRole.replace('_', ' ')}
-                          </Badge>
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </CardContent>
