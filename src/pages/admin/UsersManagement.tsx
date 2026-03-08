@@ -29,12 +29,14 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Search, MoreHorizontal, Shield, UserPlus, Loader2, X, Tag, CreditCard, Users, Crown, Filter } from 'lucide-react';
+import { Search, MoreHorizontal, Shield, UserPlus, Loader2, X, Tag, CreditCard, Users, Crown, Filter, LayoutGrid } from 'lucide-react';
 import { useUsers, useAssignRole, useRemoveRole } from '@/hooks/useUserManagement';
 import { useAuth } from '@/contexts/AuthContext';
 import { Constants } from '@/integrations/supabase/types';
 import type { Database } from '@/integrations/supabase/types';
 import { UserTagsDialog } from '@/components/admin/UserTagsDialog';
+import { UserSectionAccessDialog } from '@/components/admin/UserSectionAccessDialog';
+import { useAllUserSectionAccess, ASSIGNABLE_SECTIONS, PROSPECT_SUBSECTIONS } from '@/hooks/useSectionAccess';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
@@ -167,8 +169,10 @@ export default function UsersManagement() {
   const removeRole = useRemoveRole();
   const updateSubscription = useUpdateSubscription();
   const toggleUserActive = useToggleUserActive();
+  const { data: sectionAccessMap = {} } = useAllUserSectionAccess();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedUserForTags, setSelectedUserForTags] = useState<{ id: string; name: string } | null>(null);
+  const [selectedUserForSections, setSelectedUserForSections] = useState<{ id: string; name: string } | null>(null);
   const [filterPlan, setFilterPlan] = useState<SubscriptionPlan | 'all'>('all');
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'inactive'>('all');
 
