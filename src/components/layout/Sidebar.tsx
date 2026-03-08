@@ -53,13 +53,13 @@ const userNavItems = [
 { icon: List, label: 'Lists', path: '/lists', section: null }];
 
 
-const adminNavItems = [
-{ icon: LayoutDashboard, label: 'Task Queue', path: '/admin' },
-{ icon: Users, label: 'Users & Roles', path: '/admin/users' },
-{ icon: UsersRound, label: 'Prospects', path: '/admin/prospects' },
-{ icon: FileText, label: 'Data Management', path: '/admin/data' },
-{ icon: Library, label: 'Services', path: '/admin/services' },
-{ icon: Megaphone, label: 'Ad Management', path: '/admin/ads' }];
+const adminNavItems: Array<{ icon: React.ElementType; label: string; path: string; section: string | null }> = [
+{ icon: LayoutDashboard, label: 'Task Queue', path: '/admin', section: null },
+{ icon: Users, label: 'Users & Roles', path: '/admin/users', section: null },
+{ icon: UsersRound, label: 'Prospects', path: '/admin/prospects', section: null },
+{ icon: FileText, label: 'Data Management', path: '/admin/data', section: null },
+{ icon: Library, label: 'Services', path: '/admin/services', section: null },
+{ icon: Megaphone, label: 'Ad Management', path: '/admin/ads', section: null }];
 
 
 export function SidebarProvider({ children }: {children: React.ReactNode;}) {
