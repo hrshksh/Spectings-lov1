@@ -441,7 +441,7 @@ export default function ProspectsManagement() {
                     </DialogFooter>
                   </DialogContent>
                 </Dialog>
-              </div>
+                </div>
 
               {/* Table */}
               <Card>
@@ -657,6 +657,8 @@ export default function ProspectsManagement() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <CsvImportDialog open={csvImportOpen} onOpenChange={setCsvImportOpen} prospectType={activeSubsection} />
     </DashboardLayout>
   );
 }
