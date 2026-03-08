@@ -93,7 +93,6 @@ Deno.serve(async (req) => {
         .insert({ organization_id, user_id: existingProfile.id });
       if (addErr) throw addErr;
 
-      // Assign customer_user role if they don't have one
       const { data: existingRole } = await adminClient
         .from("user_roles")
         .select("id")
@@ -108,26 +107,37 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Send invite via Supabase Auth
-    const { data: inviteData, error: inviteErr } = await adminClient.auth.admin.inviteUserByEmail(email, {
-      data: {
+    // Create the user account directly (no invite email)
+    const { data: newUser, error: createErr } = await adminClient.auth.admin.createUser({
+      email,
+      email_confirm: true,
+      user_metadata: {
         org_id: organization_id,
         org_name: organization_name || "your team",
         invited_by: callerEmail,
       },
     });
-    if (inviteErr) throw inviteErr;
+    if (createErr) throw createErr;
 
     // Pre-create org membership
-    if (inviteData?.user?.id) {
+    if (newUser?.user?.id) {
       await adminClient.from("organization_members").insert({
         organization_id,
-        user_id: inviteData.user.id,
+        user_id: newUser.user.id,
       });
     }
 
+    // Send password reset email so the new user can set their password
+    const { error: resetErr } = await adminClient.auth.admin.generateLink({
+      type: "recovery",
+      email,
+    });
+    if (resetErr) {
+      console.error("Failed to send password reset email:", resetErr.message);
+    }
+
     return new Response(
-      JSON.stringify({ status: "invited", message: "Invitation email sent" }),
+      JSON.stringify({ status: "created", message: "User added. A password setup email has been sent." }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err) {
