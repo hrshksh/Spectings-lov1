@@ -473,7 +473,7 @@ export default function UsersManagement() {
                           <div className="flex items-center gap-1.5">
                             <div className="flex flex-wrap gap-1 max-w-[150px]">
                               {(sectionAccessMap[user.id] || [])
-                                .filter(s => [...ASSIGNABLE_SECTIONS.map(a => a.key), ...PROSPECT_SUBSECTIONS.map(p => p.key)].includes(s))
+                                .filter(s => ([...ASSIGNABLE_SECTIONS.map(a => a.key as string), ...PROSPECT_SUBSECTIONS.map(p => p.key as string)] as string[]).includes(s))
                                 .slice(0, 2)
                                 .map(sec => (
                                   <Badge key={sec} variant="outline" className="text-xs capitalize">
