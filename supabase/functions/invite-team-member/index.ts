@@ -12,7 +12,6 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // Validate caller is authenticated
     const authHeader = req.headers.get("authorization");
     if (!authHeader) {
       return new Response(JSON.stringify({ error: "Missing authorization" }), {
@@ -24,7 +23,6 @@ Deno.serve(async (req) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-    // Client with caller's token to verify identity
     const userClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_PUBLISHABLE_KEY")!, {
       global: { headers: { Authorization: authHeader } },
     });
@@ -44,7 +42,6 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Admin client for privileged operations
     const adminClient = createClient(supabaseUrl, serviceRoleKey);
 
     // Check caller is a member of the org
@@ -61,7 +58,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Check if user already exists
+    // Check if user already exists in the system
     const { data: existingProfile } = await adminClient
       .from("profiles")
       .select("id")
@@ -69,7 +66,7 @@ Deno.serve(async (req) => {
       .maybeSingle();
 
     if (existingProfile) {
-      // Check if already a member
+      // Check if already a member of this org
       const { data: existingMember } = await adminClient
         .from("organization_members")
         .select("id")
@@ -82,19 +79,13 @@ Deno.serve(async (req) => {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-
-      // Add existing user directly
-      const { error: addErr } = await adminClient
-        .from("organization_members")
-        .insert({ organization_id, user_id: existingProfile.id });
-      if (addErr) throw addErr;
-
-      return new Response(JSON.stringify({ status: "added", message: "Existing user added to team" }), {
+      return new Response(JSON.stringify({ error: "This user already has an account. They can be added from the admin panel." }), {
+        status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // User doesn't exist — send invite via Supabase Auth
+    // Send invite via Supabase Auth
     const { data: inviteData, error: inviteErr } = await adminClient.auth.admin.inviteUserByEmail(email, {
       data: {
         org_id: organization_id,
@@ -104,7 +95,7 @@ Deno.serve(async (req) => {
     });
     if (inviteErr) throw inviteErr;
 
-    // Pre-create the org membership so when they confirm, they're already in the org
+    // Pre-create org membership
     if (inviteData?.user?.id) {
       await adminClient.from("organization_members").insert({
         organization_id,

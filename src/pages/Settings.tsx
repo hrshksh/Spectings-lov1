@@ -43,13 +43,9 @@ function useInviteTeamMember() {
       if (data?.error) throw new Error(data.error);
       return data as { status: string; message: string };
     },
-    onSuccess: (data) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['team-members'] });
-      if (data.status === 'invited') {
-        toast.success('Invitation email sent successfully');
-      } else {
-        toast.success('Team member added');
-      }
+      toast.success('Invitation email sent successfully');
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -262,7 +258,7 @@ export default function Settings() {
                             className="h-8 text-sm"
                           />
                           <p className="text-[10px] text-muted-foreground">
-                            If the user has an account, they'll be added instantly. Otherwise, an invitation email will be sent.
+                            An invitation email will be sent to join your team.
                           </p>
                         </div>
                         <Button size="sm" className="h-8 w-full" onClick={handleAddMember} disabled={inviteMember.isPending || !memberEmail.trim()}>
