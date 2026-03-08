@@ -204,23 +204,30 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
             <div key={item.path}>
               <NavItem {...item} />
               {!isAdmin && item.label === 'Prospects' && selectedSubsections.length > 0 && (
-                <div className="ml-[1.15rem] mt-0.5 border-l-2 border-sidebar-border">
-                  {selectedSubsections.map((sub, idx) => (
-                    <div key={sub.path} className="relative">
-                      <div className="absolute left-0 top-1/2 w-3 h-0 border-t-2 border-sidebar-border" />
-                      <Link
-                        to={sub.path}
-                        onClick={handleNavClick}
-                        className={cn(
-                          'block rounded-lg ml-4 px-2.5 py-1.5 text-[13px] font-medium transition-all duration-200',
-                          location.pathname === sub.path
-                            ? 'bg-primary text-primary-foreground shadow-sm'
-                            : 'text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent'
-                        )}>
-                        {sub.label}
-                      </Link>
-                    </div>
-                  ))}
+                <div className="ml-[1.15rem] mt-0.5 relative">
+                  {selectedSubsections.map((sub, idx) => {
+                    const isLast = idx === selectedSubsections.length - 1;
+                    return (
+                      <div key={sub.path} className="relative">
+                        <div className={cn(
+                          'absolute left-0 top-0 w-0 border-l-2 border-sidebar-border',
+                          isLast ? 'h-1/2' : 'h-full'
+                        )} />
+                        <div className="absolute left-0 top-1/2 w-3 h-0 border-t-2 border-sidebar-border" />
+                        <Link
+                          to={sub.path}
+                          onClick={handleNavClick}
+                          className={cn(
+                            'block rounded-lg ml-4 px-2.5 py-1.5 text-[13px] font-medium transition-all duration-200',
+                            location.pathname === sub.path
+                              ? 'bg-primary text-primary-foreground shadow-sm'
+                              : 'text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent'
+                          )}>
+                          {sub.label}
+                        </Link>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -288,23 +295,30 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
             <div key={item.path}>
               <NavItem {...item} />
               {!isAdmin && item.label === 'Prospects' && selectedSubsections.length > 0 && (
-                <div className="ml-[1.15rem] mt-0.5 border-l-2 border-sidebar-border">
-                  {selectedSubsections.map((sub, idx) => (
-                    <div key={sub.path} className="relative">
-                      <div className="absolute left-0 top-1/2 w-3 h-0 border-t-2 border-sidebar-border" />
-                      <Link
-                        to={sub.path}
-                        onClick={handleNavClick}
-                        className={cn(
-                          'block rounded-lg ml-4 px-2.5 py-1.5 text-[13px] font-medium transition-all duration-200',
-                          location.pathname === sub.path
-                            ? 'bg-primary text-primary-foreground shadow-sm'
-                            : 'text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent'
-                        )}>
-                        {sub.label}
-                      </Link>
-                    </div>
-                  ))}
+                <div className="ml-[1.15rem] mt-0.5 relative">
+                  {selectedSubsections.map((sub, idx) => {
+                    const isLast = idx === selectedSubsections.length - 1;
+                    return (
+                      <div key={sub.path} className="relative">
+                        <div className={cn(
+                          'absolute left-0 top-0 w-0 border-l-2 border-sidebar-border',
+                          isLast ? 'h-1/2' : 'h-full'
+                        )} />
+                        <div className="absolute left-0 top-1/2 w-3 h-0 border-t-2 border-sidebar-border" />
+                        <Link
+                          to={sub.path}
+                          onClick={handleNavClick}
+                          className={cn(
+                            'block rounded-lg ml-4 px-2.5 py-1.5 text-[13px] font-medium transition-all duration-200',
+                            location.pathname === sub.path
+                              ? 'bg-primary text-primary-foreground shadow-sm'
+                              : 'text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent'
+                          )}>
+                          {sub.label}
+                        </Link>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </div>
