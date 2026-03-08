@@ -358,10 +358,14 @@ export default function ProspectsManagement() {
                   </div>
                 </div>
 
-                <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-                  <DialogTrigger asChild>
-                    <Button><Plus className="h-4 w-4 mr-2" />Add {activeLabel}</Button>
-                  </DialogTrigger>
+                <div className="flex items-center gap-2">
+                  <Button variant="outline" onClick={() => setCsvImportOpen(true)}>
+                    <Upload className="h-4 w-4 mr-2" />CSV Import
+                  </Button>
+                  <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button><Plus className="h-4 w-4 mr-2" />Add {activeLabel}</Button>
+                    </DialogTrigger>
                   <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
                       <DialogTitle>Add Prospect — {activeLabel}</DialogTitle>
