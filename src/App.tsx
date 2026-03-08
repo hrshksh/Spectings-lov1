@@ -7,6 +7,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { DynamicFavicon } from "@/components/DynamicFavicon";
+import { SlugRedirect } from "@/components/SlugRedirect";
 import PeopleIntelligence from "./pages/PeopleIntelligence";
 import CompanyIntelligence from "./pages/CompanyIntelligence";
 import Perspects from "./pages/Perspects";
@@ -43,62 +44,66 @@ const App = () => (
             <Routes>
               <Route path="/" element={<Auth />} />
               <Route path="/auth" element={<Auth />} />
-              <Route path="/dashboard" element={<Navigate to="/lists" replace />} />
-              <Route path="/people" element={
+              <Route path="/dashboard" element={<SlugRedirect to="/lists" />} />
+
+              {/* Slug-prefixed user routes */}
+              <Route path="/:slug/people" element={
                 <ProtectedRoute requiredSection="prospects">
                   <PeopleIntelligence />
                 </ProtectedRoute>
               } />
-              <Route path="/prospects/for-sales" element={
+              <Route path="/:slug/prospects/for-sales" element={
                 <ProtectedRoute requiredSection="prospects" requiredSubsection="for_sales">
                   <ProspectsForSales />
                 </ProtectedRoute>
               } />
-              <Route path="/prospects/for-hiring" element={
+              <Route path="/:slug/prospects/for-hiring" element={
                 <ProtectedRoute requiredSection="prospects" requiredSubsection="for_hiring">
                   <ProspectsForHiring />
                 </ProtectedRoute>
               } />
-              <Route path="/prospects/for-growth" element={
+              <Route path="/:slug/prospects/for-growth" element={
                 <ProtectedRoute requiredSection="prospects" requiredSubsection="for_growth">
                   <ProspectsForGrowth />
                 </ProtectedRoute>
               } />
-              <Route path="/inspects" element={
+              <Route path="/:slug/inspects" element={
                 <ProtectedRoute requiredSection="inspects">
                   <CompanyIntelligence />
                 </ProtectedRoute>
               } />
-              <Route path="/perspects" element={
+              <Route path="/:slug/perspects" element={
                 <ProtectedRoute requiredSection="perspects">
                   <Perspects />
                 </ProtectedRoute>
               } />
-              <Route path="/lists" element={
+              <Route path="/:slug/lists" element={
                 <ProtectedRoute>
                   <Lists />
                 </ProtectedRoute>
               } />
-              <Route path="/case-studies" element={
+              <Route path="/:slug/case-studies" element={
                 <ProtectedRoute>
                   <CaseStudies />
                 </ProtectedRoute>
               } />
-              <Route path="/settings" element={
+              <Route path="/:slug/settings" element={
                 <ProtectedRoute>
                   <Settings />
                 </ProtectedRoute>
               } />
-              <Route path="/services" element={
+              <Route path="/:slug/services" element={
                 <ProtectedRoute>
                   <Services />
                 </ProtectedRoute>
               } />
-              <Route path="/profile" element={
+              <Route path="/:slug/profile" element={
                 <ProtectedRoute>
                   <Profile />
                 </ProtectedRoute>
               } />
+
+              {/* Admin routes (no slug) */}
               <Route path="/admin" element={
                 <ProtectedRoute requireAdmin>
                   <AdminDashboard />
