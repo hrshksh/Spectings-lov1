@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Building2, Users, Plus, Check, Loader2, Trash2, ShieldCheck, Eye, Activity, UsersRound } from 'lucide-react';
+import { Building2, Users, Plus, Loader2, Trash2, ShieldCheck, Eye, Activity, UsersRound } from 'lucide-react';
 import { useOrganization } from '@/hooks/useOrganization';
 import { useAuth } from '@/contexts/AuthContext';
 import {
@@ -22,11 +22,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
-const PLANS = [
-  { id: 'essential', name: 'Basic', price: '₹4,999', features: ['1 prospect section', '5 competitor tracking', '50 leads/month', 'Weekly reports'] },
-  { id: 'growth', name: 'Core', price: '₹14,999', features: ['2 prospect sections', '15 competitor tracking', '200 leads/month', 'All reports', 'Case studies'] },
-  { id: 'agency', name: 'Elite', price: '₹39,999', features: ['3 prospect sections', '50 competitor tracking', 'Unlimited leads', 'All reports', 'Priority support'] },
-];
 
 const SECTION_ICONS: Record<string, React.ElementType> = {
   prospects: UsersRound,
