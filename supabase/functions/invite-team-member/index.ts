@@ -74,6 +74,7 @@ Deno.serve(async (req) => {
       .maybeSingle();
 
     if (existingProfile) {
+      // Check if already in THIS org
       const { data: existingMember } = await adminClient
         .from("organization_members")
         .select("id")
@@ -82,6 +83,20 @@ Deno.serve(async (req) => {
         .maybeSingle();
       if (existingMember) {
         return new Response(JSON.stringify({ error: "This user is already a team member" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // Check if user belongs to ANOTHER org
+      const { data: otherOrg } = await adminClient
+        .from("organization_members")
+        .select("id")
+        .eq("user_id", existingProfile.id)
+        .neq("organization_id", organization_id)
+        .maybeSingle();
+      if (otherOrg) {
+        return new Response(JSON.stringify({ error: "This user is already with another organisation" }), {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
