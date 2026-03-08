@@ -28,6 +28,8 @@ import ProspectsManagement from "./pages/admin/ProspectsManagement";
 import InspectsManagement from "./pages/admin/InspectsManagement";
 import PerspectsManagement from "./pages/admin/PerspectsManagement";
 import Services from "./pages/Services";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();

@@ -1,15 +1,17 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { z } from 'zod';
-import { Loader2, ArrowLeft, ArrowRight, User, Building2 } from 'lucide-react';
+import { Loader2, ArrowLeft, ArrowRight, User, Building2, Mail, RotateCw } from 'lucide-react';
 
 const emailSchema = z.string().email('Please enter a valid work email address');
 const passwordSchema = z.string().min(6, 'Password must be at least 6 characters');
@@ -66,15 +68,16 @@ export default function Auth() {
   // Sign-in state
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [rememberMe, setRememberMe] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // Sign-up step: 1 = user info, 2 = org info
+  // Sign-up step: 1 = user info, 2 = org info, 3 = check email
   const [signupStep, setSignupStep] = useState(1);
+  const [signupEmail, setSignupEmail] = useState('');
 
   // Sign-up user fields
   const [signupFullName, setSignupFullName] = useState('');
-  const [signupEmail, setSignupEmail] = useState('');
   const [signupPassword, setSignupPassword] = useState('');
   const [countryCode, setCountryCode] = useState('+1');
   const [phoneNumber, setPhoneNumber] = useState('');
@@ -84,6 +87,9 @@ export default function Auth() {
   const [orgIndustry, setOrgIndustry] = useState('');
   const [orgSize, setOrgSize] = useState('');
   const [orgCountry, setOrgCountry] = useState('');
+
+  // Resend cooldown
+  const [resendCooldown, setResendCooldown] = useState(0);
 
   const orgSlug = useMemo(() => generateSlug(orgName), [orgName]);
 
@@ -96,6 +102,13 @@ export default function Auth() {
       navigate('/dashboard');
     }
   }, [user, loading, navigate]);
+
+  // Resend cooldown timer
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const timer = setTimeout(() => setResendCooldown(resendCooldown - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [resendCooldown]);
 
   const validateSignIn = () => {
     const newErrors: Record<string, string> = {};
@@ -197,10 +210,26 @@ export default function Auth() {
         variant: 'destructive',
       });
     } else {
-      toast({
-        title: 'Account created!',
-        description: 'Please check your email to verify your account before signing in.',
-      });
+      setSignupStep(3);
+      setResendCooldown(60);
+    }
+  };
+
+  const handleResendEmail = async () => {
+    if (resendCooldown > 0) return;
+    
+    setIsLoading(true);
+    const { error } = await supabase.auth.resend({
+      type: 'signup',
+      email: signupEmail,
+    });
+    setIsLoading(false);
+
+    if (error) {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    } else {
+      setResendCooldown(60);
+      toast({ title: 'Email sent!', description: 'A new verification email has been sent.' });
     }
   };
 
@@ -235,9 +264,24 @@ export default function Auth() {
                   {errors.email && <p className="text-sm text-destructive">{errors.email}</p>}
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="signin-password">Password</Label>
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="signin-password">Password</Label>
+                    <Link to="/forgot-password" className="text-xs text-muted-foreground hover:text-foreground transition-colors">
+                      Forgot password?
+                    </Link>
+                  </div>
                   <Input id="signin-password" type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} disabled={isLoading} />
                   {errors.password && <p className="text-sm text-destructive">{errors.password}</p>}
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="remember-me"
+                    checked={rememberMe}
+                    onCheckedChange={(checked) => setRememberMe(checked === true)}
+                  />
+                  <Label htmlFor="remember-me" className="text-sm font-normal text-muted-foreground cursor-pointer">
+                    Remember me
+                  </Label>
                 </div>
               </CardContent>
               <CardFooter>
@@ -250,22 +294,70 @@ export default function Auth() {
 
           {/* SIGN UP */}
           <TabsContent value="signup">
-            {/* Step indicator */}
-            <div className="flex items-center justify-center gap-3 px-6 pt-4 pb-2">
-              <div className="flex items-center gap-2">
-                <div className={`h-8 w-8 rounded-full flex items-center justify-center text-xs font-medium transition-colors ${signupStep === 1 ? 'bg-primary text-primary-foreground' : 'bg-primary/20 text-primary'}`}>
-                  <User className="h-4 w-4" />
-                </div>
-                <span className={`text-sm font-medium ${signupStep === 1 ? 'text-foreground' : 'text-muted-foreground'}`}>Your Info</span>
+
+            {/* Step 3: Check Your Email */}
+            {signupStep === 3 && (
+              <div>
+                <CardContent className="pt-6 text-center space-y-4">
+                  <div className="mx-auto h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
+                    <Mail className="h-8 w-8 text-primary" />
+                  </div>
+                  <div className="space-y-2">
+                    <h3 className="text-lg font-semibold text-foreground">Check your email</h3>
+                    <p className="text-sm text-muted-foreground">
+                      We sent a verification link to<br />
+                      <span className="font-medium text-foreground">{signupEmail}</span>
+                    </p>
+                  </div>
+                  <div className="rounded-lg border border-border bg-muted/50 p-3 text-xs text-muted-foreground space-y-1">
+                    <p>Click the link in the email to activate your account.</p>
+                    <p>If you don't see it, check your spam or junk folder.</p>
+                  </div>
+                </CardContent>
+                <CardFooter className="flex flex-col gap-3">
+                  <Button
+                    variant="outline"
+                    className="w-full"
+                    onClick={handleResendEmail}
+                    disabled={isLoading || resendCooldown > 0}
+                  >
+                    {isLoading ? (
+                      <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Sending...</>
+                    ) : resendCooldown > 0 ? (
+                      <>Resend in {resendCooldown}s</>
+                    ) : (
+                      <><RotateCw className="mr-2 h-4 w-4" />Resend verification email</>
+                    )}
+                  </Button>
+                  <button
+                    type="button"
+                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                    onClick={() => { setSignupStep(1); setErrors({}); }}
+                  >
+                    Use a different email
+                  </button>
+                </CardFooter>
               </div>
-              <div className="h-px w-8 bg-border" />
-              <div className="flex items-center gap-2">
-                <div className={`h-8 w-8 rounded-full flex items-center justify-center text-xs font-medium transition-colors ${signupStep === 2 ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>
-                  <Building2 className="h-4 w-4" />
+            )}
+
+            {/* Step indicator (only for steps 1 & 2) */}
+            {signupStep < 3 && (
+              <div className="flex items-center justify-center gap-3 px-6 pt-4 pb-2">
+                <div className="flex items-center gap-2">
+                  <div className={`h-8 w-8 rounded-full flex items-center justify-center text-xs font-medium transition-colors ${signupStep === 1 ? 'bg-primary text-primary-foreground' : 'bg-primary/20 text-primary'}`}>
+                    <User className="h-4 w-4" />
+                  </div>
+                  <span className={`text-sm font-medium ${signupStep === 1 ? 'text-foreground' : 'text-muted-foreground'}`}>Your Info</span>
                 </div>
-                <span className={`text-sm font-medium ${signupStep === 2 ? 'text-foreground' : 'text-muted-foreground'}`}>Organisation</span>
+                <div className="h-px w-8 bg-border" />
+                <div className="flex items-center gap-2">
+                  <div className={`h-8 w-8 rounded-full flex items-center justify-center text-xs font-medium transition-colors ${signupStep === 2 ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>
+                    <Building2 className="h-4 w-4" />
+                  </div>
+                  <span className={`text-sm font-medium ${signupStep === 2 ? 'text-foreground' : 'text-muted-foreground'}`}>Organisation</span>
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Step 1: User Information */}
             {signupStep === 1 && (
