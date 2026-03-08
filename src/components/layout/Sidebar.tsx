@@ -93,9 +93,15 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
   const location = useLocation();
   const { isAdmin: hasAdminAccess } = useAuth();
   const navItems = isAdmin ? adminNavItems : userNavItems;
-  const { data: prospectSelections = [] } = useProspectSelections();
+  const { data: sectionAccess = [] } = useUserSectionAccess();
 
-  const selectedSubsections = PROSPECT_SUBSECTIONS.filter(s => prospectSelections.includes(s.key));
+  // Filter user nav items by section access (admin sees all)
+  const filteredNavItems = isAdmin
+    ? navItems
+    : navItems.filter(item => item.section === null || hasSection(sectionAccess, item.section));
+
+  // Prospect subsections the user has access to
+  const selectedSubsections = PROSPECT_SUBSECTIONS.filter(s => hasProspectSubsection(sectionAccess, s.key));
 
   // Fetch active ad banner for user sidebar
   const { data: activeBanner } = useQuery({
