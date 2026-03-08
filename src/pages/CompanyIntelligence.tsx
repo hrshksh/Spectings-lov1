@@ -219,8 +219,13 @@ export default function CompanyIntelligence() {
           )}
 
           <div className="flex items-center justify-between px-4 py-1.5 border-t border-border bg-muted/20 shrink-0">
-            <span className="text-[11px] text-muted-foreground">{sorted.length} event{sorted.length !== 1 ? 's' : ''}</span>
-            {selectedIds.size > 0 && <span className="text-[11px] text-muted-foreground">{selectedIds.size} selected</span>}
+            <div className="flex items-center gap-3">
+              <span className="text-[11px] text-muted-foreground">{sorted.length} event{sorted.length !== 1 ? 's' : ''}</span>
+              {selectedIds.size > 0 && <span className="text-[11px] text-muted-foreground">{selectedIds.size} selected</span>}
+            </div>
+            <Button variant="ghost" size="sm" className="h-7 text-xs gap-1" onClick={() => setAddCompanyOpen(true)}>
+              <Plus className="h-3 w-3" />Add Company
+            </Button>
           </div>
         </div>
       )}
