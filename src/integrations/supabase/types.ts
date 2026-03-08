@@ -505,6 +505,30 @@ export type Database = {
         }
         Relationships: []
       }
+      site_logos: {
+        Row: {
+          created_at: string
+          dark_logo_url: string | null
+          id: string
+          light_logo_url: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          dark_logo_url?: string | null
+          id?: string
+          light_logo_url?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          dark_logo_url?: string | null
+          id?: string
+          light_logo_url?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       tasks: {
         Row: {
           assigned_to: string | null

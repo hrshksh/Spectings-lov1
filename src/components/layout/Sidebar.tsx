@@ -4,6 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
+import { useTheme } from 'next-themes';
 import { useUserSectionAccess, PROSPECT_SUBSECTIONS, hasSection, hasProspectSubsection } from '@/hooks/useSectionAccess';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -18,6 +19,7 @@ import {
   BookOpen,
   Shield,
   X,
+  ImagePlus,
   Menu,
   Megaphone,
   Library,
@@ -59,7 +61,8 @@ const adminNavItems: Array<{ icon: React.ElementType; label: string; path: strin
 { icon: Eye, label: 'Inspects', path: '/admin/inspects', section: null },
 { icon: Activity, label: 'Perspects', path: '/admin/perspects', section: null },
 { icon: Library, label: 'Services', path: '/admin/services', section: null },
-{ icon: Megaphone, label: 'Ad Management', path: '/admin/ads', section: null }];
+{ icon: Megaphone, label: 'Ad Management', path: '/admin/ads', section: null },
+{ icon: ImagePlus, label: 'Logo', path: '/admin/logo', section: null }];
 
 
 export function SidebarProvider({ children }: {children: React.ReactNode;}) {
@@ -92,6 +95,7 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
   const { collapsed, setCollapsed, mobileOpen, setMobileOpen } = useSidebarState();
   const location = useLocation();
   const { isAdmin: hasAdminAccess } = useAuth();
+  const { resolvedTheme } = useTheme();
   const navItems = isAdmin ? adminNavItems : userNavItems;
   const { data: sectionAccess = [] } = useUserSectionAccess();
 
@@ -102,6 +106,22 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
 
   // Prospect subsections the user has access to
   const selectedSubsections = PROSPECT_SUBSECTIONS.filter(s => hasProspectSubsection(sectionAccess, s.key));
+
+  // Fetch site logo
+  const { data: siteLogo } = useQuery({
+    queryKey: ['site-logo'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('site_logos')
+        .select('*')
+        .limit(1)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const logoUrl = resolvedTheme === 'dark' ? siteLogo?.dark_logo_url : siteLogo?.light_logo_url;
 
   // Fetch active ad banner for user sidebar
   const { data: activeBanner } = useQuery({
@@ -179,17 +199,26 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
         {/* Logo */}
         <div className="flex h-14 items-center justify-between border-b border-sidebar-border px-3">
           {!collapsed &&
-          <Link to={isAdmin ? '/admin' : '/people'} className="flex items-center gap-2">
-              <div className="h-7 w-7 rounded-lg bg-primary flex items-center justify-center">
-                <span className="text-primary-foreground font-bold text-xs">BK</span>
-              </div>
-              <span className="font-semibold text-sm text-sidebar-foreground">​</span>
+          <Link to={isAdmin ? '/admin' : '/people'} className="flex items-center">
+              {logoUrl ? (
+                <img src={logoUrl} alt="Logo" className="h-7 w-14 object-contain" />
+              ) : (
+                <div className="h-7 w-7 rounded-lg bg-primary flex items-center justify-center">
+                  <span className="text-primary-foreground font-bold text-xs">BK</span>
+                </div>
+              )}
             </Link>
           }
           {collapsed &&
-          <div className="h-7 w-7 rounded-lg bg-primary flex items-center justify-center mx-auto">
-              <span className="text-primary-foreground font-bold text-xs">BK</span>
-            </div>
+          <Link to={isAdmin ? '/admin' : '/people'} className="mx-auto">
+              {logoUrl ? (
+                <img src={logoUrl} alt="Logo" className="h-7 w-14 object-contain" />
+              ) : (
+                <div className="h-7 w-7 rounded-lg bg-primary flex items-center justify-center">
+                  <span className="text-primary-foreground font-bold text-xs">BK</span>
+                </div>
+              )}
+            </Link>
           }
         </div>
 
@@ -268,11 +297,14 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
 
         {/* Mobile header */}
         <div className="flex h-14 items-center justify-between border-b border-sidebar-border px-3">
-          <Link to={isAdmin ? '/admin' : '/people'} className="flex items-center gap-2" onClick={handleNavClick}>
-            <div className="h-7 w-7 rounded-lg bg-primary flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-xs">BK</span>
-            </div>
-            <span className="font-semibold text-sm text-sidebar-foreground">Brackats</span>
+          <Link to={isAdmin ? '/admin' : '/people'} className="flex items-center" onClick={handleNavClick}>
+            {logoUrl ? (
+              <img src={logoUrl} alt="Logo" className="h-7 w-14 object-contain" />
+            ) : (
+              <div className="h-7 w-7 rounded-lg bg-primary flex items-center justify-center">
+                <span className="text-primary-foreground font-bold text-xs">BK</span>
+              </div>
+            )}
           </Link>
           <Button
             variant="ghost"
