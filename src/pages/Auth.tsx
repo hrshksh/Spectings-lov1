@@ -179,9 +179,7 @@ export default function Auth() {
     if (error) {
       toast({
         title: 'Sign in failed',
-        description: error.message === 'Invalid login credentials'
-          ? 'Invalid email or password. Please try again.'
-          : error.message,
+        description: 'Invalid email or password. Please try again.',
         variant: 'destructive',
       });
     } else {
