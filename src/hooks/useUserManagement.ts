@@ -244,6 +244,8 @@ export function useCreateOrganization() {
 
   return useMutation({
     mutationFn: async (org: { name: string; industry?: string }) => {
+      const result = organizationSchema.safeParse(org);
+      if (!result.success) throw new Error(result.error.errors[0]?.message || 'Invalid organization data');
       const { error } = await supabase.from('organizations').insert(org);
       if (error) throw error;
     },
