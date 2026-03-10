@@ -3,6 +3,7 @@ import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import type { Database } from '@/integrations/supabase/types';
+import { personSchema, organizationSchema, companyEventSchema, leadSchema } from '@/lib/validations';
 
 type AppRole = Database['public']['Enums']['app_role'];
 type SubscriptionPlan = Database['public']['Enums']['subscription_plan'];
