@@ -277,7 +277,7 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
           {!collapsed && <LogoBlock />}
           {collapsed && <div className="mx-auto"><LogoBlock /></div>}
         </div>
-        <nav className="flex-1 space-y-1 p-2 overflow-y-auto">
+        <nav className="flex-1 space-y-1.5 p-2.5 overflow-y-auto">
           {isAdmin && !collapsed && (
             <div className="mb-3 px-2.5">
               <Badge variant="default" className="text-[10px] py-0.5 px-1.5">Admin</Badge>
