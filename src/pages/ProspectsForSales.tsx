@@ -11,6 +11,8 @@ import { useQuery, useInfiniteQuery } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSavedItemIds, useToggleSave } from '@/hooks/useSavedItems';
 import { TableSkeleton } from '@/components/ui/table-skeleton';
+import { MobileDataCard, CardField } from '@/components/MobileDataCard';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { exportToCsv } from '@/lib/csv-export';
 import { toast } from 'sonner';
 
@@ -56,6 +58,7 @@ type SortDir = 'asc' | 'desc' | null;
 
 export default function ProspectsForSales() {
   const { user } = useAuth();
+  const isMobile = useIsMobile();
   const [sortKey, setSortKey] = useState<SortKey | null>(null);
   const [sortDir, setSortDir] = useState<SortDir>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -123,10 +126,22 @@ export default function ProspectsForSales() {
   const SortIcon = ({ field }: { field: SortKey }) =>
     sortKey === field ? (sortDir === 'asc' ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />) : <ArrowUpDown className="h-3 w-3 opacity-40" />;
 
+  const BulkActions = () => selectedIds.size > 0 ? (
+    <div className="flex items-center gap-2 px-4 py-1.5 border-b border-border bg-muted/40 shrink-0 animate-fade-in">
+      <span className="text-xs text-muted-foreground">{selectedIds.size} selected</span>
+      <Button variant="outline" size="sm" className="h-7 text-xs gap-1" onClick={handleBulkSave}>
+        <Bookmark className="h-3 w-3" />Save to List
+      </Button>
+      <Button variant="outline" size="sm" className="h-7 text-xs gap-1" onClick={handleExportCsv}>
+        <Download className="h-3 w-3" />Export CSV
+      </Button>
+    </div>
+  ) : null;
+
   return (
-    <DashboardLayout title="For Sales" subtitle="Sales-focused lead profiles" flush>
+    <DashboardLayout title="For Sales" subtitle="Sales-focused lead profiles" flush={!isMobile}>
       {isLoading ? (
-        <TableSkeleton columns={8} flush />
+        <TableSkeleton columns={8} flush={!isMobile} />
       ) : userTags.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-center text-muted-foreground animate-fade-in">
           <div className="h-14 w-14 rounded-2xl bg-muted flex items-center justify-center mb-4">
@@ -140,19 +155,71 @@ export default function ProspectsForSales() {
           <p className="text-sm font-medium text-foreground">No leads found</p>
           <p className="text-xs mt-1">No sales leads match your assigned tags yet.</p>
         </div>
-      ) : (
-        <div className="flex flex-col h-[calc(100vh-57px)]">
-          {selectedIds.size > 0 && (
-            <div className="flex items-center gap-2 px-4 py-1.5 border-b border-border bg-muted/40 shrink-0 animate-fade-in">
-              <span className="text-xs text-muted-foreground">{selectedIds.size} selected</span>
-              <Button variant="outline" size="sm" className="h-7 text-xs gap-1" onClick={handleBulkSave}>
-                <Bookmark className="h-3 w-3" />Save to List
-              </Button>
-              <Button variant="outline" size="sm" className="h-7 text-xs gap-1" onClick={handleExportCsv}>
-                <Download className="h-3 w-3" />Export CSV
-              </Button>
-            </div>
+      ) : isMobile ? (
+        /* ── Mobile Card View ── */
+        <div className="flex flex-col gap-2 px-3 py-3 animate-fade-in">
+          <BulkActions />
+          <div className="flex items-center gap-2 px-1">
+            <Checkbox
+              checked={selectedIds.size === sorted.length && sorted.length > 0}
+              onCheckedChange={toggleAll}
+            />
+            <span className="text-xs text-muted-foreground">Select all · {sorted.length} leads</span>
+          </div>
+          {sorted.map(lead => {
+            const p = lead.person!;
+            return (
+              <MobileDataCard
+                key={lead.id}
+                id={lead.id}
+                selected={selectedIds.has(lead.id)}
+                onSelect={toggleSelect}
+              >
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="h-8 w-8 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
+                    <span className="text-primary text-[11px] font-semibold">{p.name.split(' ').map(n => n[0]).join('').slice(0, 2)}</span>
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium truncate">{p.name}</p>
+                    {p.role && <p className="text-[11px] text-muted-foreground truncate">{p.role}</p>}
+                  </div>
+                  {lead.quality_score != null && (
+                    <span className="ml-auto text-xs font-mono font-medium bg-muted px-1.5 py-0.5 rounded shrink-0">{lead.quality_score}</span>
+                  )}
+                </div>
+                <div className="space-y-1">
+                  {p.company && <CardField label="Company">{p.company}</CardField>}
+                  {p.email && (
+                    <CardField label="Email">
+                      <a href={`mailto:${p.email}`} className="text-primary hover:underline">{p.email}</a>
+                    </CardField>
+                  )}
+                  {p.phone && (
+                    <CardField label="Phone">
+                      <a href={`tel:${p.phone}`} className="text-muted-foreground hover:text-foreground">{p.phone}</a>
+                    </CardField>
+                  )}
+                </div>
+                {p.linkedin && (
+                  <div className="mt-2 pt-2 border-t border-border">
+                    <a href={p.linkedin} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground">
+                      <Linkedin className="h-3.5 w-3.5" /> LinkedIn
+                    </a>
+                  </div>
+                )}
+              </MobileDataCard>
+            );
+          })}
+          {hasNextPage && (
+            <Button variant="ghost" size="sm" onClick={() => fetchNextPage()} disabled={isFetchingNextPage} className="text-xs mt-1">
+              {isFetchingNextPage ? 'Loading...' : 'Load More'}
+            </Button>
           )}
+        </div>
+      ) : (
+        /* ── Desktop Table View ── */
+        <div className="flex flex-col h-[calc(100vh-57px)]">
+          <BulkActions />
           <div className="flex-1 overflow-auto">
             <table className="w-full text-sm border-collapse">
               <thead className="sticky top-0 z-10">

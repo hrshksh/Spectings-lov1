@@ -1,6 +1,7 @@
 import { ReactNode } from 'react';
 import { Sidebar, SidebarProvider, MobileMenuTrigger, useSidebarState } from './Sidebar';
 import { Header } from './Header';
+import { MobileBottomNav } from './MobileBottomNav';
 import { cn } from '@/lib/utils';
 
 interface DashboardLayoutProps {
@@ -19,10 +20,14 @@ function DashboardContent({ children, title, subtitle, isAdmin, flush }: Dashboa
       <Sidebar isAdmin={isAdmin} />
       <div className={cn('transition-all duration-300', collapsed ? 'md:pl-14' : 'md:pl-56')}>
         <Header title={title} subtitle={subtitle} mobileMenuTrigger={<MobileMenuTrigger />} />
-        <main className={flush ? '' : 'px-4 py-5 lg:px-6 max-w-[1400px]'}>
+        <main className={cn(
+          flush ? '' : 'px-4 py-5 lg:px-6 max-w-[1400px]',
+          'pb-16 md:pb-0' // space for bottom nav on mobile
+        )}>
           {children}
         </main>
       </div>
+      {!isAdmin && <MobileBottomNav />}
     </div>
   );
 }

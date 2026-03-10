@@ -11,6 +11,8 @@ import { useInfiniteQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { useSavedItemIds, useToggleSave } from '@/hooks/useSavedItems';
 import { TableSkeleton } from '@/components/ui/table-skeleton';
+import { MobileDataCard, CardField } from '@/components/MobileDataCard';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { exportToCsv } from '@/lib/csv-export';
 import { toast } from 'sonner';
 
@@ -62,6 +64,7 @@ function useCompanyEvents() {
 }
 
 export default function CompanyIntelligence() {
+  const isMobile = useIsMobile();
   const [sortKey, setSortKey] = useState<SortKey | null>(null);
   const [sortDir, setSortDir] = useState<SortDir>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -128,11 +131,23 @@ export default function CompanyIntelligence() {
   const SortIcon = ({ field }: { field: SortKey }) =>
     sortKey === field ? (sortDir === 'asc' ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />) : <ArrowUpDown className="h-3 w-3 opacity-40" />;
 
+  const BulkActions = () => selectedIds.size > 0 ? (
+    <div className="flex items-center gap-2 px-4 py-1.5 border-b border-border bg-muted/40 shrink-0 animate-fade-in">
+      <span className="text-xs text-muted-foreground">{selectedIds.size} selected</span>
+      <Button variant="outline" size="sm" className="h-7 text-xs gap-1" onClick={handleBulkSave}>
+        <Bookmark className="h-3 w-3" />Save to List
+      </Button>
+      <Button variant="outline" size="sm" className="h-7 text-xs gap-1" onClick={handleExportCsv}>
+        <Download className="h-3 w-3" />Export CSV
+      </Button>
+    </div>
+  ) : null;
+
   return (
-    <DashboardLayout title="Inspects" subtitle="Company activity intelligence" flush>
+    <DashboardLayout title="Inspects" subtitle="Company activity intelligence" flush={!isMobile}>
       <AddCompanyDialog open={addCompanyOpen} onOpenChange={setAddCompanyOpen} />
       {isLoading ? (
-        <TableSkeleton columns={5} flush />
+        <TableSkeleton columns={5} flush={!isMobile} />
       ) : sorted.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-center text-muted-foreground animate-fade-in">
           <div className="h-14 w-14 rounded-2xl bg-muted flex items-center justify-center mb-4">
@@ -142,19 +157,46 @@ export default function CompanyIntelligence() {
           <p className="text-xs mt-1 max-w-[260px] mb-4">Add companies to track and activity will appear here.</p>
           <Button size="sm" className="gap-1" onClick={() => setAddCompanyOpen(true)}><Plus className="h-4 w-4" />Add Company</Button>
         </div>
+      ) : isMobile ? (
+        <div className="flex flex-col gap-2 px-3 py-3 animate-fade-in">
+          <BulkActions />
+          <div className="flex items-center gap-2 px-1">
+            <Checkbox checked={selectedIds.size === sorted.length && sorted.length > 0} onCheckedChange={toggleAll} />
+            <span className="text-xs text-muted-foreground">Select all · {sorted.length} events</span>
+          </div>
+          {sorted.map(event => {
+            const companyName = (event.company as { name: string } | null)?.name ?? '—';
+            return (
+              <MobileDataCard key={event.id} id={event.id} selected={selectedIds.has(event.id)} onSelect={toggleSelect}>
+                <div className="flex items-center justify-between gap-2 mb-2">
+                  <p className="text-sm font-medium truncate">{companyName}</p>
+                  <span className={`inline-flex items-center rounded-full px-2 py-px text-[10px] font-semibold shrink-0 ${EVENT_TYPE_COLORS[event.event_type] || ''}`}>
+                    {EVENT_TYPE_LABELS[event.event_type] || event.event_type}
+                  </span>
+                </div>
+                <div className="space-y-1">
+                  <CardField label="Date">{format(new Date(event.created_at), 'MMM dd, yyyy')}</CardField>
+                  {event.summary && (
+                    <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{event.summary}</p>
+                  )}
+                </div>
+              </MobileDataCard>
+            );
+          })}
+          {hasNextPage && (
+            <Button variant="ghost" size="sm" onClick={() => fetchNextPage()} disabled={isFetchingNextPage} className="text-xs mt-1">
+              {isFetchingNextPage ? 'Loading...' : 'Load More'}
+            </Button>
+          )}
+          <div className="flex justify-center py-2">
+            <Button variant="ghost" size="sm" className="h-7 text-xs gap-1" onClick={() => setAddCompanyOpen(true)}>
+              <Plus className="h-3 w-3" />Add Company
+            </Button>
+          </div>
+        </div>
       ) : (
         <div className="flex flex-col h-[calc(100vh-57px)]">
-          {selectedIds.size > 0 && (
-            <div className="flex items-center gap-2 px-4 py-1.5 border-b border-border bg-muted/40 shrink-0 animate-fade-in">
-              <span className="text-xs text-muted-foreground">{selectedIds.size} selected</span>
-              <Button variant="outline" size="sm" className="h-7 text-xs gap-1" onClick={handleBulkSave}>
-                <Bookmark className="h-3 w-3" />Save to List
-              </Button>
-              <Button variant="outline" size="sm" className="h-7 text-xs gap-1" onClick={handleExportCsv}>
-                <Download className="h-3 w-3" />Export CSV
-              </Button>
-            </div>
-          )}
+          <BulkActions />
           <div className="flex-1 overflow-auto">
             <table className="w-full text-sm border-collapse">
               <thead className="sticky top-0 z-10">
