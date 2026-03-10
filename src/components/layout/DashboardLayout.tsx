@@ -18,7 +18,7 @@ function DashboardContent({ children, title, subtitle, isAdmin, flush }: Dashboa
   return (
     <div className="min-h-screen bg-background">
       <Sidebar isAdmin={isAdmin} />
-      <div className={cn('transition-all duration-300', collapsed ? 'md:pl-14' : 'md:pl-56')}>
+      <div className={cn('transition-all duration-300', collapsed ? 'md:pl-16' : 'md:pl-62')}>
         <Header title={title} subtitle={subtitle} mobileMenuTrigger={<MobileMenuTrigger />} />
         <main className={cn(
           flush ? '' : 'px-4 py-5 lg:px-6 max-w-[1400px]',

@@ -159,13 +159,13 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
         to={path}
         onClick={handleNavClick}
         className={cn(
-          'group flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm font-medium transition-all duration-200',
+          'group flex items-center gap-3 rounded-lg px-3 py-2.5 text-[15px] font-medium transition-all duration-200',
           isActive
             ? 'bg-primary text-primary-foreground shadow-sm'
             : 'text-sidebar-foreground hover:bg-sidebar-accent',
           !showLabel && 'justify-center px-2'
         )}>
-        <Icon className="h-4 w-4 flex-shrink-0" />
+        <Icon className="h-[18px] w-[18px] flex-shrink-0" />
         {showLabel && <span>{label}</span>}
       </Link>
     );
@@ -185,10 +185,10 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
   const LogoBlock = () => (
     <Link to={logoTarget} className="flex items-center" onClick={handleNavClick}>
       {logoUrl ? (
-        <img src={logoUrl} alt="Logo" className="h-7 w-14 object-contain" />
+        <img src={logoUrl} alt="Logo" className="h-8 w-16 object-contain" />
       ) : (
-        <div className="h-7 w-7 rounded-lg bg-primary flex items-center justify-center">
-          <span className="text-primary-foreground font-bold text-xs">BK</span>
+        <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
+          <span className="text-primary-foreground font-bold text-sm">BK</span>
         </div>
       )}
     </Link>
@@ -214,7 +214,7 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
                       to={sub.path}
                       onClick={handleNavClick}
                       className={cn(
-                        'block rounded-lg ml-4 px-2.5 py-1.5 text-[13px] font-medium transition-all duration-200',
+                        'block rounded-lg ml-4 px-3 py-2 text-[14px] font-medium transition-all duration-200',
                         location.pathname === sub.path
                           ? 'bg-primary text-primary-foreground shadow-sm'
                           : 'text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent'
@@ -232,7 +232,7 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
   );
 
   const BottomNav = () => (
-    <div className="border-t border-sidebar-border p-2 space-y-1">
+    <div className="border-t border-sidebar-border p-2.5 space-y-1.5">
       {!isAdmin && <NavItem icon={Library} label="Services" path={`/${orgSlug}/services`} />}
       {!isAdmin && <NavItem icon={BookOpen} label="Case Studies" path={`/${orgSlug}/case-studies`} />}
       {!isAdmin && <NavItem icon={Settings} label="Settings" path={`/${orgSlug}/settings`} />}
@@ -271,13 +271,13 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
         className={cn(
           'fixed left-0 top-0 z-50 h-screen bg-sidebar border-r border-sidebar-border transition-all duration-300 flex flex-col',
           'hidden md:flex',
-          collapsed ? 'w-14' : 'w-56'
+          collapsed ? 'w-16' : 'w-62'
         )}>
-        <div className="flex h-14 items-center justify-between border-b border-sidebar-border px-3">
+        <div className="flex h-16 items-center justify-between border-b border-sidebar-border px-3.5">
           {!collapsed && <LogoBlock />}
           {collapsed && <div className="mx-auto"><LogoBlock /></div>}
         </div>
-        <nav className="flex-1 space-y-1 p-2 overflow-y-auto">
+        <nav className="flex-1 space-y-1.5 p-2.5 overflow-y-auto">
           {isAdmin && !collapsed && (
             <div className="mb-3 px-2.5">
               <Badge variant="default" className="text-[10px] py-0.5 px-1.5">Admin</Badge>
@@ -292,10 +292,10 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
       {/* Mobile sidebar */}
       <aside
         className={cn(
-          'fixed left-0 top-0 z-50 h-screen bg-sidebar border-r border-sidebar-border transition-transform duration-300 flex flex-col w-64 md:hidden',
+          'fixed left-0 top-0 z-50 h-screen bg-sidebar border-r border-sidebar-border transition-transform duration-300 flex flex-col w-72 md:hidden',
           mobileOpen ? 'translate-x-0' : '-translate-x-full'
         )}>
-        <div className="flex h-14 items-center justify-between border-b border-sidebar-border px-3">
+        <div className="flex h-16 items-center justify-between border-b border-sidebar-border px-3.5">
           <LogoBlock />
           <Button
             variant="ghost"
@@ -305,7 +305,7 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
             <X className="h-3.5 w-3.5" />
           </Button>
         </div>
-        <nav className="flex-1 space-y-1 p-2 overflow-y-auto">
+        <nav className="flex-1 space-y-1.5 p-2.5 overflow-y-auto">
           {isAdmin && (
             <div className="mb-3 px-2.5">
               <Badge variant="default" className="text-[10px] py-0.5 px-1.5">Admin</Badge>

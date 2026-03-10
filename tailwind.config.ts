@@ -13,6 +13,9 @@ export default {
       },
     },
     extend: {
+      spacing: {
+        '62': '15.5rem',
+      },
       fontFamily: {
         sans: ['Outfit', 'system-ui', 'sans-serif'],
         mono: ['JetBrains Mono', 'monospace'],
