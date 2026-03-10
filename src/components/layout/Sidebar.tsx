@@ -232,7 +232,7 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
   );
 
   const BottomNav = () => (
-    <div className="border-t border-sidebar-border p-2 space-y-1">
+    <div className="border-t border-sidebar-border p-2.5 space-y-1.5">
       {!isAdmin && <NavItem icon={Library} label="Services" path={`/${orgSlug}/services`} />}
       {!isAdmin && <NavItem icon={BookOpen} label="Case Studies" path={`/${orgSlug}/case-studies`} />}
       {!isAdmin && <NavItem icon={Settings} label="Settings" path={`/${orgSlug}/settings`} />}
