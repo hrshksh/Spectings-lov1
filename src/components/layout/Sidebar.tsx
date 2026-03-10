@@ -165,7 +165,7 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
             : 'text-sidebar-foreground hover:bg-sidebar-accent',
           !showLabel && 'justify-center px-2'
         )}>
-        <Icon className="h-[18px] w-[18px] flex-shrink-0" />
+        <Icon className="h-4 w-4 flex-shrink-0" />
         {showLabel && <span>{label}</span>}
       </Link>
     );
