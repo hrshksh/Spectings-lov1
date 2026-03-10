@@ -159,7 +159,7 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
         to={path}
         onClick={handleNavClick}
         className={cn(
-          'group flex items-center gap-3 rounded-lg px-3 py-2.5 text-[15px] font-medium transition-all duration-200',
+          'group flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[14px] font-medium transition-all duration-200',
           isActive
             ? 'bg-primary text-primary-foreground shadow-sm'
             : 'text-sidebar-foreground hover:bg-sidebar-accent',
