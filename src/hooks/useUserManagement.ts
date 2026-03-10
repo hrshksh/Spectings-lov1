@@ -374,6 +374,8 @@ export function useCreateLead() {
       organization_id?: string;
       quality_score?: number;
     }) => {
+      const result = leadSchema.safeParse(lead);
+      if (!result.success) throw new Error(result.error.errors[0]?.message || 'Invalid lead data');
       const { error } = await supabase.from('leads').insert(lead);
       if (error) throw error;
     },

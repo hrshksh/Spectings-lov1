@@ -103,8 +103,12 @@ export default function Settings() {
   const [memberEmail, setMemberEmail] = useState('');
 
   const handleSaveOrg = () => {
-    if (!orgName.trim()) return;
     const orgData = { name: orgName, industry: orgIndustry, slug: orgSlug, size: orgSize, country: orgCountry };
+    const result = organizationSchema.safeParse(orgData);
+    if (!result.success) {
+      toast.error(result.error.errors[0]?.message || 'Invalid organization data');
+      return;
+    }
     if (organizationId) {
       updateOrg.mutate({ orgId: organizationId, ...orgData });
     } else {

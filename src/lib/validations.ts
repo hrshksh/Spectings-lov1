@@ -58,6 +58,28 @@ export const serviceSchema = z.object({
 export const organizationSchema = z.object({
   name: nameField,
   industry: optionalText(100),
+  slug: z.string().trim().max(100, 'Slug must be under 100 characters').optional().or(z.literal('')),
+  size: z.string().trim().max(50, 'Size must be under 50 characters').optional().or(z.literal('')),
+  country: z.string().trim().max(100, 'Country must be under 100 characters').optional().or(z.literal('')),
+});
+
+// --- Company ---
+
+export const companySchema = z.object({
+  name: nameField,
+  domain: optionalUrl,
+  industry: optionalText(100),
+  size: z.string().trim().max(50).optional().or(z.literal('')),
+  is_tracked: z.boolean().optional(),
+});
+
+// --- Company Event ---
+
+export const companyEventSchema = z.object({
+  company_id: z.string().uuid('Invalid company ID'),
+  event_type: z.enum(['pricing_change', 'product_launch', 'hiring', 'campaign', 'news', 'review', 'funding', 'acquisition']),
+  summary: optionalText(2000),
+  confidence: z.number().min(0).max(1).optional(),
 });
 
 // Helper to validate and return first error message
