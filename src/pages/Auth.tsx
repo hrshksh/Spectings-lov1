@@ -204,13 +204,9 @@ export default function Auth() {
     setIsLoading(false);
 
     if (error) {
-      let message = error.message;
-      if (error.message.includes('already registered')) {
-        message = 'This email is already registered. Please sign in instead.';
-      }
       toast({
         title: 'Sign up failed',
-        description: message,
+        description: 'Unable to create account. Please check your details and try again.',
         variant: 'destructive',
       });
     } else {
