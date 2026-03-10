@@ -295,7 +295,7 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
           'fixed left-0 top-0 z-50 h-screen bg-sidebar border-r border-sidebar-border transition-transform duration-300 flex flex-col w-64 md:hidden',
           mobileOpen ? 'translate-x-0' : '-translate-x-full'
         )}>
-        <div className="flex h-14 items-center justify-between border-b border-sidebar-border px-3">
+        <div className="flex h-16 items-center justify-between border-b border-sidebar-border px-3.5">
           <LogoBlock />
           <Button
             variant="ghost"
