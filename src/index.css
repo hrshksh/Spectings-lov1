@@ -62,57 +62,57 @@
   }
 
   .dark {
-    /* Dark Mode — deep charcoal with bright text */
-    --background: 0 0% 5%;
+    /* Dark Mode — true black with blue accent */
+    --background: 0 0% 0%;
     --foreground: 0 0% 96%;
 
-    --card: 0 0% 8%;
+    --card: 0 0% 9%;
     --card-foreground: 0 0% 96%;
 
-    --popover: 0 0% 8%;
+    --popover: 0 0% 9%;
     --popover-foreground: 0 0% 96%;
 
-    --primary: 0 0% 96%;
-    --primary-foreground: 0 0% 5%;
+    --primary: 219 51% 72%;
+    --primary-foreground: 0 0% 0%;
 
-    --secondary: 0 0% 13%;
+    --secondary: 0 0% 12%;
     --secondary-foreground: 0 0% 90%;
 
-    --muted: 0 0% 13%;
+    --muted: 0 0% 12%;
     --muted-foreground: 0 0% 50%;
 
-    --accent: 0 0% 16%;
+    --accent: 0 0% 14%;
     --accent-foreground: 0 0% 96%;
 
     --destructive: 0 62% 50%;
     --destructive-foreground: 0 0% 100%;
 
     --success: 142 60% 50%;
-    --success-foreground: 0 0% 6%;
+    --success-foreground: 0 0% 0%;
 
     --warning: 38 92% 55%;
-    --warning-foreground: 0 0% 6%;
+    --warning-foreground: 0 0% 0%;
 
-    --border: 0 0% 18%;
-    --input: 0 0% 18%;
-    --ring: 0 0% 85%;
+    --border: 0 0% 16%;
+    --input: 0 0% 16%;
+    --ring: 219 51% 72%;
 
     /* Sidebar */
-    --sidebar-background: 0 0% 4%;
+    --sidebar-background: 0 0% 0%;
     --sidebar-foreground: 0 0% 96%;
-    --sidebar-primary: 0 0% 96%;
-    --sidebar-primary-foreground: 0 0% 5%;
+    --sidebar-primary: 219 51% 72%;
+    --sidebar-primary-foreground: 0 0% 0%;
     --sidebar-accent: 0 0% 12%;
     --sidebar-accent-foreground: 0 0% 96%;
-    --sidebar-border: 0 0% 16%;
-    --sidebar-ring: 0 0% 85%;
+    --sidebar-border: 0 0% 14%;
+    --sidebar-ring: 219 51% 72%;
 
     /* Chart colors */
-    --chart-1: 0 0% 96%;
-    --chart-2: 0 0% 78%;
-    --chart-3: 0 0% 58%;
-    --chart-4: 0 0% 38%;
-    --chart-5: 0 0% 22%;
+    --chart-1: 219 51% 72%;
+    --chart-2: 219 40% 60%;
+    --chart-3: 219 30% 50%;
+    --chart-4: 0 0% 40%;
+    --chart-5: 0 0% 24%;
   }
 }
 
