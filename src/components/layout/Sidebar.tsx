@@ -273,7 +273,7 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
           'hidden md:flex',
           collapsed ? 'w-16' : 'w-62'
         )}>
-        <div className="flex h-14 items-center justify-between border-b border-sidebar-border px-3">
+        <div className="flex h-16 items-center justify-between border-b border-sidebar-border px-3.5">
           {!collapsed && <LogoBlock />}
           {collapsed && <div className="mx-auto"><LogoBlock /></div>}
         </div>
