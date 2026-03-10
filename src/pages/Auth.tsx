@@ -174,17 +174,36 @@ export default function Auth() {
     e.preventDefault();
     if (!validateSignIn()) return;
 
+    // Rate limiting: lock out after 5 failed attempts for 60s
+    const now = Date.now();
+    if (signInLockUntil > now) {
+      const secs = Math.ceil((signInLockUntil - now) / 1000);
+      toast({
+        title: 'Too many attempts',
+        description: `Please wait ${secs} seconds before trying again.`,
+        variant: 'destructive',
+      });
+      return;
+    }
+
     setIsLoading(true);
     const { error } = await signIn(email, password);
     setIsLoading(false);
 
     if (error) {
+      const attempts = signInAttempts + 1;
+      setSignInAttempts(attempts);
+      if (attempts >= 5) {
+        setSignInLockUntil(Date.now() + 60000);
+        setSignInAttempts(0);
+      }
       toast({
         title: 'Sign in failed',
         description: 'Invalid email or password. Please try again.',
         variant: 'destructive',
       });
     } else {
+      setSignInAttempts(0);
       navigate('/dashboard');
     }
   };
