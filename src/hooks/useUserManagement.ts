@@ -298,6 +298,8 @@ export function useCreateCompanyEvent() {
       confidence?: number;
       published_at?: string;
     }) => {
+      const result = companyEventSchema.safeParse(event);
+      if (!result.success) throw new Error(result.error.errors[0]?.message || 'Invalid event data');
       const { error } = await supabase.from('company_events').insert(event);
       if (error) throw error;
     },
