@@ -1,12 +1,23 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.89.0";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
-};
+const ALLOWED_ORIGINS = [
+  "https://alllbrackets.lovable.app",
+  "https://id-preview--81afc344-6a57-41a1-b602-3bed2702e2e1.lovable.app",
+];
+
+function getCorsHeaders(req: Request) {
+  const origin = req.headers.get("origin") || "";
+  const allowedOrigin = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+  return {
+    "Access-Control-Allow-Origin": allowedOrigin,
+    "Access-Control-Allow-Headers":
+      "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+  };
+}
 
 Deno.serve(async (req) => {
+  const corsHeaders = getCorsHeaders(req);
+
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -66,6 +77,21 @@ Deno.serve(async (req) => {
       });
     }
 
+    // FIX #4: Check caller has customer_admin or higher role
+    const { data: callerRoles } = await adminClient
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", callerId);
+
+    const adminRoles = ["super_admin", "researcher", "analyst", "qc", "customer_admin"];
+    const hasAdminRole = callerRoles?.some((r) => adminRoles.includes(r.role));
+    if (!hasAdminRole) {
+      return new Response(JSON.stringify({ error: "Only team administrators can invite members" }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     // Check if user already exists
     const { data: existingProfile } = await adminClient
       .from("profiles")
@@ -82,7 +108,8 @@ Deno.serve(async (req) => {
         .eq("user_id", existingProfile.id)
         .maybeSingle();
       if (existingMember) {
-        return new Response(JSON.stringify({ error: "This user is already a team member" }), {
+        // FIX #10: Generic error - don't reveal org membership details
+        return new Response(JSON.stringify({ error: "Unable to invite this user. They may already be a member." }), {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
@@ -96,7 +123,8 @@ Deno.serve(async (req) => {
         .neq("organization_id", organization_id)
         .maybeSingle();
       if (otherOrg) {
-        return new Response(JSON.stringify({ error: "This user is already with another organisation" }), {
+        // FIX #10: Generic error - don't reveal cross-org info
+        return new Response(JSON.stringify({ error: "Unable to invite this user. They may already be a member." }), {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });

@@ -55,13 +55,19 @@ const COUNTRY_CODES = [
   { code: '+254', label: 'KE (+254)' },
 ];
 
+const RESERVED_SLUGS = ['admin', 'auth', 'api', 'dashboard', 'login', 'signup', 'reset-password', 'forgot-password', 'settings', 'profile', 'lists', 'people', 'inspects', 'perspects', 'prospects', 'services', 'case-studies'];
+
 function generateSlug(name: string): string {
-  return name
+  let slug = name
     .toLowerCase()
     .trim()
     .replace(/[^\w\s-]/g, '')
     .replace(/[\s_]+/g, '-')
     .replace(/^-+|-+$/g, '');
+  if (RESERVED_SLUGS.includes(slug)) {
+    slug = `${slug}-org`;
+  }
+  return slug;
 }
 
 export default function Auth() {
@@ -71,6 +77,8 @@ export default function Auth() {
   const [rememberMe, setRememberMe] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [signInAttempts, setSignInAttempts] = useState(0);
+  const [signInLockUntil, setSignInLockUntil] = useState(0);
 
   // Sign-up step: 1 = user info, 2 = org info, 3 = check email
   const [signupStep, setSignupStep] = useState(1);
@@ -166,19 +174,36 @@ export default function Auth() {
     e.preventDefault();
     if (!validateSignIn()) return;
 
+    // Rate limiting: lock out after 5 failed attempts for 60s
+    const now = Date.now();
+    if (signInLockUntil > now) {
+      const secs = Math.ceil((signInLockUntil - now) / 1000);
+      toast({
+        title: 'Too many attempts',
+        description: `Please wait ${secs} seconds before trying again.`,
+        variant: 'destructive',
+      });
+      return;
+    }
+
     setIsLoading(true);
     const { error } = await signIn(email, password);
     setIsLoading(false);
 
     if (error) {
+      const attempts = signInAttempts + 1;
+      setSignInAttempts(attempts);
+      if (attempts >= 5) {
+        setSignInLockUntil(Date.now() + 60000);
+        setSignInAttempts(0);
+      }
       toast({
         title: 'Sign in failed',
-        description: error.message === 'Invalid login credentials'
-          ? 'Invalid email or password. Please try again.'
-          : error.message,
+        description: 'Invalid email or password. Please try again.',
         variant: 'destructive',
       });
     } else {
+      setSignInAttempts(0);
       navigate('/dashboard');
     }
   };
@@ -200,13 +225,9 @@ export default function Auth() {
     setIsLoading(false);
 
     if (error) {
-      let message = error.message;
-      if (error.message.includes('already registered')) {
-        message = 'This email is already registered. Please sign in instead.';
-      }
       toast({
         title: 'Sign up failed',
-        description: message,
+        description: 'Unable to create account. Please check your details and try again.',
         variant: 'destructive',
       });
     } else {

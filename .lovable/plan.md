@@ -1,93 +1,50 @@
 
+# Cleanup: Remove Unused Code
 
-# Security Audit: Attacker's Perspective
+After auditing the codebase, here are files and components that are not imported or used anywhere:
 
-Here's what I'd exploit if I were attacking this application, ranked by severity.
+## Files to Remove
 
----
+### 1. `src/pages/Dashboard.tsx`
+- The `/dashboard` route in App.tsx redirects to `/people` -- this page component is imported but never actually rendered. The import can be removed from App.tsx as well.
 
-## CRITICAL Vulnerabilities
+### 2. `src/pages/Index.tsx`
+- A landing page component that is never imported in App.tsx or anywhere else. Completely orphaned.
 
-### 1. Cross-Organization Data Leak via Tag Matching
-**Attack**: Register for Org A, get assigned the tag "finance". Now I can read **all** people and leads records across **every** organization that also use the "finance" tag — including emails, phone numbers, LinkedIn URLs, and notes.
+### 3. `src/pages/Reports.tsx`
+- Contains a static reports page with hardcoded data. Not imported anywhere in the project -- no route, no reference.
 
-**Root cause**: The RLS policies `Users can view people matching their tags` and `Users can view leads matching their tags` check tag overlap but never verify `organization_id`. The `user_has_matching_lead_tag` function also has no org filter.
+### 4. `src/components/NavLink.tsx`
+- A custom NavLink wrapper that is never imported by any other file.
 
-**Impact**: Full PII exposure across tenant boundaries.
+### 5. `src/hooks/useRealtimeData.ts`
+- Only imported by `Dashboard.tsx` (which itself is unused). Once Dashboard is removed, this hook has zero consumers.
 
-**Fix**: Add `AND organization_id = get_user_org_id(auth.uid())` to both tag-matching policies, and update the `user_has_matching_lead_tag` function similarly.
+### 6. `src/components/ui/navigation-menu.tsx`
+- Only imports itself (internal Radix primitives). Never used by any page or component in the app.
 
-### 2. teammate_profiles View Has Zero RLS Protection
-**Attack**: Query `SELECT * FROM teammate_profiles` — returns **all** users' names and emails across every organization, not just my teammates.
+### 7. `src/components/ui/data-table.tsx`
+- Only imported by `Dashboard.tsx`. Once Dashboard is removed, this generic DataTable component has no consumers.
 
-**Root cause**: It's a view with no RLS policies. The `security_invoker` flag helps with the underlying `profiles` table, but the view itself has no row filtering if queried directly via PostgREST.
+### 8. `src/types/index.ts`
+- Contains TypeScript interfaces (Person, Lead, Company, etc.) that mirror the database but are never actually imported anywhere. The app uses the auto-generated Supabase types instead.
 
-**Fix**: Add a proper RLS policy or replace with a function that filters by org.
+## Code Changes
 
-### 3. Edge Function JWT Verification Disabled
-**Attack**: The `invite-team-member` function has `verify_jwt = false` in config.toml. While the function does manual auth checking, this means unauthenticated requests reach the function handler. If there's any code path that bypasses the auth check, it's exploitable.
+### 9. `src/App.tsx`
+- Remove the unused `import Dashboard from "./pages/Dashboard"` (the component is imported but the route just redirects, so the import is dead weight).
 
-**Fix**: Set `verify_jwt = true` and rely on Supabase's built-in JWT verification as the first layer.
+## Summary
 
----
+| Item | Reason |
+|------|--------|
+| `src/pages/Dashboard.tsx` | Route redirects; component never renders |
+| `src/pages/Index.tsx` | No import anywhere |
+| `src/pages/Reports.tsx` | No import anywhere |
+| `src/components/NavLink.tsx` | No import anywhere |
+| `src/hooks/useRealtimeData.ts` | Only used by unused Dashboard |
+| `src/components/ui/navigation-menu.tsx` | No import anywhere |
+| `src/components/ui/data-table.tsx` | Only used by unused Dashboard |
+| `src/types/index.ts` | Never imported; Supabase types used instead |
 
-## HIGH Vulnerabilities
-
-### 4. No Authorization Check on Team Invites
-**Attack**: Any org member (even `customer_user`) can invoke `invite-team-member`. The function only checks if the caller is *a member* of the org — not if they're an admin. So a regular user can add anyone to their team.
-
-**Fix**: Check caller has `customer_admin` or higher role before allowing invites.
-
-### 5. No Rate Limiting on Auth Endpoints
-**Attack**: Brute-force passwords against the sign-in form. There's no client-side throttling, no CAPTCHA, and Supabase's default rate limits are generous.
-
-**Fix**: Add rate limiting (client-side cooldowns + consider enabling Supabase's stricter rate limits).
-
-### 6. Leaked Password Protection Disabled
-**Attack**: Users can set passwords that have appeared in known data breaches. This makes credential stuffing attacks more likely to succeed.
-
-**Fix**: Enable leaked password protection in auth settings.
-
----
-
-## MEDIUM Vulnerabilities
-
-### 7. CORS Wildcard on Edge Function
-**Attack**: The `invite-team-member` function sets `Access-Control-Allow-Origin: *`, allowing any website to make cross-origin requests to it. Combined with #3 (no JWT verification), a malicious site could trigger team additions if a user visits it while authenticated.
-
-**Fix**: Restrict CORS to your actual domain(s).
-
-### 8. Client-Side Admin Check is Cosmetic
-**Attack**: The `isAdmin` flag is computed client-side from roles. While RLS enforces server-side, the client routing (`ProtectedRoute`) can be bypassed by modifying JavaScript. An attacker could navigate to admin pages and see the UI (though data queries would fail due to RLS).
-
-**Impact**: Low (data is protected by RLS), but admin UI exposure is undesirable.
-
-### 9. No Input Sanitization on Org Slug
-**Attack**: The `generateSlug` function strips special characters but doesn't prevent slugs that collide with app routes (e.g., "admin", "auth", "reset-password"). A user could create an org named "Admin" and get slug "admin", potentially causing routing conflicts.
-
-**Fix**: Add a reserved-words blocklist for slugs.
-
-### 10. Error Messages Reveal System State
-**Attack**: Error messages like "This email is already registered" and "This user is already with another organisation" confirm whether an email exists in the system and which org they belong to — useful for enumeration.
-
-**Fix**: Use generic error messages that don't reveal user existence.
-
----
-
-## Recommended Fix Priority
-
-| # | Issue | Severity | Effort |
-|---|-------|----------|--------|
-| 1 | Cross-org data leak via tags | CRITICAL | Low — update 2 RLS policies + 1 function |
-| 2 | teammate_profiles no RLS | CRITICAL | Low — add policy or recreate view |
-| 3 | Edge function JWT disabled | HIGH | Trivial — config change |
-| 4 | No role check on invites | HIGH | Low — add role check in edge function |
-| 5 | No rate limiting | HIGH | Medium |
-| 6 | Leaked password protection | HIGH | Trivial — config change |
-| 7 | CORS wildcard | MEDIUM | Trivial |
-| 8-10 | UI/enumeration issues | MEDIUM | Low |
-
----
-
-Shall I fix all of these? I'd recommend starting with items 1-4 as they represent actual data exposure and privilege escalation risks.
-
+Total: **8 files to delete**, **1 file to edit** (App.tsx -- remove dead import).
