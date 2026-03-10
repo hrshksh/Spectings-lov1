@@ -328,6 +328,8 @@ export function useCreatePerson() {
       linkedin?: string;
       confidence?: number;
     }) => {
+      const result = personSchema.safeParse(person);
+      if (!result.success) throw new Error(result.error.errors[0]?.message || 'Invalid person data');
       const { error } = await supabase
         .from('people')
         .insert([person]);
