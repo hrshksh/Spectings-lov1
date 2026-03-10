@@ -14,7 +14,7 @@ export default {
     },
     extend: {
       spacing: {
-        '62': '15.5rem',
+        '62': '15.25rem',
       },
       fontFamily: {
         sans: ['Outfit', 'system-ui', 'sans-serif'],
