@@ -77,6 +77,8 @@ export default function Auth() {
   const [rememberMe, setRememberMe] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [signInAttempts, setSignInAttempts] = useState(0);
+  const [signInLockUntil, setSignInLockUntil] = useState(0);
 
   // Sign-up step: 1 = user info, 2 = org info, 3 = check email
   const [signupStep, setSignupStep] = useState(1);
