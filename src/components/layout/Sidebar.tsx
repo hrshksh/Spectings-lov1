@@ -185,7 +185,7 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
   const LogoBlock = () => (
     <Link to={logoTarget} className="flex items-center" onClick={handleNavClick}>
       {logoUrl ? (
-        <img src={logoUrl} alt="Logo" className="h-7 w-14 object-contain" />
+        <img src={logoUrl} alt="Logo" className="h-8 w-16 object-contain" />
       ) : (
         <div className="h-7 w-7 rounded-lg bg-primary flex items-center justify-center">
           <span className="text-primary-foreground font-bold text-xs">BK</span>
