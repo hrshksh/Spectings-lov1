@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Loader2, User, Mail, Phone, Shield } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProfile } from '@/hooks/useSettings';
 import { supabase } from '@/integrations/supabase/client';
