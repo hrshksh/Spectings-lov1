@@ -358,6 +358,8 @@ export function useCreateCompany() {
       size?: string;
       is_tracked?: boolean;
     }) => {
+      const result = companySchema.safeParse(company);
+      if (!result.success) throw new Error(result.error.errors[0]?.message || 'Invalid company data');
       const { error } = await supabase
         .from('companies')
         .insert([company]);
