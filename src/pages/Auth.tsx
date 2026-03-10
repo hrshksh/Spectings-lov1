@@ -55,13 +55,19 @@ const COUNTRY_CODES = [
   { code: '+254', label: 'KE (+254)' },
 ];
 
+const RESERVED_SLUGS = ['admin', 'auth', 'api', 'dashboard', 'login', 'signup', 'reset-password', 'forgot-password', 'settings', 'profile', 'lists', 'people', 'inspects', 'perspects', 'prospects', 'services', 'case-studies'];
+
 function generateSlug(name: string): string {
-  return name
+  let slug = name
     .toLowerCase()
     .trim()
     .replace(/[^\w\s-]/g, '')
     .replace(/[\s_]+/g, '-')
     .replace(/^-+|-+$/g, '');
+  if (RESERVED_SLUGS.includes(slug)) {
+    slug = `${slug}-org`;
+  }
+  return slug;
 }
 
 export default function Auth() {
