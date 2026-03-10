@@ -187,8 +187,8 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
       {logoUrl ? (
         <img src={logoUrl} alt="Logo" className="h-8 w-16 object-contain" />
       ) : (
-        <div className="h-7 w-7 rounded-lg bg-primary flex items-center justify-center">
-          <span className="text-primary-foreground font-bold text-xs">BK</span>
+        <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
+          <span className="text-primary-foreground font-bold text-sm">BK</span>
         </div>
       )}
     </Link>
