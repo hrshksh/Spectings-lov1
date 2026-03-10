@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useEffect } from 'react';
+import { personSchema, companySchema, companyEventSchema } from '@/lib/validations';
 
 type TaskStatus = 'pending' | 'in_progress' | 'completed' | 'rejected';
 type EvidenceStatus = 'pending' | 'parsed' | 'published' | 'rejected';
@@ -297,6 +298,8 @@ export function useCreateCompanyEvent() {
       summary?: string;
       confidence?: number;
     }) => {
+      const result = companyEventSchema.safeParse(event);
+      if (!result.success) throw new Error(result.error.errors[0]?.message || 'Invalid event data');
       const { error } = await supabase
         .from('company_events')
         .insert([event]);
@@ -327,6 +330,8 @@ export function useCreatePerson() {
       linkedin?: string;
       confidence?: number;
     }) => {
+      const result = personSchema.safeParse(person);
+      if (!result.success) throw new Error(result.error.errors[0]?.message || 'Invalid person data');
       const { error } = await supabase
         .from('people')
         .insert([person]);
@@ -355,6 +360,8 @@ export function useCreateCompany() {
       size?: string;
       is_tracked?: boolean;
     }) => {
+      const result = companySchema.safeParse(company);
+      if (!result.success) throw new Error(result.error.errors[0]?.message || 'Invalid company data');
       const { error } = await supabase
         .from('companies')
         .insert([company]);

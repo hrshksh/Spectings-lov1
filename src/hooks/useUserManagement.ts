@@ -3,6 +3,7 @@ import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import type { Database } from '@/integrations/supabase/types';
+import { personSchema, organizationSchema, companyEventSchema, leadSchema } from '@/lib/validations';
 
 type AppRole = Database['public']['Enums']['app_role'];
 type SubscriptionPlan = Database['public']['Enums']['subscription_plan'];
@@ -196,6 +197,8 @@ export function useCreatePerson() {
       tags?: string[];
       confidence?: number;
     }) => {
+      const result = personSchema.safeParse(person);
+      if (!result.success) throw new Error(result.error.errors[0]?.message || 'Invalid person data');
       const { error } = await supabase.from('people').insert(person);
       if (error) throw error;
     },
@@ -242,6 +245,8 @@ export function useCreateOrganization() {
 
   return useMutation({
     mutationFn: async (org: { name: string; industry?: string }) => {
+      const result = organizationSchema.safeParse(org);
+      if (!result.success) throw new Error(result.error.errors[0]?.message || 'Invalid organization data');
       const { error } = await supabase.from('organizations').insert(org);
       if (error) throw error;
     },
@@ -294,6 +299,8 @@ export function useCreateCompanyEvent() {
       confidence?: number;
       published_at?: string;
     }) => {
+      const result = companyEventSchema.safeParse(event);
+      if (!result.success) throw new Error(result.error.errors[0]?.message || 'Invalid event data');
       const { error } = await supabase.from('company_events').insert(event);
       if (error) throw error;
     },
@@ -368,6 +375,8 @@ export function useCreateLead() {
       organization_id?: string;
       quality_score?: number;
     }) => {
+      const result = leadSchema.safeParse(lead);
+      if (!result.success) throw new Error(result.error.errors[0]?.message || 'Invalid lead data');
       const { error } = await supabase.from('leads').insert(lead);
       if (error) throw error;
     },

@@ -180,6 +180,27 @@ export default function ProspectsManagement() {
     mutationFn: async () => {
       if (!editingLead) throw new Error('No lead selected');
 
+      // Validate person fields
+      const personResult = personSchema.safeParse({
+        name: editForm.name,
+        email: editForm.email || undefined,
+        phone: editForm.phone || undefined,
+        company: editForm.company || undefined,
+        role: editForm.role || undefined,
+        linkedin: editForm.linkedin || undefined,
+        tags: editForm.tags,
+      });
+      if (!personResult.success) throw new Error(personResult.error.errors[0]?.message || 'Invalid person data');
+
+      // Validate lead fields
+      const leadResult = leadSchema.safeParse({
+        quality_score: editForm.quality_score,
+        notes: editForm.notes || undefined,
+        source: editForm.source || undefined,
+        prospect_type: editForm.prospect_type,
+      });
+      if (!leadResult.success) throw new Error(leadResult.error.errors[0]?.message || 'Invalid lead data');
+
       if (editingLead.person_id) {
         const { error: personErr } = await supabase
           .from('people')
