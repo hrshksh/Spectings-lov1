@@ -76,6 +76,10 @@ export default {
           4: "hsl(var(--chart-4))",
           5: "hsl(var(--chart-5))",
         },
+        "accent-indigo": "hsl(var(--accent-indigo))",
+        "accent-cyan": "hsl(var(--accent-cyan))",
+        "accent-amber": "hsl(var(--accent-amber))",
+        "accent-rose": "hsl(var(--accent-rose))",
       },
       borderRadius: {
         lg: "var(--radius)",
