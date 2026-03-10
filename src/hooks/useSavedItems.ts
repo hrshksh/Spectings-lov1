@@ -88,7 +88,7 @@ export function useAllSavedItems() {
   });
 }
 
-/** Bulk remove saved items */
+/** Bulk remove saved items with optimistic updates */
 export function useBulkRemoveSaved() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -102,11 +102,29 @@ export function useBulkRemoveSaved() {
         .in('record_id', recordIds);
       if (error) throw error;
     },
-    onSuccess: () => {
+    onMutate: async (recordIds) => {
+      await queryClient.cancelQueries({ queryKey: ['saved-items-all', user?.id] });
+      const previousAll = queryClient.getQueryData<any[]>(['saved-items-all', user?.id]);
+      
+      // Optimistically remove items
+      queryClient.setQueryData<any[]>(['saved-items-all', user?.id], (old = []) =>
+        old.filter(item => !recordIds.includes(item.record_id))
+      );
+
+      return { previousAll };
+    },
+    onError: (err: Error, _, context) => {
+      if (context?.previousAll !== undefined) {
+        queryClient.setQueryData(['saved-items-all', user?.id], context.previousAll);
+      }
+      toast.error(err.message);
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['saved-items-all'] });
       queryClient.invalidateQueries({ queryKey: ['saved-items'] });
+    },
+    onSuccess: () => {
       toast.success('Items removed from list');
     },
-    onError: (e: Error) => toast.error(e.message),
   });
 }

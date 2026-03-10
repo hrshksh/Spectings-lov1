@@ -77,8 +77,19 @@ export function useToggleCompetitorTracking() {
       const { error } = await supabase.from('companies').update({ is_tracked }).eq('id', id);
       if (error) throw error;
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['tracked-competitors'] }),
-    onError: (e: Error) => toast.error(e.message),
+    onMutate: async ({ id, is_tracked }) => {
+      await queryClient.cancelQueries({ queryKey: ['tracked-competitors'] });
+      const previous = queryClient.getQueryData<any[]>(['tracked-competitors']);
+      queryClient.setQueryData<any[]>(['tracked-competitors'], (old = []) =>
+        old.map(c => c.id === id ? { ...c, is_tracked } : c)
+      );
+      return { previous };
+    },
+    onError: (err: Error, _, context) => {
+      if (context?.previous) queryClient.setQueryData(['tracked-competitors'], context.previous);
+      toast.error(err.message);
+    },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ['tracked-competitors'] }),
   });
 }
 

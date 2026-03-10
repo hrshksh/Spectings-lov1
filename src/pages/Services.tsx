@@ -1,9 +1,41 @@
 import { DashboardLayout } from '@/components/layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Check, Loader2, Briefcase } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Check, Briefcase } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
+
+function ServicesSkeletons() {
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      {Array.from({ length: 6 }).map((_, i) => (
+        <Card key={i} className="flex flex-col">
+          <CardHeader className="pb-3">
+            <div className="flex items-center gap-3">
+              <Skeleton className="h-10 w-10 rounded-lg" />
+              <Skeleton className="h-5 w-32" />
+            </div>
+          </CardHeader>
+          <CardContent className="flex-1 space-y-4">
+            <div className="space-y-2">
+              <Skeleton className="h-3 w-full" />
+              <Skeleton className="h-3 w-3/4" />
+            </div>
+            <div className="space-y-2">
+              {Array.from({ length: 3 }).map((_, j) => (
+                <div key={j} className="flex items-center gap-2">
+                  <Skeleton className="h-3.5 w-3.5 rounded-full" />
+                  <Skeleton className="h-3 w-40" />
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  );
+}
 
 export default function Services() {
   const { data: services = [], isLoading } = useQuery({
@@ -22,9 +54,7 @@ export default function Services() {
   return (
     <DashboardLayout title="Services" subtitle="Explore our intelligence and analytics capabilities.">
       {isLoading ? (
-        <div className="flex justify-center py-12">
-          <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-        </div>
+        <ServicesSkeletons />
       ) : services.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-center">
           <Briefcase className="h-10 w-10 text-muted-foreground mb-3" />
