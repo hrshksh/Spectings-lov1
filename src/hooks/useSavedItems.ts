@@ -22,7 +22,7 @@ export function useSavedItemIds(sourceType: string) {
   });
 }
 
-/** Toggle save/unsave a record */
+/** Toggle save/unsave a record with optimistic updates */
 export function useToggleSave() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -36,11 +36,36 @@ export function useToggleSave() {
         if (error) throw error;
       }
     },
-    onSuccess: (_, { sourceType }) => {
+    onMutate: async ({ recordId, sourceType, isSaved }) => {
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ['saved-items', sourceType, user?.id] });
+      await queryClient.cancelQueries({ queryKey: ['saved-items-all', user?.id] });
+
+      // Snapshot previous values
+      const previousIds = queryClient.getQueryData<string[]>(['saved-items', sourceType, user?.id]);
+      const previousAll = queryClient.getQueryData(['saved-items-all', user?.id]);
+
+      // Optimistically update the saved IDs list
+      queryClient.setQueryData<string[]>(['saved-items', sourceType, user?.id], (old = []) =>
+        isSaved ? old.filter(id => id !== recordId) : [...old, recordId]
+      );
+
+      return { previousIds, previousAll };
+    },
+    onError: (err: Error, { sourceType }, context) => {
+      // Revert on error
+      if (context?.previousIds !== undefined) {
+        queryClient.setQueryData(['saved-items', sourceType, user?.id], context.previousIds);
+      }
+      if (context?.previousAll !== undefined) {
+        queryClient.setQueryData(['saved-items-all', user?.id], context.previousAll);
+      }
+      toast.error(err.message);
+    },
+    onSettled: (_, __, { sourceType }) => {
       queryClient.invalidateQueries({ queryKey: ['saved-items', sourceType] });
       queryClient.invalidateQueries({ queryKey: ['saved-items-all'] });
     },
-    onError: (e: Error) => toast.error(e.message),
   });
 }
 
