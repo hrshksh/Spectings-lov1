@@ -271,7 +271,7 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
         className={cn(
           'fixed left-0 top-0 z-50 h-screen bg-sidebar border-r border-sidebar-border transition-all duration-300 flex flex-col',
           'hidden md:flex',
-          collapsed ? 'w-14' : 'w-56'
+          collapsed ? 'w-16' : 'w-62'
         )}>
         <div className="flex h-14 items-center justify-between border-b border-sidebar-border px-3">
           {!collapsed && <LogoBlock />}
