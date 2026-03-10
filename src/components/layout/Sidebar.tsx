@@ -159,13 +159,13 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
         to={path}
         onClick={handleNavClick}
         className={cn(
-          'group flex items-center gap-3 rounded-lg px-3 py-2.5 text-[15px] font-medium transition-all duration-200',
+          'group flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[14px] font-medium transition-all duration-200',
           isActive
             ? 'bg-primary text-primary-foreground shadow-sm'
             : 'text-sidebar-foreground hover:bg-sidebar-accent',
           !showLabel && 'justify-center px-2'
         )}>
-        <Icon className="h-[18px] w-[18px] flex-shrink-0" />
+        <Icon className="h-4 w-4 flex-shrink-0" />
         {showLabel && <span>{label}</span>}
       </Link>
     );
@@ -214,7 +214,7 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
                       to={sub.path}
                       onClick={handleNavClick}
                       className={cn(
-                        'block rounded-lg ml-4 px-3 py-2 text-[14px] font-medium transition-all duration-200',
+                        'block rounded-lg ml-4 px-2.5 py-1.5 text-[13px] font-medium transition-all duration-200',
                         location.pathname === sub.path
                           ? 'bg-primary text-primary-foreground shadow-sm'
                           : 'text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent'
