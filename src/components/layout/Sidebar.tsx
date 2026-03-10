@@ -305,7 +305,7 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
             <X className="h-3.5 w-3.5" />
           </Button>
         </div>
-        <nav className="flex-1 space-y-1 p-2 overflow-y-auto">
+        <nav className="flex-1 space-y-1.5 p-2.5 overflow-y-auto">
           {isAdmin && (
             <div className="mb-3 px-2.5">
               <Badge variant="default" className="text-[10px] py-0.5 px-1.5">Admin</Badge>
